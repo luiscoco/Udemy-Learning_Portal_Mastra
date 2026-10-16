@@ -26,3 +26,15 @@ Exact versions are locked in `package-lock.json` (`save-exact=true`). This table
 | `npm audit`: `sprintf-js` (GHSA-hp3w-g68c-fv3c, moderate) via `@mastra/core` → gray-matter → js-yaml 3 → argparse | Server-side transitive; not reachable from request input in this app | Suggested fix downgrades Mastra to 1.0.4. Accepted pending upstream. |
 | Tailwind Vite plugin emits a `SOURCEMAP_BROKEN` warning during build | Cosmetic (CSS sourcemap) | Upstream |
 | Vite binds `localhost` to IPv6 on some Windows setups | Playwright could not reach it | Dev server pinned to `127.0.0.1` |
+
+## Verified Mastra behaviour (used by labs)
+
+| Fact | Source | Used by |
+| --- | --- | --- |
+| `Agent` accepts AI SDK `LanguageModelV2` objects and `"provider/model"` router strings | `@mastra/core/dist/llm/model/shared.types.d.ts`; spike test `packages/mastra-runtime/src/spike.test.ts` | offline scripted model, all agent labs |
+| `agent.generate()` returns `text`, `toolCalls`, `toolResults`; `agent.stream()` exposes `fullStream` with `text-delta`, `tool-call`, `tool-result` chunks | spike test | L03+, L08 |
+| `new Mastra({ agents })`, `getAgent(key)`, `getAgentById(id)`, `listAgents()` | `@mastra/core/dist/mastra/index.d.ts`; spike test | L03 |
+| Tools: `createTool({ id, description, inputSchema, outputSchema, execute: (inputData, context) => … })` | `@mastra/core/dist/tools/tool.d.ts` | L11+ |
+| Provider registry at runtime: `getProviderConfig`, `parseModelString`, `modelSupportsTemperature`, `modelSupportsStructuredOutput` from `@mastra/core/llm` | runtime probe; `models.test.ts` | model validation |
+| API key variables: OpenAI `OPENAI_API_KEY`, Anthropic `ANTHROPIC_API_KEY`, Google `GOOGLE_API_KEY` or `GOOGLE_GENERATIVE_AI_API_KEY` | `getProviderConfig(p).apiKeyEnvVar` | config, L01 |
+| `mastra` CLI 1.34.2 project scripts `mastra dev` / `mastra build` / `mastra start`; Studio on `http://localhost:4111` | CLI bundle (`dist/*.js`) | L01, L05 |

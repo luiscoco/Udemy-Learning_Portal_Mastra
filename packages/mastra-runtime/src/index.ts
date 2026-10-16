@@ -1,5 +1,8 @@
 import { createRequire } from 'node:module';
 
+export * from './scripted-model.js';
+export * from './models.js';
+
 const require = createRequire(import.meta.url);
 
 /**

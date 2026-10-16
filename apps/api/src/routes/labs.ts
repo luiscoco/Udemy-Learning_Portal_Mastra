@@ -13,7 +13,7 @@ export function configuredProviders(config: AppConfig): string[] {
   return [
     config.OPENAI_API_KEY ? 'openai' : null,
     config.ANTHROPIC_API_KEY ? 'anthropic' : null,
-    config.GOOGLE_GENERATIVE_AI_API_KEY ? 'google' : null,
+    config.GOOGLE_API_KEY || config.GOOGLE_GENERATIVE_AI_API_KEY ? 'google' : null,
   ].filter((p): p is string => p !== null);
 }
 

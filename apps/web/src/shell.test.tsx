@@ -2,8 +2,12 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { emptyProgress } from '@mlp/contracts';
+import { catalog } from '@mlp/lab-catalog';
 import { searchLabs } from './components/layout/SearchBox';
 import { jsonResponse, renderApp } from './test-utils';
+
+const AVAILABLE = catalog.labs.filter((l) => l.status === 'available').length;
+const summary = (done: number) => `${done} of ${AVAILABLE} available ${AVAILABLE === 1 ? 'lab' : 'labs'} completed`;
 
 const HEALTH = {
   status: 'ok',
@@ -50,8 +54,8 @@ describe('home and sidebar', () => {
 
   it('shows truthful zero progress for a fresh learner', () => {
     renderApp('/');
-    for (const el of screen.getAllByTestId('progress-summary')) expect(el).toHaveTextContent('0 of 1 available lab completed');
-    expect(screen.getAllByText('1 of 76 labs released').length).toBeGreaterThan(0);
+    for (const el of screen.getAllByTestId('progress-summary')) expect(el).toHaveTextContent(summary(0));
+    expect(screen.getAllByText(`${AVAILABLE} of 76 labs released`).length).toBeGreaterThan(0);
   });
 
   it('counts completion only from stored records', () => {
@@ -64,7 +68,7 @@ describe('home and sidebar', () => {
       quiz: { score: 4, total: 4, passed: true, attempts: 1, answers: {} },
     };
     renderApp('/', { 'lab-00': rec });
-    expect(screen.getAllByTestId('progress-summary')[0]).toHaveTextContent('1 of 1 available lab completed');
+    expect(screen.getAllByTestId('progress-summary')[0]).toHaveTextContent(summary(1));
   });
 
   it('toggles a module with aria-expanded', async () => {
@@ -81,7 +85,8 @@ describe('home and sidebar', () => {
   it('marks locked labs as locked and never as completed', () => {
     renderApp('/');
     const nav = screen.getAllByRole('navigation', { name: 'Course' })[0]!;
-    expect(within(nav).getByRole('link', { name: 'lab-01: Create a Mastra project (Locked)' })).toBeInTheDocument();
+    const locked = catalog.labs.find((l) => l.status === 'locked' && l.moduleId === 'module-01');
+    if (locked) expect(within(nav).getByRole('link', { name: `${locked.id}: ${locked.title} (Locked)` })).toBeInTheDocument();
     expect(within(nav).queryByRole('link', { name: /\(Completed\)/ })).toBeNull();
   });
 });

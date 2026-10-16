@@ -16,6 +16,7 @@
     "@mlp/lab-catalog": "0.1.0",
     "@mlp/lab-engine": "0.1.0",
     "@mlp/mastra-runtime": "0.1.0",
+    "typescript": "6.0.3",
     "zod": "4.6.7"
   }
 }

@@ -1,3 +1,4 @@
+import { catalog } from '../packages/lab-catalog/src/index';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
@@ -17,6 +18,9 @@ async function expectNoSeriousA11yViolations(page: Page) {
   const serious = results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
   expect(serious.map((v) => `${v.id}: ${v.help} (${v.nodes.length})`)).toEqual([]);
 }
+
+const AVAILABLE = catalog.labs.filter((l) => l.status === 'available').length;
+const summary = (done: number) => `${done} of ${AVAILABLE} available ${AVAILABLE === 1 ? 'lab' : 'labs'} completed`;
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
@@ -65,7 +69,7 @@ test('unknown labs and paths show a graceful 404', async ({ page }) => {
 
 test('fresh learner sees zero completion', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByTestId('progress-summary').first()).toHaveText('0 of 1 available lab completed');
+  await expect(page.getByTestId('progress-summary').first()).toHaveText(summary(0));
 });
 
 test('keyboard: skip link, "/" search and Enter navigation', async ({ page }) => {

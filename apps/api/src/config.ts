@@ -23,6 +23,7 @@ export const ConfigSchema = z.object({
   SSE_HEARTBEAT_MS: z.coerce.number().int().min(1000).max(60_000).default(15_000),
   OPENAI_API_KEY: optionalSecret,
   ANTHROPIC_API_KEY: optionalSecret,
+  GOOGLE_API_KEY: optionalSecret,
   GOOGLE_GENERATIVE_AI_API_KEY: optionalSecret,
 });
 
@@ -60,7 +61,7 @@ export function loadDotEnv(cwd = process.cwd()): string | undefined {
 }
 
 export function secretValues(config: AppConfig): string[] {
-  return [config.OPENAI_API_KEY, config.ANTHROPIC_API_KEY, config.GOOGLE_GENERATIVE_AI_API_KEY].filter(
+  return [config.OPENAI_API_KEY, config.ANTHROPIC_API_KEY, config.GOOGLE_API_KEY, config.GOOGLE_GENERATIVE_AI_API_KEY].filter(
     (v): v is string => Boolean(v),
   );
 }
@@ -75,6 +76,7 @@ export function describeConfig(config: AppConfig): Record<string, string | numbe
     MASTRA_MODE: config.MASTRA_MODE,
     OPENAI_API_KEY: maskSecret(config.OPENAI_API_KEY),
     ANTHROPIC_API_KEY: maskSecret(config.ANTHROPIC_API_KEY),
+    GOOGLE_API_KEY: maskSecret(config.GOOGLE_API_KEY),
     GOOGLE_GENERATIVE_AI_API_KEY: maskSecret(config.GOOGLE_GENERATIVE_AI_API_KEY),
   };
 }

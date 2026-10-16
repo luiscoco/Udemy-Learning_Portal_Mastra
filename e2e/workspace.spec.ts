@@ -1,3 +1,4 @@
+import { catalog } from '../packages/lab-catalog/src/index';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { lab00Definition } from '../packages/labs/src/lab-00/definition';
@@ -6,6 +7,9 @@ async function noSeriousViolations(page: Page) {
   const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
   expect(r.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical').map((v) => `${v.id}: ${v.help}`)).toEqual([]);
 }
+
+const AVAILABLE = catalog.labs.filter((l) => l.status === 'available').length;
+const summary = (done: number) => `${done} of ${AVAILABLE} available ${AVAILABLE === 1 ? 'lab' : 'labs'} completed`;
 
 test('Dummy Lab 00 end-to-end: learn, run, cancel, source, quiz, persistent progress', async ({ page }) => {
   await page.goto('/labs/lab-00');
@@ -68,7 +72,7 @@ test('Dummy Lab 00 end-to-end: learn, run, cancel, source, quiz, persistent prog
   // Persistence across reload
   await page.reload();
   await expect(page.getByTestId('lab-status')).toHaveText('Completed');
-  await expect(page.getByTestId('progress-summary').first()).toHaveText('1 of 1 available lab completed');
+  await expect(page.getByTestId('progress-summary').first()).toHaveText(summary(1));
 });
 
 test('API errors surface in the Run tab (live mode refused on offline server)', async ({ page, request }) => {
