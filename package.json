@@ -1,0 +1,41 @@
+{
+  "name": "mastra-learning-platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Mastra AI Agents 2026 — interactive learning platform with 75 labs",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"npm:dev -w @mlp/api\" \"npm:dev -w @mlp/web\"",
+    "build": "npm run build -w @mlp/api && npm run build -w @mlp/web",
+    "start": "npm run start -w @mlp/api",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc -p tsconfig.json && npm run typecheck --workspaces --if-present",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "check:bundle-secrets": "node scripts/check-bundle-secrets.mjs",
+    "verify": "npm run lint && npm run typecheck && npm test && npm run build && npm run check:bundle-secrets",
+    "openspec": "openspec"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@fission-ai/openspec": "1.14.2",
+    "@playwright/test": "1.64.1",
+    "@types/node": "24.19.2",
+    "concurrently": "10.0.6",
+    "eslint": "10.13.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.13.0",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2",
+    "vitest": "5.0.5"
+  }
+}

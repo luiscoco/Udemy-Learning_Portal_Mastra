@@ -1,0 +1,17 @@
+{
+  "name": "@mlp/mastra-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Server-only Mastra adapters. Never import from apps/web.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@mastra/core": "1.78.0",
+    "zod": "4.6.7"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "@mlp/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false src/server.ts",
+    "build": "tsup",
+    "start": "node dist/server.js",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/express": "5.0.6",
+    "@types/supertest": "7.2.1",
+    "supertest": "7.3.1",
+    "tsup": "9.0.0",
+    "tsx": "4.23.15"
+  },
+  "dependencies": {
+    "@mlp/contracts": "0.1.0",
+    "@mlp/lab-catalog": "0.1.0",
+    "@mlp/mastra-runtime": "0.1.0",
+    "express": "5.3.0",
+    "zod": "4.6.7"
+  }
+}
