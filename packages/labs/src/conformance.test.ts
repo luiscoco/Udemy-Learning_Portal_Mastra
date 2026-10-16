@@ -66,7 +66,7 @@ describe.each(allLabs.map((l) => [l.implementation.definition.id, l] as const))(
     // Every declared check id is reported.
     const reported = result?.type === 'result' ? (result.validation?.checks.map((c) => c.id) ?? []) : [];
     expect(reported.sort()).toEqual(def.checks.map((c) => c.id).sort());
-  });
+  }, def.execution.maxTimeoutMs + 5_000);
 
   it.each(lab.fixtures.map((f) => [f.name, f] as const))('fixture: %s', async (_name, fixture) => {
     const run = runner.start(labId, { input: fixture.input, mode: fixture.mode ?? 'offline' });
@@ -88,7 +88,7 @@ describe.each(allLabs.map((l) => [l.implementation.definition.id, l] as const))(
     if (fixture.expect.eventTypes) {
       expect(events.map((e) => e.type)).toEqual(fixture.expect.eventTypes);
     }
-  });
+  }, def.execution.maxTimeoutMs + 5_000);
 });
 
 describe('lab-00 determinism', () => {

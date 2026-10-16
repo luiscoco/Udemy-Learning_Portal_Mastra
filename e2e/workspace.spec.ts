@@ -12,6 +12,7 @@ const AVAILABLE = catalog.labs.filter((l) => l.status === 'available').length;
 const summary = (done: number) => `${done} of ${AVAILABLE} available ${AVAILABLE === 1 ? 'lab' : 'labs'} completed`;
 
 test('Dummy Lab 00 end-to-end: learn, run, cancel, source, quiz, persistent progress', async ({ page }) => {
+  test.setTimeout(90_000);
   await page.goto('/labs/lab-00');
   await expect(page.getByTestId('lab-status')).toHaveText('Not started');
 

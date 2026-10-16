@@ -31,11 +31,20 @@ const diagnostics = all.slice(0, 50).map((d) => {
 parentPort.postMessage({ ok: all.length === 0, diagnostics, durationMs: Date.now() - started });
 `;
 
+// The compiler is CPU- and memory-heavy: run one build at a time, queueing the rest.
+let queue: Promise<unknown> = Promise.resolve();
+
 /**
  * Typechecks a generated project with the TypeScript compiler API in a worker thread.
  * `resolveFrom` is a file path whose node_modules provide `typescript`.
  */
 export function typecheckProject(projectDir: string, resolveFrom: string, signal: AbortSignal): Promise<TypecheckResult> {
+  const job = queue.then(() => runWorker(projectDir, resolveFrom, signal));
+  queue = job.catch(() => undefined);
+  return job;
+}
+
+function runWorker(projectDir: string, resolveFrom: string, signal: AbortSignal): Promise<TypecheckResult> {
   return new Promise((resolve, reject) => {
     if (signal.aborted) {
       reject(signal.reason);

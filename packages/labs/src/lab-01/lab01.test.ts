@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { mkdir, writeFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import { LabRegistry, LabRunner } from '@mlp/lab-engine';
 import { checkModelId } from '@mlp/mastra-runtime';
 import { dataDir, labSourceDir, labsPackageDir } from '../paths.js';
@@ -87,8 +87,8 @@ describe('lab-01 safety', () => {
     runner.cancel(run.runId);
     const snap = await runner.waitFor(run.runId);
     expect(snap.status).toBe('cancelled');
-    await new Promise((r) => setTimeout(r, 200)); // finally-block cleanup
-    expect(existsSync(join(dataDir(), 'scaffolds', run.runId))).toBe(false);
+    // The engine reports 'cancelled' immediately; the lab's finally-block removes the folder right after.
+    await vi.waitFor(() => expect(existsSync(join(dataDir(), 'scaffolds', run.runId))).toBe(false), { timeout: 10_000 });
   }, 60_000);
 
   it('checks the Node version requirement', () => {
