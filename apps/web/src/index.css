@@ -1,1 +1,112 @@
 @import 'tailwindcss';
+
+/* Dark mode is driven by data-theme on <html>, not the OS setting (light-first). */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* ---------- Design tokens (light, default) ---------- */
+:root {
+  --mlp-bg: #f8fafc;
+  --mlp-surface: #ffffff;
+  --mlp-surface-muted: #f1f5f9;
+  --mlp-border: #e2e8f0;
+  --mlp-border-strong: #cbd5e1;
+  --mlp-fg: #0f172a;
+  --mlp-fg-muted: #475569;
+  --mlp-fg-subtle: #64748b;
+  --mlp-accent: #4338ca;
+  --mlp-accent-hover: #3730a3;
+  --mlp-accent-fg: #ffffff;
+  --mlp-accent-soft: #eef2ff;
+  --mlp-success: #047857;
+  --mlp-success-soft: #ecfdf5;
+  --mlp-warning: #92400e;
+  --mlp-warning-soft: #fffbeb;
+  --mlp-danger: #b91c1c;
+  --mlp-danger-soft: #fef2f2;
+  --mlp-focus: #4338ca;
+  --mlp-code-bg: #0f172a;
+  --mlp-code-fg: #e2e8f0;
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --mlp-bg: #0b1120;
+  --mlp-surface: #111827;
+  --mlp-surface-muted: #1f2937;
+  --mlp-border: #1f2937;
+  --mlp-border-strong: #374151;
+  --mlp-fg: #f1f5f9;
+  --mlp-fg-muted: #cbd5e1;
+  --mlp-fg-subtle: #9ca3af;
+  --mlp-accent: #a5b4fc;
+  --mlp-accent-hover: #c7d2fe;
+  --mlp-accent-fg: #111827;
+  --mlp-accent-soft: #1e1b4b;
+  --mlp-success: #6ee7b7;
+  --mlp-success-soft: #052e2b;
+  --mlp-warning: #fcd34d;
+  --mlp-warning-soft: #2d2208;
+  --mlp-danger: #fca5a5;
+  --mlp-danger-soft: #3b0d0d;
+  --mlp-focus: #a5b4fc;
+  --mlp-code-bg: #020617;
+  --mlp-code-fg: #e2e8f0;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--mlp-bg);
+  --color-surface: var(--mlp-surface);
+  --color-surface-muted: var(--mlp-surface-muted);
+  --color-border: var(--mlp-border);
+  --color-border-strong: var(--mlp-border-strong);
+  --color-fg: var(--mlp-fg);
+  --color-fg-muted: var(--mlp-fg-muted);
+  --color-fg-subtle: var(--mlp-fg-subtle);
+  --color-accent: var(--mlp-accent);
+  --color-accent-hover: var(--mlp-accent-hover);
+  --color-accent-fg: var(--mlp-accent-fg);
+  --color-accent-soft: var(--mlp-accent-soft);
+  --color-success: var(--mlp-success);
+  --color-success-soft: var(--mlp-success-soft);
+  --color-warning: var(--mlp-warning);
+  --color-warning-soft: var(--mlp-warning-soft);
+  --color-danger: var(--mlp-danger);
+  --color-danger-soft: var(--mlp-danger-soft);
+  --color-focus: var(--mlp-focus);
+  --color-code-bg: var(--mlp-code-bg);
+  --color-code-fg: var(--mlp-code-fg);
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+}
+
+@layer base {
+  html {
+    background: var(--mlp-bg);
+    color: var(--mlp-fg);
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    min-height: 100dvh;
+  }
+  :focus-visible {
+    outline: 3px solid var(--mlp-focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  [tabindex='-1']:focus {
+    outline: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

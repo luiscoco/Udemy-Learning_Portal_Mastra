@@ -25,6 +25,8 @@
     "@mlp/contracts": "0.1.0",
     "@mlp/lab-catalog": "0.1.0",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "react-router": "8.4.0",
+    "zod": "4.6.7"
   }
 }

@@ -17,6 +17,8 @@ export const CatalogLabSchema = z.object({
   id: LabIdSchema,
   number: z.number().int().min(0).max(99),
   title: z.string().min(1),
+  /** false while the lab title has not yet been confirmed by the course outline. */
+  titleConfirmed: z.boolean(),
   moduleId: ModuleIdSchema,
   status: LabStatusSchema,
   /** true when the lab can run with zero provider cost (offline mock mode). */

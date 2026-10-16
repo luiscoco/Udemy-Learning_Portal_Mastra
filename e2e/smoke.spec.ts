@@ -2,9 +2,9 @@ import { expect, test } from '@playwright/test';
 
 test('home loads and reports a healthy offline API', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1, name: 'Mastra Learning Platform' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Build production AI agents with Mastra');
   await expect(page.getByTestId('api-status')).toHaveText('ok');
-  await expect(page.getByText('Dummy Lab 00')).toBeVisible();
+  await expect(page.getByRole('link', { name: /Start Dummy Lab 00/ })).toBeVisible();
 });
 
 test('API health is reachable through the web proxy', async ({ request }) => {

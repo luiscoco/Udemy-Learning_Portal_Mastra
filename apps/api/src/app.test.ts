@@ -48,3 +48,12 @@ describe('GET /api/catalog', () => {
     expect(res.body.labs.map((l: { id: string }) => l.id)).toContain('lab-00');
   });
 });
+
+describe('catalog ⇔ registry consistency', () => {
+  it('marks exactly the registered labs as available', async () => {
+    const { registry } = createApp({ config: parseConfig({ NODE_ENV: 'test' }), logger: createLogger('silent') });
+    const res = await request(app).get('/api/catalog').expect(200);
+    const available = (res.body.labs as { id: string; status: string }[]).filter((l) => l.status === 'available').map((l) => l.id);
+    expect(available.sort()).toEqual(registry.ids().sort());
+  });
+});

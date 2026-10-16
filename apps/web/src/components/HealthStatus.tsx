@@ -23,29 +23,31 @@ export function HealthStatus({ load = fetchHealth }: { load?: typeof fetchHealth
 
   if (state.kind === 'loading') {
     return (
-      <p role="status" className="text-sm text-slate-500">
+      <p role="status" className="text-sm text-fg-muted">
         Checking API…
       </p>
     );
   }
   if (state.kind === 'error') {
     return (
-      <p role="alert" className="text-sm text-red-700">
+      <p role="alert" className="text-sm text-danger">
         API unavailable: {state.message}
       </p>
     );
   }
   const { health } = state;
   return (
-    <dl role="status" aria-label="API health" className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-      <dt className="text-slate-500">API</dt>
-      <dd data-testid="api-status" className="font-medium text-emerald-700">
-        {health.status}
-      </dd>
-      <dt className="text-slate-500">Mode</dt>
-      <dd>{health.mode}</dd>
-      <dt className="text-slate-500">Mastra</dt>
-      <dd>@mastra/core {health.mastraVersion}</dd>
-    </dl>
+    <div role="status" aria-label="API health">
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+        <dt className="text-fg-muted">API</dt>
+        <dd data-testid="api-status" className="font-medium text-success">
+          {health.status}
+        </dd>
+        <dt className="text-fg-muted">Mode</dt>
+        <dd>{health.mode}</dd>
+        <dt className="text-fg-muted">Mastra</dt>
+        <dd>@mastra/core {health.mastraVersion}</dd>
+      </dl>
+    </div>
   );
 }
