@@ -35,7 +35,7 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
     deps.runner ??
     new LabRunner<LabServices>({
       registry,
-      services: createLabServices({ serverMode: config.MASTRA_MODE }),
+      services: createLabServices({ serverMode: config.MASTRA_MODE, env: process.env }),
       liveEnabled: config.MASTRA_MODE === 'live',
       maxConcurrentRuns: config.MAX_CONCURRENT_RUNS,
       serverMaxTimeoutMs: config.RUN_MAX_TIMEOUT_MS,

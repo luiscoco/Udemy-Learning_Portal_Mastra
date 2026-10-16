@@ -38,7 +38,7 @@ const OUTLINE_TITLES: Record<number, string> = {
  * Labs whose implementation is registered on the server. Flip a lab here when its
  * OpenSpec change lands (the API test keeps this list and the registry in sync).
  */
-export const AVAILABLE_LAB_NUMBERS: ReadonlySet<number> = new Set([0, 1, 2]);
+export const AVAILABLE_LAB_NUMBERS: ReadonlySet<number> = new Set([0, 1, 2, 3]);
 
 export const labId = (n: number) => `lab-${String(n).padStart(2, '0')}`;
 export const moduleIdForLab = (n: number) =>

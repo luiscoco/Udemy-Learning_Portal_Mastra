@@ -8,7 +8,7 @@ export function JsonView({ value, label }: { value: unknown; label: string }) {
     <pre
       tabIndex={0}
       aria-label={label}
-      className="max-h-80 overflow-auto rounded-lg bg-code-bg p-3 font-mono text-xs leading-5 text-code-fg"
+      className="max-h-80 max-w-full overflow-auto rounded-lg bg-code-bg p-3 font-mono text-xs leading-5 text-code-fg"
     >
       {value === undefined ? '—' : JSON.stringify(value, null, 2)}
     </pre>
@@ -79,7 +79,7 @@ export function TraceView({ state }: { state: RunState }) {
     return <p className="text-sm text-fg-muted">No tool calls or workflow steps recorded.</p>;
   }
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
       <div>
         <h4 className="mb-2 text-sm font-semibold">Workflow steps</h4>
         <ul className="flex flex-col gap-1 text-sm">

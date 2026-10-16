@@ -8,6 +8,8 @@ export default defineConfig({
   outDir: 'dist',
   clean: true,
   sourcemap: true,
-  // Internal workspace packages ship as TS source, so bundle them; keep real npm deps external.
+  // Internal workspace packages ship as TS source, so bundle them. Every other bare import
+  // (@mastra/core, express, typescript…) stays external and is resolved from node_modules at runtime.
   noExternal: [/^@mlp\//],
+  external: [/^(?!@mlp\/)[^./]/],
 });

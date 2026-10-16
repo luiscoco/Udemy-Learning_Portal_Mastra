@@ -226,7 +226,7 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
         ) : (
           <p className="text-sm text-fg-muted">Checks run automatically when a run completes.</p>
         )}
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
           <div>
             <p className="mb-1 text-sm font-medium">Output</p>
             <JsonView value={state.output} label="Run output" />

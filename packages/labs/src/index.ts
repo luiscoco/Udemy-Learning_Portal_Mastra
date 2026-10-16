@@ -7,6 +7,8 @@ import { lab01 } from './lab-01/run.js';
 import { lab01Fixtures } from './lab-01/fixtures.js';
 import { lab02 } from './lab-02/run.js';
 import { lab02Fixtures } from './lab-02/fixtures.js';
+import { lab03 } from './lab-03/run.js';
+import { lab03Fixtures } from './lab-03/fixtures.js';
 
 export * from './services.js';
 export { labSourceDir, labsPackageDir, dataDir } from './paths.js';
@@ -23,7 +25,7 @@ const reg = (implementation: object, fixtures: LabFixture[]): RegisteredLab => (
 });
 
 /** Every implemented lab, in course order. Append new labs; never reorder or remove. */
-export const allLabs: RegisteredLab[] = [reg(lab00, lab00Fixtures), reg(lab01, lab01Fixtures), reg(lab02, lab02Fixtures)];
+export const allLabs: RegisteredLab[] = [reg(lab00, lab00Fixtures), reg(lab01, lab01Fixtures), reg(lab02, lab02Fixtures), reg(lab03, lab03Fixtures)];
 
 export function createLabRegistry(): LabRegistry<LabServices> {
   return new LabRegistry<LabServices>(allLabs.map((l) => l.implementation));

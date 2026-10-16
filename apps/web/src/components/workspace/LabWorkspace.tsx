@@ -70,9 +70,9 @@ export function LabWorkspace({ definition }: { definition: LabDefinition }) {
           { id: 'source', label: 'Source', panel: <SourceTab definition={definition} /> },
         ]}
       />
-      <div className="grid gap-10 border-t border-border pt-10">
+      <div className="grid gap-10 border-t border-border pt-10 [&>*]:min-w-0">
         <QuizPanel definition={definition} />
-        <div className="grid gap-10 lg:grid-cols-2">
+        <div className="grid gap-10 lg:grid-cols-2 [&>*]:min-w-0">
           <SelfCheckPanel definition={definition} />
           <NotesPanel definition={definition} />
         </div>

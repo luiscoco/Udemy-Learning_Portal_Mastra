@@ -13,6 +13,9 @@ for (const lab of released) {
     await page.getByRole('button', { name: 'Run', exact: true }).click();
     await expect(page.getByTestId('run-status')).toHaveText('Run succeeded — all checks passed', { timeout: 100_000 });
     await expect(page.getByTestId('timeline')).toContainText('complete — succeeded');
+    // Responsive guard: long outputs must scroll inside their boxes, never widen the page.
+    const layoutWidth = await page.evaluate(() => Math.max(window.innerWidth, document.documentElement.scrollWidth));
+    expect(layoutWidth).toBeLessThanOrEqual(page.viewportSize()!.width);
   });
 }
 
