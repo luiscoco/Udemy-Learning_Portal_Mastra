@@ -9,6 +9,8 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/dist/**',
       '**/coverage/**',
+      '**/.mastra/**',
+      '.data/**',
       'playwright-report/**',
       'test-results/**',
       '.claude/**',

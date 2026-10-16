@@ -111,11 +111,14 @@ describe('routing', () => {
   });
 
   it('shows a locked preview without run controls', () => {
-    renderApp('/labs/lab-05');
-    expect(screen.getByRole('heading', { level: 1, name: /Inspect agent in Studio/ })).toBeInTheDocument();
+    // First locked lab with a confirmed title, and its prerequisite.
+    const locked = catalog.labs.find((l) => l.status === 'locked' && l.titleConfirmed)!;
+    const prereq = catalog.labs.find((l) => l.id === locked.prerequisites[0])!;
+    renderApp(`/labs/${locked.id}`);
+    expect(screen.getByRole('heading', { level: 1, name: new RegExp(locked.title) })).toBeInTheDocument();
     expect(screen.getByText('This lab is not available yet')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /run/i })).toBeNull();
-    expect(within(screen.getByRole('main')).getByRole('link', { name: /lab-04: Model and instructions/ })).toBeInTheDocument();
+    expect(within(screen.getByRole('main')).getByRole('link', { name: new RegExp(`${prereq.id}: ${prereq.title}`) })).toBeInTheDocument();
   });
 
   it('shows 404 for unknown labs and routes', () => {

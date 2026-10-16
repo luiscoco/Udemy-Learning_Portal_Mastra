@@ -51,6 +51,16 @@ macOS/Linux: same commands, use `cp .env.example .env`.
 | `npm run check:bundle-secrets` | Fails if secret names/values appear in `apps/web/dist` |
 | `npm run verify` | lint → typecheck → test → build → secret scan (what CI runs) |
 
+## Mastra Studio (reference project)
+
+`examples/course-project` is a real Mastra project (the Lab 01 template with default names). Start Studio with:
+
+```powershell
+npm run studio   # runs `mastra dev` → Studio at http://localhost:4111, API at http://localhost:4111/api
+```
+
+Open Studio in its own browser tab. Chatting with agents in Studio needs a provider key in `examples/course-project/.env` (copy its `.env.example`). Only one `mastra dev` may run per project; stop it with Ctrl+C.
+
 ## Offline vs live mode
 
 - `MASTRA_MODE=offline` (default): labs use deterministic mock models, no network, zero cost. All automated tests use this.

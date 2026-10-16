@@ -9,7 +9,8 @@
   },
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/*",
+    "examples/*"
   ],
   "scripts": {
     "dev": "concurrently -n api,web -c blue,green \"npm:dev -w @mlp/api\" \"npm:dev -w @mlp/web\"",
@@ -22,7 +23,8 @@
     "test:e2e": "playwright test",
     "check:bundle-secrets": "node scripts/check-bundle-secrets.mjs",
     "verify": "npm run lint && npm run typecheck && npm test && npm run build && npm run check:bundle-secrets",
-    "openspec": "openspec"
+    "openspec": "openspec",
+    "studio": "npm run dev -w course-project"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

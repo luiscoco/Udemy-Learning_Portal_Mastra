@@ -52,8 +52,9 @@ test('deep links and the legacy ?lesson= query both open the lesson', async ({ p
 });
 
 test('locked labs show a preview without progress or run controls', async ({ page }) => {
-  await page.goto('/labs/lab-08');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Token streaming');
+  const locked = catalog.labs.find((l) => l.status === 'locked' && l.titleConfirmed)!;
+  await page.goto(`/labs/${locked.id}`);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(locked.title);
   await expect(page.getByText('This lab is not available yet')).toBeVisible();
   await expect(page.getByRole('button', { name: /^Run/ })).toHaveCount(0);
 });

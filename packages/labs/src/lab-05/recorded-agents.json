@@ -1,0 +1,30 @@
+{
+  "recordedWith": "mastra 1.34.2 / @mastra/core 1.78.0 (npm run studio)",
+  "endpoint": "GET /api/agents",
+  "response": {
+    "assistant-agent": {
+      "id": "assistant-agent",
+      "name": "Assistant",
+      "description": "",
+      "instructions": "You are a helpful assistant. Answer clearly and concisely.",
+      "agents": {},
+      "tools": {},
+      "workflows": {},
+      "skills": [],
+      "workspaceTools": [],
+      "browserTools": [],
+      "hasBrowser": false,
+      "inputProcessors": [],
+      "outputProcessors": [],
+      "provider": "openai",
+      "modelId": "gpt-5-mini",
+      "modelVersion": "v2",
+      "supportsMemory": true,
+      "defaultOptions": {},
+      "defaultGenerateOptionsLegacy": {},
+      "defaultStreamOptionsLegacy": {},
+      "source": "code",
+      "hasDraft": false
+    }
+  }
+}
