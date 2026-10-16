@@ -17,6 +17,10 @@ export const ConfigSchema = z.object({
   /** offline = deterministic mock models only; live = real providers allowed when keys exist. */
   MASTRA_MODE: z.enum(['offline', 'live']).default('offline'),
   CORS_ORIGIN: z.string().optional(),
+  MAX_CONCURRENT_RUNS: z.coerce.number().int().min(1).max(100).default(4),
+  RUN_MAX_TIMEOUT_MS: z.coerce.number().int().min(1000).max(300_000).default(120_000),
+  SSE_DISCONNECT_GRACE_MS: z.coerce.number().int().min(0).max(60_000).default(5_000),
+  SSE_HEARTBEAT_MS: z.coerce.number().int().min(1000).max(60_000).default(15_000),
   OPENAI_API_KEY: optionalSecret,
   ANTHROPIC_API_KEY: optionalSecret,
   GOOGLE_GENERATIVE_AI_API_KEY: optionalSecret,

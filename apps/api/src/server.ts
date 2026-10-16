@@ -15,7 +15,7 @@ function main(): void {
     throw err;
   }
   const logger = createLogger(config.LOG_LEVEL, secretValues(config));
-  const app = createApp({ config, logger });
+  const { app, runner } = createApp({ config, logger });
   const server = app.listen(config.PORT, config.HOST, () => {
     logger.info('api listening', {
       url: `http://${config.HOST}:${config.PORT}`,
@@ -25,6 +25,7 @@ function main(): void {
   });
   const shutdown = () => {
     logger.info('shutting down');
+    void runner.dispose();
     server.close(() => process.exit(0));
     setTimeout(() => process.exit(0), 3000).unref();
   };

@@ -1,0 +1,216 @@
+import { afterEach, describe, expect, it } from 'vitest';
+import { ExecutionEventSchema, type ExecutionEvent } from '@mlp/contracts';
+import { LabError } from './errors.js';
+import { LabRegistry } from './registry.js';
+import { LabRunner, type RunnerOptions } from './runner.js';
+import { makeTestDefinition, makeTestLab } from './testing.js';
+
+const SECRET = 'sk-test-SUPERSECRET-123456789';
+const runners: LabRunner[] = [];
+
+function setup(opts: Partial<RunnerOptions<unknown>> = {}) {
+  const registry = new LabRegistry([makeTestLab()]);
+  const runner = new LabRunner({ registry, services: {}, liveEnabled: false, secrets: [SECRET], ...opts });
+  runners.push(runner);
+  return runner;
+}
+
+afterEach(async () => {
+  await Promise.all(runners.splice(0).map((r) => r.dispose()));
+});
+
+function collect(runner: LabRunner, runId: string): ExecutionEvent[] {
+  const out: ExecutionEvent[] = [];
+  runner.subscribe(runId, (e) => out.push(e));
+  return out;
+}
+
+const last = <T>(a: readonly T[]) => a[a.length - 1];
+
+describe('LabRunner.start validation', () => {
+  it('rejects unknown labs with NOT_FOUND', () => {
+    const r = setup();
+    expect(() => r.start('lab-42', { input: {} })).toThrowError(expect.objectContaining({ code: 'NOT_FOUND' }));
+  });
+
+  it('rejects invalid input with field details', () => {
+    const r = setup();
+    try {
+      r.start('lab-99', { input: { text: '' } });
+      expect.unreachable();
+    } catch (err) {
+      expect(err).toBeInstanceOf(LabError);
+      expect((err as LabError).code).toBe('VALIDATION_FAILED');
+      expect((err as LabError).details?.[0]?.path).toBe('input.text');
+    }
+  });
+
+  it('rejects malformed execution requests', () => {
+    const r = setup();
+    expect(() => r.start('lab-99', { input: 'nope' })).toThrowError(expect.objectContaining({ code: 'VALIDATION_FAILED' }));
+  });
+
+  it('refuses live mode when the server is offline', () => {
+    const registry = new LabRegistry([makeTestLab({ execution: { modes: ['offline', 'live'], defaultTimeoutMs: 1000, maxTimeoutMs: 2000, budget: {}, costNotice: 'x' } })]);
+    const r = new LabRunner({ registry, services: {}, liveEnabled: false });
+    runners.push(r);
+    expect(() => r.start('lab-99', { input: { text: 'a' }, mode: 'live' })).toThrowError(
+      expect.objectContaining({ code: 'NOT_CONFIGURED', message: expect.stringContaining('MASTRA_MODE=live') }),
+    );
+  });
+
+  it('refuses live mode for offline-only labs even when live is enabled', () => {
+    const r = setup({ liveEnabled: true });
+    expect(() => r.start('lab-99', { input: { text: 'a' }, mode: 'live' })).toThrowError(
+      expect.objectContaining({ code: 'NOT_CONFIGURED' }),
+    );
+  });
+
+  it('enforces the concurrency limit with a retryable error', () => {
+    const r = setup({ maxConcurrentRuns: 1 });
+    r.start('lab-99', { input: { text: 'a', delayMs: 1000 } });
+    try {
+      r.start('lab-99', { input: { text: 'b' } });
+      expect.unreachable();
+    } catch (err) {
+      expect((err as LabError).code).toBe('TOO_MANY_REQUESTS');
+      expect((err as LabError).retryable).toBe(true);
+    }
+  });
+});
+
+describe('LabRunner execution', () => {
+  it('streams schema-valid events ending in exactly one complete', async () => {
+    const r = setup();
+    const run = r.start('lab-99', { input: { text: 'hello' } }, { requestId: 'req-1', correlationId: 'corr-1' });
+    const events = collect(r, run.runId);
+    const snap = await r.waitFor(run.runId);
+    expect(snap.status).toBe('succeeded');
+    for (const e of events) ExecutionEventSchema.parse(e);
+    expect(events.map((e) => e.type)).toEqual(['log', 'token', 'result', 'complete']);
+    expect(events.filter((e) => e.type === 'complete')).toHaveLength(1);
+    expect(events.map((e) => e.seq)).toEqual([0, 1, 2, 3]);
+    expect(events.every((e) => e.correlationId === 'corr-1')).toBe(true);
+    const result = events.find((e) => e.type === 'result');
+    expect(result).toMatchObject({ output: { echo: 'hello' }, validation: { passed: true } });
+  });
+
+  it('cancels an active run', async () => {
+    const r = setup();
+    const run = r.start('lab-99', { input: { text: 'x', delayMs: 5000 } });
+    const events = collect(r, run.runId);
+    r.cancel(run.runId);
+    const snap = await r.waitFor(run.runId);
+    expect(snap.status).toBe('cancelled');
+    expect(events.at(-2)).toMatchObject({ type: 'error', code: 'CANCELLED' });
+    expect(last(events)).toMatchObject({ type: 'complete', status: 'cancelled' });
+  });
+
+  it('times out at the deadline even if the lab ignores the abort signal', async () => {
+    const r = setup();
+    const started = Date.now();
+    const run = r.start('lab-99', { input: { text: 'x', delayMs: 3000, behavior: 'ignore-abort' }, timeoutMs: 150 });
+    expect(run.deadlineMs).toBe(150);
+    const events = collect(r, run.runId);
+    const snap = await r.waitFor(run.runId);
+    expect(Date.now() - started).toBeLessThan(1500);
+    expect(snap.status).toBe('timeout');
+    expect(events.at(-2)).toMatchObject({ type: 'error', code: 'TIMEOUT', retryable: true });
+  });
+
+  it('clamps the deadline to the lab maximum and the server maximum', () => {
+    const r = setup({ serverMaxTimeoutMs: 1000 });
+    const run = r.start('lab-99', { input: { text: 'x' }, timeoutMs: 100_000 });
+    expect(run.deadlineMs).toBe(1000);
+  });
+
+  it('maps LabError to its canonical code', async () => {
+    const r = setup();
+    const run = r.start('lab-99', { input: { text: 'x', behavior: 'lab-error' } });
+    const events = collect(r, run.runId);
+    expect((await r.waitFor(run.runId)).status).toBe('failed');
+    expect(events.at(-2)).toMatchObject({ type: 'error', code: 'PROVIDER_ERROR', retryable: true });
+  });
+
+  it('hides internal error details behind a generic message', async () => {
+    const r = setup();
+    const run = r.start('lab-99', { input: { text: 'x', behavior: 'crash' } });
+    const events = collect(r, run.runId);
+    await r.waitFor(run.runId);
+    const err = events.find((e) => e.type === 'error');
+    expect(err).toMatchObject({ code: 'INTERNAL', message: 'Lab execution failed' });
+    expect(JSON.stringify(events)).not.toContain('kaboom');
+  });
+
+  it('redacts configured secrets from error events', async () => {
+    const r = setup();
+    const run = r.start('lab-99', { input: { text: 'x', behavior: 'leak-secret', secret: SECRET } });
+    const events = collect(r, run.runId);
+    await r.waitFor(run.runId);
+    const text = JSON.stringify(events);
+    expect(text).not.toContain(SECRET);
+    expect(text).toContain('sk-…6789');
+  });
+
+  it('bounds the event buffer and annotates truncation', async () => {
+    const r = setup({ maxEventsPerRun: 10 });
+    const run = r.start('lab-99', { input: { text: 'x', behavior: 'flood' } });
+    await r.waitFor(run.runId);
+    const events = r.events(run.runId);
+    expect(events.length).toBeLessThanOrEqual(13);
+    expect(events.some((e) => e.annotations?.truncated === true)).toBe(true);
+    expect(last(events)).toMatchObject({ type: 'complete', status: 'succeeded' });
+  });
+
+  it('replays buffered events to late subscribers', async () => {
+    const r = setup();
+    const run = r.start('lab-99', { input: { text: 'late' } });
+    await r.waitFor(run.runId);
+    const replay: ExecutionEvent[] = [];
+    r.subscribe(run.runId, (e) => replay.push(e), 1);
+    expect(replay.map((e) => e.seq)).toEqual([2, 3]);
+  });
+});
+
+describe('LabRunner disconnect handling', () => {
+  it('aborts the run after the grace period when the last subscriber leaves', async () => {
+    const r = setup({ disconnectGraceMs: 20 });
+    const run = r.start('lab-99', { input: { text: 'x', delayMs: 5000 } });
+    const unsubscribe = r.subscribe(run.runId, () => {});
+    expect(r.listenerCount(run.runId)).toBe(1);
+    unsubscribe();
+    expect(r.listenerCount(run.runId)).toBe(0);
+    const snap = await r.waitFor(run.runId);
+    expect(snap.status).toBe('cancelled');
+    expect(r.activeCount).toBe(0);
+  });
+
+  it('keeps the run alive if a subscriber reconnects within the grace period', async () => {
+    const r = setup({ disconnectGraceMs: 50 });
+    const run = r.start('lab-99', { input: { text: 'x', delayMs: 120 } });
+    r.subscribe(run.runId, () => {})();
+    const events: ExecutionEvent[] = [];
+    r.subscribe(run.runId, (e) => events.push(e));
+    expect((await r.waitFor(run.runId)).status).toBe('succeeded');
+  });
+});
+
+describe('LabRegistry', () => {
+  it('rejects definitions with two hints', () => {
+    const def = makeTestDefinition();
+    const bad = makeTestLab({ guide: { ...def.guide, hints: def.guide.hints.slice(0, 2) } });
+    expect(() => new LabRegistry([bad])).toThrow(/hints/);
+  });
+
+  it('rejects source paths with traversal', () => {
+    expect(() => new LabRegistry([makeTestLab({ sourceFiles: [{ path: '../../.env', title: 'x' }] })])).toThrow(/sourceFiles/);
+  });
+
+  it('rejects an example input that fails the lab schema', () => {
+    expect(() => new LabRegistry([makeTestLab({ exampleInput: { text: '' } })])).toThrow(/exampleInput/);
+  });
+
+  it('rejects duplicate ids', () => {
+    expect(() => new LabRegistry([makeTestLab(), makeTestLab()])).toThrow(/already registered/);
+  });
+});

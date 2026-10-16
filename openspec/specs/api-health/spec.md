@@ -1,7 +1,7 @@
 # api-health Specification
 
 ## Purpose
-TBD - created by archiving change f01-monorepo-foundation. Update Purpose after archive.
+Contract for the API liveness endpoint and unknown-route handling.
 
 ## Requirements
 

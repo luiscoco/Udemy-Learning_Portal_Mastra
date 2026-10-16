@@ -1,7 +1,7 @@
 # lab-catalog Specification
 
 ## Purpose
-TBD - created by archiving change f01-monorepo-foundation. Update Purpose after archive.
+Browser-safe registry of course modules and labs shared by web and API.
 
 ## Requirements
 

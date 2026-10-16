@@ -1,7 +1,7 @@
 # dev-foundation Specification
 
 ## Purpose
-TBD - created by archiving change f01-monorepo-foundation. Update Purpose after archive.
+Reproducible monorepo install, scripts, validated configuration, secret isolation and CI.
 
 ## Requirements
 

@@ -58,6 +58,37 @@ macOS/Linux: same commands, use `cp .env.example .env`.
 
 Keys are read only by `apps/api`. The web bundle only receives variables prefixed `VITE_PUBLIC_`.
 
+## API reference
+
+All bodies are JSON validated with the Zod schemas in `packages/contracts`. Errors use `{ error: { code, message, retryable?, details?, requestId } }`.
+
+| Method & path | Purpose |
+| --- | --- |
+| `GET /api/health` | Liveness, mode, installed Mastra version |
+| `GET /api/catalog` | Modules and lab index |
+| `GET /api/labs` · `GET /api/labs/:labId` | Lab summaries · full `LabDefinition` |
+| `GET /api/labs/:labId/source` | Readonly reference source + pinned versions |
+| `GET /api/labs/:labId/preflight` | Environment checks for the lab |
+| `POST /api/labs/:labId/runs` | Start a run: `{ input, mode: "offline" \| "live", timeoutMs? }` → `202 { runId, correlationId, requestId }` |
+| `GET /api/runs/:runId` | Run snapshot |
+| `GET /api/runs/:runId/events` | Server-Sent Events (`log`, `token`, `tool-start`, `tool-finish`, `workflow-step`, `result`, `error`, `complete`); supports `Last-Event-ID` |
+| `POST /api/runs/:runId/cancel` | Cancel a run |
+
+Try it from PowerShell:
+
+```powershell
+$run = Invoke-RestMethod -Method Post -ContentType 'application/json' `
+  -Uri http://127.0.0.1:8787/api/labs/lab-00/runs `
+  -Body '{"input":{"message":"Hello Mastra","delayMs":100}}'
+curl.exe -N "http://127.0.0.1:8787/api/runs/$($run.runId)/events"
+```
+
+Limits (env): `MAX_CONCURRENT_RUNS` (4), `RUN_MAX_TIMEOUT_MS` (120000), `SSE_DISCONNECT_GRACE_MS` (5000) — a run whose last viewer disconnects is cancelled after the grace period.
+
+## Adding a lab
+
+Each lab lives in `packages/labs/src/lab-XX/` (`definition.ts`, `run.ts`, `fixtures.ts`, optional `solution.md`), is appended to `allLabs` in `packages/labs/src/index.ts` and marked `available` in `packages/lab-catalog`. The conformance suite (`packages/labs/src/conformance.test.ts`) then enforces the pedagogical contract and runs every fixture offline.
+
 ## OpenSpec workflow
 
 Every foundation milestone and lab is an OpenSpec change under `openspec/changes/`, archived into `openspec/specs/` when done. See [AGENTS.md](AGENTS.md) for assistant-specific command spelling (`/opsx:propose` in Claude Code, `$openspec-propose` in Codex, `/opsx-propose` in Copilot).

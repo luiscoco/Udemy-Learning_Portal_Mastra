@@ -1,0 +1,17 @@
+{
+  "name": "@mlp/lab-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Server-only lab orchestration (registry, runner, run store). No Mastra dependency.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@mlp/contracts": "0.1.0",
+    "zod": "4.6.7"
+  }
+}

@@ -6,7 +6,7 @@ import { parseConfig } from './config.js';
 import { createLogger } from './logger.js';
 
 const SECRET = 'sk-test-DO-NOT-LEAK-0123456789';
-const app = createApp({
+const { app } = createApp({
   config: parseConfig({ OPENAI_API_KEY: SECRET, NODE_ENV: 'test' }),
   logger: createLogger('silent'),
 });

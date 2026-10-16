@@ -1,10 +1,15 @@
 import express, { type ErrorRequestHandler, type Express } from 'express';
-import { HealthResponseSchema, type HealthResponse } from '@mlp/contracts';
+import { HealthResponseSchema, redactSecrets, type HealthResponse } from '@mlp/contracts';
 import { catalog } from '@mlp/lab-catalog';
+import { LabError, LabRunner, toCanonicalError, type LabRegistry } from '@mlp/lab-engine';
+import { createLabRegistry, createLabServices, type LabServices } from '@mlp/labs';
 import { getMastraVersion } from '@mlp/mastra-runtime';
-import type { AppConfig } from './config.js';
-import { HttpError, errorBody } from './errors.js';
+import { secretValues, type AppConfig } from './config.js';
+import { errorBody, statusFor } from './errors.js';
 import type { Logger } from './logger.js';
+import { requestIds } from './request-id.js';
+import { labsRouter } from './routes/labs.js';
+import { runsRouter } from './routes/runs.js';
 
 export const SERVICE_NAME = 'mastra-learning-platform-api';
 export const SERVICE_VERSION = '0.1.0';
@@ -13,11 +18,37 @@ export interface AppDeps {
   config: AppConfig;
   logger: Logger;
   startedAt?: number;
+  registry?: LabRegistry<LabServices>;
+  runner?: LabRunner<LabServices>;
 }
 
-export function createApp({ config, logger, startedAt = Date.now() }: AppDeps): Express {
+export interface ApiApp {
+  app: Express;
+  runner: LabRunner<LabServices>;
+  registry: LabRegistry<LabServices>;
+}
+
+export function createApp({ config, logger, startedAt = Date.now(), ...deps }: AppDeps): ApiApp {
+  const secrets = secretValues(config);
+  const registry = deps.registry ?? createLabRegistry();
+  const runner =
+    deps.runner ??
+    new LabRunner<LabServices>({
+      registry,
+      services: createLabServices({ serverMode: config.MASTRA_MODE }),
+      liveEnabled: config.MASTRA_MODE === 'live',
+      maxConcurrentRuns: config.MAX_CONCURRENT_RUNS,
+      serverMaxTimeoutMs: config.RUN_MAX_TIMEOUT_MS,
+      disconnectGraceMs: config.SSE_DISCONNECT_GRACE_MS,
+      secrets,
+      logger,
+    });
+  const mastraVersion = getMastraVersion();
+  const pinned = { '@mastra/core': mastraVersion, zod: '4.6.7', node: process.version };
+
   const app = express();
   app.disable('x-powered-by');
+  app.use(requestIds);
   app.use(express.json({ limit: '64kb' }));
 
   app.get('/api/health', (_req, res) => {
@@ -27,7 +58,7 @@ export function createApp({ config, logger, startedAt = Date.now() }: AppDeps): 
       version: SERVICE_VERSION,
       uptimeSeconds: Math.round((Date.now() - startedAt) / 1000),
       mode: config.MASTRA_MODE,
-      mastraVersion: getMastraVersion(),
+      mastraVersion,
       timestamp: new Date().toISOString(),
     };
     res.json(HealthResponseSchema.parse(body));
@@ -37,28 +68,46 @@ export function createApp({ config, logger, startedAt = Date.now() }: AppDeps): 
     res.json(catalog);
   });
 
+  app.use('/api/labs', labsRouter({ config, registry, runner, pinned }));
+  app.use('/api/runs', runsRouter({ runner, heartbeatMs: config.SSE_HEARTBEAT_MS }));
+
   app.use('/api', (req, _res, next) => {
-    next(new HttpError('NOT_FOUND', `No API route for ${req.method} ${req.originalUrl}`));
+    next(new LabError('NOT_FOUND', `No API route for ${req.method} ${req.originalUrl}`));
   });
 
-  const onError: ErrorRequestHandler = (err: unknown, _req, res, _next) => {
-    if (err instanceof HttpError) {
-      res.status(err.status).json(errorBody(err.code, err.message, err.details ? { details: err.details } : {}));
+  const onError: ErrorRequestHandler = (err: unknown, req, res, _next) => {
+    const requestId = req.requestId;
+    if (res.headersSent) {
+      res.end();
       return;
     }
-    // express.json() parse failures
-    if (typeof err === 'object' && err && 'type' in err && (err as { type: string }).type === 'entity.parse.failed') {
-      res.status(400).json(errorBody('BAD_REQUEST', 'Request body is not valid JSON'));
-      return;
+    if (typeof err === 'object' && err && 'type' in err) {
+      const type = (err as { type: string }).type;
+      if (type === 'entity.parse.failed') {
+        res.status(400).json(errorBody('BAD_REQUEST', 'Request body is not valid JSON', { requestId }));
+        return;
+      }
+      if (type === 'entity.too.large') {
+        res.status(413).json(errorBody('BAD_REQUEST', 'Request body too large (max 64 KB)', { requestId }));
+        return;
+      }
     }
-    if (typeof err === 'object' && err && 'type' in err && (err as { type: string }).type === 'entity.too.large') {
-      res.status(413).json(errorBody('BAD_REQUEST', 'Request body too large'));
-      return;
+    const canonical = toCanonicalError(err, secrets);
+    if (canonical.code === 'INTERNAL') {
+      logger.error('unhandled error', {
+        requestId,
+        error: redactSecrets(err instanceof Error ? err.message : String(err), secrets),
+      });
     }
-    logger.error('unhandled error', { error: err instanceof Error ? err.message : String(err) });
-    res.status(500).json(errorBody('INTERNAL', 'Internal server error'));
+    res.status(statusFor(canonical.code)).json(
+      errorBody(canonical.code, canonical.message, {
+        requestId,
+        ...(canonical.retryable ? { retryable: true } : {}),
+        ...(canonical.details ? { details: canonical.details } : {}),
+      }),
+    );
   };
   app.use(onError);
 
-  return app;
+  return { app, runner, registry };
 }

@@ -13,21 +13,6 @@ const STATUS: Record<ApiErrorCode, number> = {
   INTERNAL: 500,
 };
 
-/** Typed error carrying a canonical API error code. */
-export class HttpError extends Error {
-  constructor(
-    public readonly code: ApiErrorCode,
-    message: string,
-    public readonly details?: { path: string; message: string }[],
-  ) {
-    super(message);
-    this.name = 'HttpError';
-  }
-  get status(): number {
-    return STATUS[this.code];
-  }
-}
-
 export function statusFor(code: ApiErrorCode): number {
   return STATUS[code];
 }
