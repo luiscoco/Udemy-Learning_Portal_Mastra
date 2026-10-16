@@ -85,6 +85,13 @@ curl.exe -N "http://127.0.0.1:8787/api/runs/$($run.runId)/events"
 
 Limits (env): `MAX_CONCURRENT_RUNS` (4), `RUN_MAX_TIMEOUT_MS` (120000), `SSE_DISCONNECT_GRACE_MS` (5000) — a run whose last viewer disconnects is cancelled after the grace period.
 
+## Learner experience
+
+- `/` — Home, course progress, course map (15 modules, locked previews for unreleased labs).
+- `/labs/lab-XX` (or legacy `/?lesson=lab-XX`) — lesson workspace with **Learn / Run / Source** tabs (`?tab=run`, `?tab=source`), quiz, self-check, notes and an instructor script with JSON export.
+- Progress is stored in the browser (`localStorage`, key `mlp.progress.v1`) through the `ProgressStore` adapter in `apps/web/src/lib/progress-store.ts`. A lab is completed when the lesson is marked read, a run succeeds with all checks passing and the quiz is passed (≥ 70%).
+- Keyboard: `/` focuses search, arrow keys move through the sidebar and tabs, `Esc` closes the mobile menu.
+
 ## Adding a lab
 
 Each lab lives in `packages/labs/src/lab-XX/` (`definition.ts`, `run.ts`, `fixtures.ts`, optional `solution.md`), is appended to `allLabs` in `packages/labs/src/index.ts` and marked `available` in `packages/lab-catalog`. The conformance suite (`packages/labs/src/conformance.test.ts`) then enforces the pedagogical contract and runs every fixture offline.

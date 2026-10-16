@@ -4,6 +4,7 @@ import type { CatalogLab, LabDefinition } from '@mlp/contracts';
 import { getLab, getModule } from '@mlp/lab-catalog';
 import { fetchLabDefinition } from '../api/client';
 import { PageHeading } from '../components/PageHeading';
+import { LabWorkspace } from '../components/workspace/LabWorkspace';
 import { Prerequisites } from '../components/Prerequisites';
 import { Badge, Button, Notice, Skeleton } from '../components/ui/primitives';
 import { useAsync } from '../lib/use-async';
@@ -60,34 +61,18 @@ function LockedLab({ lab }: { lab: CatalogLab }) {
   );
 }
 
-/** Overview of an available lab. The full Learn/Run/Source workspace is rendered by LabWorkspace (F04). */
+/** Available lab: header plus the Learn / Run / Source workspace. */
 export function AvailableLab({ lab, definition }: { lab: CatalogLab; definition: LabDefinition }) {
   return (
     <div className="flex flex-col gap-8">
       <LabHeader lab={lab}>
         <p className="max-w-3xl text-lg text-fg-muted">{definition.summary}</p>
         <div className="flex flex-wrap gap-2">
-          <Badge tone="success">Available</Badge>
           {definition.execution.modes.includes('offline') ? <Badge tone="accent">Offline mode · free</Badge> : null}
           {definition.execution.modes.includes('live') ? <Badge tone="warning">Live mode optional</Badge> : null}
         </div>
       </LabHeader>
-      <section aria-labelledby="prereq-title">
-        <h2 id="prereq-title" className="mb-3 text-lg font-semibold">
-          Prerequisites
-        </h2>
-        <Prerequisites labIds={definition.prerequisites} />
-      </section>
-      <section aria-labelledby="objectives-title">
-        <h2 id="objectives-title" className="mb-3 text-lg font-semibold">
-          Learning objectives
-        </h2>
-        <ul className="list-disc space-y-1 pl-6 text-fg-muted">
-          {definition.objectives.map((o) => (
-            <li key={o}>{o}</li>
-          ))}
-        </ul>
-      </section>
+      <LabWorkspace definition={definition} />
     </div>
   );
 }

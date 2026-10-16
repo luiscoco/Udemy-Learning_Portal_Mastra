@@ -22,6 +22,8 @@ export const ProgressRecordSchema = z.object({
   quiz: QuizAttemptSchema.nullable(),
   selfCheck: z.record(z.string(), z.boolean()).default({}),
   notes: z.string().max(10_000),
+  /** Learner's answer to the lesson prediction prompt. */
+  prediction: z.string().max(2_000).default(''),
   updatedAt: z.iso.datetime(),
 });
 export type ProgressRecord = z.infer<typeof ProgressRecordSchema>;
@@ -29,7 +31,14 @@ export type ProgressRecord = z.infer<typeof ProgressRecordSchema>;
 /** A lab counts as completed when lesson read, a run succeeded with passing checks and the quiz passed. */
 export function deriveProgressStatus(r: Omit<ProgressRecord, 'status' | 'updatedAt'>): ProgressStatus {
   if (r.lessonRead && r.runSucceeded && r.checksPassed && r.quiz?.passed) return 'completed';
-  if (r.lessonRead || r.runSucceeded || r.quiz || r.notes.length > 0 || Object.keys(r.selfCheck).length > 0) {
+  if (
+    r.lessonRead ||
+    r.runSucceeded ||
+    r.quiz ||
+    r.notes.length > 0 ||
+    r.prediction.length > 0 ||
+    Object.values(r.selfCheck).some(Boolean)
+  ) {
     return 'in-progress';
   }
   return 'not-started';
@@ -45,6 +54,7 @@ export function emptyProgress(labId: string, now = new Date()): ProgressRecord {
     quiz: null,
     selfCheck: {},
     notes: '',
+    prediction: '',
     updatedAt: now.toISOString(),
   };
 }
