@@ -14,6 +14,14 @@ export function labSourceDir(labId: string): string {
   return join(labsPackageDir(), 'src', labId);
 }
 
+/**
+ * Resolves a declared source path: `shared/…` points at code shared by several labs
+ * (packages/labs/src/shared), anything else is inside the lab's own folder.
+ */
+export function resolveLabSourcePath(labId: string, path: string): string {
+  return path.startsWith('shared/') ? join(labsPackageDir(), 'src', path) : join(labSourceDir(labId), path);
+}
+
 /** Server-side scratch directory for lab artefacts (gitignored). Override with MLP_DATA_DIR. */
 export function dataDir(): string {
   return process.env.MLP_DATA_DIR ?? join(labsPackageDir(), '..', '..', '.data');

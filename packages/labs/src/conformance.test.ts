@@ -1,10 +1,9 @@
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { ExecutionEventSchema, LabDefinitionSchema, type ExecutionEvent } from '@mlp/contracts';
 import { getLab } from '@mlp/lab-catalog';
 import { LabRunner } from '@mlp/lab-engine';
-import { allLabs, createLabRegistry, createLabServices, labSourceDir } from './index.js';
+import { allLabs, createLabRegistry, createLabServices, resolveLabSourcePath } from './index.js';
 
 /** Counts sentences in plain prose (terminal punctuation followed by space or end). */
 export function countSentences(text: string): number {
@@ -44,11 +43,10 @@ describe.each(allLabs.map((l) => [l.implementation.definition.id, l] as const))(
   });
 
   it('ships every declared source, starter and solution file', () => {
-    const dir = labSourceDir(labId);
     const files = [...def.sourceFiles.map((f) => f.path), def.exercise.starterFile, def.exercise.solutionFile].filter(
       (f): f is string => Boolean(f),
     );
-    for (const f of files) expect(existsSync(join(dir, f)), `${labId}/${f}`).toBe(true);
+    for (const f of files) expect(existsSync(resolveLabSourcePath(labId, f)), `${labId}/${f}`).toBe(true);
   });
 
   it('declares at least one automated check and one fixture', () => {
@@ -66,6 +64,10 @@ describe.each(allLabs.map((l) => [l.implementation.definition.id, l] as const))(
     // Every declared check id is reported.
     const reported = result?.type === 'result' ? (result.validation?.checks.map((c) => c.id) ?? []) : [];
     expect(reported.sort()).toEqual(def.checks.map((c) => c.id).sort());
+    // The documented expected output must match what the example input really produces (offline).
+    if (def.expectedOutput.example && typeof def.expectedOutput.example === 'object') {
+      expect(result?.type === 'result' ? result.output : undefined).toMatchObject(def.expectedOutput.example as object);
+    }
   }, def.execution.maxTimeoutMs + 5_000);
 
   it.each(lab.fixtures.map((f) => [f.name, f] as const))('fixture: %s', async (_name, fixture) => {

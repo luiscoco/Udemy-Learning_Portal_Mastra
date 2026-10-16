@@ -80,7 +80,7 @@ export const lab01Definition = {
       apiKeyEnvVar: 'OPENAI_API_KEY',
       agent: { variable: 'supportDeskAgent', id: 'support-desk-agent', file: 'src/mastra/agents/support-desk-agent.ts' },
       build: { ok: true, diagnostics: [] },
-      rootFiles: ['.env.example', '.gitignore', 'package.json', 'tsconfig.json', 'src/mastra/index.ts'],
+      rootFiles: ['.env.example', '.gitignore', 'package.json', 'src/mastra/index.ts', 'tsconfig.json'],
     },
   },
   guide: {

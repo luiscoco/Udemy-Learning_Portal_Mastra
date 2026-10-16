@@ -124,7 +124,9 @@ export function SourceTab({ definition }: { definition: LabDefinition }) {
                   onClick={() => setActive(i)}
                   className={cn(
                     'rounded-lg border px-3 py-1.5 font-mono text-xs',
-                    i === active ? 'border-accent bg-accent-soft text-accent' : 'border-border text-fg-muted hover:bg-surface-muted',
+                    i === active
+                      ? 'border-accent bg-accent-soft text-accent'
+                      : 'border-border text-fg-muted hover:bg-surface-muted',
                   )}
                 >
                   {f.path}
@@ -139,7 +141,9 @@ export function SourceTab({ definition }: { definition: LabDefinition }) {
               <FileActions file={file} />
             </div>
             <CodeBlock code={file.code} language={file.language} label={`Source of ${file.path}`} />
-            <p className="text-xs text-fg-subtle">Readonly. Path: packages/labs/src/{definition.id}/{file.path}</p>
+            <p className="text-xs text-fg-subtle">
+              Readonly. Path: packages/labs/src/{file.path.startsWith('shared/') ? file.path : `${definition.id}/${file.path}`}
+            </p>
           </>
         )}
       </Section>

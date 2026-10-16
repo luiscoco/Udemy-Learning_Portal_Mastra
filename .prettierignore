@@ -1,0 +1,9 @@
+node_modules
+dist
+coverage
+openspec
+.claude
+.agents
+.github
+package-lock.json
+*.md

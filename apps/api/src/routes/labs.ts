@@ -1,9 +1,8 @@
 import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import { Router } from 'express';
 import type { CheckResult, LabSourceResponse, PreflightResult, SourceFile } from '@mlp/contracts';
 import { LabError, type LabRegistry, type LabRunner } from '@mlp/lab-engine';
-import { labSourceDir, type LabServices } from '@mlp/labs';
+import { resolveLabSourcePath, type LabServices } from '@mlp/labs';
 import { getMastraVersion } from '@mlp/mastra-runtime';
 import type { AppConfig } from '../config.js';
 
@@ -45,7 +44,6 @@ export function labsRouter(deps: {
 
   router.get('/:labId/source', async (req, res) => {
     const def = registry.require(req.params.labId).definition;
-    const dir = labSourceDir(def.id);
     const refs = [...def.sourceFiles];
     for (const extra of [def.exercise.starterFile, def.exercise.solutionFile]) {
       if (extra && !refs.some((r) => r.path === extra)) {
@@ -55,7 +53,7 @@ export function labsRouter(deps: {
     const files: SourceFile[] = [];
     for (const ref of refs) {
       // Paths were validated at registration (no traversal); join keeps them inside the lab folder.
-      const code = await readFile(join(dir, ref.path), 'utf8').catch(() => {
+      const code = await readFile(resolveLabSourcePath(def.id, ref.path), 'utf8').catch(() => {
         throw new LabError('NOT_FOUND', `Source file ${ref.path} is missing for ${def.id}`);
       });
       const ext = ref.path.split('.').pop() ?? 'ts';
