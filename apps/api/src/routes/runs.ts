@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import type { ExecutionEvent } from '@mlp/contracts';
+import { ApprovalDecisionRequestSchema, type ApprovalDecisionResponse, type ExecutionEvent } from '@mlp/contracts';
 import { LabError, type LabRunner } from '@mlp/lab-engine';
 import type { LabServices } from '@mlp/labs';
 
@@ -20,6 +20,15 @@ export function runsRouter(deps: { runner: LabRunner<LabServices>; heartbeatMs: 
 
   router.post('/:runId/cancel', (req, res) => {
     res.json(runner.cancel(req.params.runId));
+  });
+
+  /** Human decision for a pending approval (see ctx.requestApproval). 404 unknown run, 409 not pending. */
+  router.post('/:runId/approvals/:approvalId', (req, res) => {
+    const { runId, approvalId } = req.params;
+    const body = ApprovalDecisionRequestSchema.parse(req.body ?? {});
+    runner.resolveApproval(runId, approvalId, body.decision, body.reason);
+    const response: ApprovalDecisionResponse = { runId, approvalId, decision: body.decision };
+    res.json(response);
   });
 
   /** Server-Sent Events: replay (honouring Last-Event-ID or ?after=) then live, closing after `complete`. */

@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-export type AsyncState<T> =
-  | { status: 'loading' }
-  | { status: 'success'; data: T }
-  | { status: 'error'; error: Error };
+export type AsyncState<T> = { status: 'loading' } | { status: 'success'; data: T } | { status: 'error'; error: Error };
 
 /** Runs an abortable loader whenever `key` changes; exposes retry. */
 export function useAsync<T>(key: string, load: (signal: AbortSignal) => Promise<T>): AsyncState<T> & { retry: () => void } {

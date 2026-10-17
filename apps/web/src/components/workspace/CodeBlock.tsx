@@ -3,10 +3,7 @@ import { Highlight, themes, type PrismTheme } from 'prism-react-renderer';
 /** oneDark with comment colour raised to meet WCAG AA (4.5:1) on its #282c34 background. */
 const ACCESSIBLE_ONE_DARK: PrismTheme = {
   ...themes.oneDark,
-  styles: [
-    ...themes.oneDark.styles,
-    { types: ['comment', 'prolog', 'cdata'], style: { color: '#a0a8b7', fontStyle: 'italic' } },
-  ],
+  styles: [...themes.oneDark.styles, { types: ['comment', 'prolog', 'cdata'], style: { color: '#a0a8b7', fontStyle: 'italic' } }],
 };
 
 const PRISM_LANG: Record<string, string> = { typescript: 'tsx', tsx: 'tsx', json: 'json', markdown: 'markdown' };

@@ -22,9 +22,7 @@ export function InstructorPanel({ definition }: { definition: LabDefinition }) {
   const o = definition.instructorOutline;
   return (
     <details className="rounded-xl border border-border bg-surface p-4">
-      <summary className="cursor-pointer font-semibold">
-        Instructor script · {o.durationMinutes} min video
-      </summary>
+      <summary className="cursor-pointer font-semibold">Instructor script · {o.durationMinutes} min video</summary>
       <ol className="mt-4 flex flex-col gap-3">
         {o.segments.map((s, i) => (
           <li key={s.title} className="rounded-lg border border-border p-3">
@@ -44,7 +42,11 @@ export function InstructorPanel({ definition }: { definition: LabDefinition }) {
         size="sm"
         className="mt-4"
         onClick={() =>
-          downloadText(`${definition.id}-instructor.json`, JSON.stringify(instructorExport(definition), null, 2), 'application/json')
+          downloadText(
+            `${definition.id}-instructor.json`,
+            JSON.stringify(instructorExport(definition), null, 2),
+            'application/json',
+          )
         }
       >
         Export JSON

@@ -19,7 +19,13 @@ export function Prerequisites({ labIds }: { labIds: string[] }) {
             <Link to={`/labs/${id}`} className="text-accent underline-offset-2 hover:underline">
               {id}: {lab?.title ?? id}
             </Link>
-            {done ? <Badge tone="success">Completed</Badge> : lab?.status === 'locked' ? <Badge>Locked</Badge> : <Badge tone="warning">Not completed</Badge>}
+            {done ? (
+              <Badge tone="success">Completed</Badge>
+            ) : lab?.status === 'locked' ? (
+              <Badge>Locked</Badge>
+            ) : (
+              <Badge tone="warning">Not completed</Badge>
+            )}
           </li>
         );
       })}

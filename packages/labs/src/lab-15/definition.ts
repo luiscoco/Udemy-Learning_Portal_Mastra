@@ -18,7 +18,7 @@ export const lab15Definition = {
     'The third layer is a policy check inside execute(), such as a refund limit or a duplicate-refund rule, because approval is necessary but not sufficient: a tired human can approve a bad call. ' +
     'Every decision, whether blocked, approval requested, approved, declined, executed or denied by policy, is appended to an audit trail that is never edited. ' +
     'Here the side effect is a mock payments ledger, so you can prove that an approved refund changes it exactly once and that a declined or blocked one leaves it untouched. ' +
-    'The approval decision is part of the lab input so that runs are repeatable; in a real product it would come from a button in the UI.',
+    'With "Ask me during the run" the server really pauses and the Run tab shows Approve and Decline buttons; the presets apply a fixed decision so automated tests stay repeatable.',
   objectives: [
     'Give each role only the tools it is allowed to use',
     'Pause a side-effect tool with requireApproval and resume it with approveToolCall or declineToolCall',
@@ -52,10 +52,11 @@ export const lab15Definition = {
       kind: 'select',
       name: 'userDecision',
       label: 'Approver’s decision',
-      help: 'Applied when the refund tool asks for approval.',
+      help: 'Ask = the run pauses and you decide in an approval panel. Presets decide automatically (used by tests).',
       options: [
-        { value: 'approve', label: 'Approve' },
-        { value: 'decline', label: 'Decline' },
+        { value: 'ask', label: 'Ask me during the run (interactive)' },
+        { value: 'approve', label: 'Approve automatically (preset)' },
+        { value: 'decline', label: 'Decline automatically (preset)' },
       ],
       default: 'approve',
       required: true,
@@ -84,9 +85,10 @@ export const lab15Definition = {
   guide: {
     procedure: [
       'Open policy.ts in the Source tab and find requireApproval, the role allowlist and the policy check.',
-      'Run the example. In the timeline, find the suspended approval step between the tool start and the tool finish.',
+      'Run the example (preset Approve). In the timeline, find the suspended approval step between the tool start and the tool finish.',
+      'Choose “Ask me during the run” and run again. When the approval panel appears, read the arguments and press Approve.',
       'Check the audit entries in the result: approval-requested, approved, executed.',
-      'Switch the decision to Decline and run again. The ledger should stay empty.',
+      'Run with Ask again and press Decline. The ledger should stay empty.',
       'Switch the role to viewer. The refund tool is not given to the agent, so the attempt is blocked.',
       'Ask for a refund of 450.00 on ORD-1002 with Approve: the policy denies it even though it was approved.',
       'Optional (costs money): run live and see whether a real model calls issueRefund.',

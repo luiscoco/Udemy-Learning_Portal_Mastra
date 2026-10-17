@@ -20,6 +20,23 @@ export const StartRunResponseSchema = z.object({
 });
 export type StartRunResponse = z.infer<typeof StartRunResponseSchema>;
 
+export const ApprovalDecisionSchema = z.enum(['approve', 'decline']);
+export type ApprovalDecision = z.infer<typeof ApprovalDecisionSchema>;
+
+/** Body of POST /api/runs/:runId/approvals/:approvalId. */
+export const ApprovalDecisionRequestSchema = z.object({
+  decision: ApprovalDecisionSchema,
+  reason: z.string().trim().max(200).optional(),
+});
+export type ApprovalDecisionRequest = z.infer<typeof ApprovalDecisionRequestSchema>;
+
+export const ApprovalDecisionResponseSchema = z.object({
+  runId: z.string(),
+  approvalId: z.string(),
+  decision: ApprovalDecisionSchema,
+});
+export type ApprovalDecisionResponse = z.infer<typeof ApprovalDecisionResponseSchema>;
+
 // ---------- Validation ----------
 
 export const CheckResultSchema = z.object({
@@ -99,6 +116,25 @@ export const ExecutionEventSchema = z.discriminatedUnion('type', [
   }),
   z.object({
     ...eventBase,
+    type: z.literal('approval-request'),
+    approvalId: z.string(),
+    toolName: z.string(),
+    args: z.unknown(),
+    /** Human-readable summary of what will happen if approved. */
+    message: z.string(),
+    expiresAt: z.iso.datetime(),
+  }),
+  z.object({
+    ...eventBase,
+    type: z.literal('approval-resolved'),
+    approvalId: z.string(),
+    decision: ApprovalDecisionSchema,
+    reason: z.string().optional(),
+    /** user = decided via the API; timeout = nobody answered in time (auto-declined). */
+    by: z.enum(['user', 'timeout']),
+  }),
+  z.object({
+    ...eventBase,
     type: z.literal('result'),
     output: z.unknown(),
     validation: ValidationResultSchema.optional(),
@@ -129,6 +165,8 @@ export const EXECUTION_EVENT_TYPES = [
   'tool-start',
   'tool-finish',
   'workflow-step',
+  'approval-request',
+  'approval-resolved',
   'result',
   'error',
   'complete',
@@ -153,6 +191,8 @@ export const RunSnapshotSchema = z.object({
   finishedAt: z.iso.datetime().optional(),
   deadlineMs: z.number().int().positive(),
   eventCount: z.number().int().nonnegative(),
+  /** Approvals the run is currently waiting on. */
+  pendingApprovals: z.number().int().nonnegative().default(0),
 });
 export type RunSnapshot = z.infer<typeof RunSnapshotSchema>;
 

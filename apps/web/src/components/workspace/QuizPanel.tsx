@@ -35,7 +35,13 @@ export function QuizPanel({ definition }: { definition: LabDefinition }) {
     <Section
       title="Quiz"
       id={id}
-      actions={record.quiz ? <Badge tone={record.quiz.passed ? 'success' : 'warning'}>Best: {record.quiz.score}/{record.quiz.total}</Badge> : null}
+      actions={
+        record.quiz ? (
+          <Badge tone={record.quiz.passed ? 'success' : 'warning'}>
+            Best: {record.quiz.score}/{record.quiz.total}
+          </Badge>
+        ) : null
+      }
     >
       <p className="text-sm text-fg-muted">
         {quiz.length} questions · pass with {Math.ceil(quiz.length * QUIZ_PASS_RATIO)} correct.
@@ -90,7 +96,11 @@ export function QuizPanel({ definition }: { definition: LabDefinition }) {
       <div className="flex flex-wrap items-center gap-3">
         {submitted ? (
           <>
-            <p role="status" className={cn('font-semibold', result.passed ? 'text-success' : 'text-warning')} data-testid="quiz-score">
+            <p
+              role="status"
+              className={cn('font-semibold', result.passed ? 'text-success' : 'text-warning')}
+              data-testid="quiz-score"
+            >
               Score {result.score}/{result.total} — {result.passed ? 'passed' : 'not passed yet'}
             </p>
             <Button

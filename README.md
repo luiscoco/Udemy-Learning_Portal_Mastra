@@ -84,8 +84,9 @@ All bodies are JSON validated with the Zod schemas in `packages/contracts`. Erro
 | `GET /api/labs/:labId/preflight` | Environment checks for the lab |
 | `POST /api/labs/:labId/runs` | Start a run: `{ input, mode: "offline" \| "live", timeoutMs? }` → `202 { runId, correlationId, requestId }` |
 | `GET /api/runs/:runId` | Run snapshot |
-| `GET /api/runs/:runId/events` | Server-Sent Events (`log`, `token`, `tool-start`, `tool-finish`, `workflow-step`, `result`, `error`, `complete`); supports `Last-Event-ID` |
+| `GET /api/runs/:runId/events` | Server-Sent Events (`log`, `token`, `tool-start`, `tool-finish`, `workflow-step`, `approval-request`, `approval-resolved`, `result`, `error`, `complete`); supports `Last-Event-ID` |
 | `POST /api/runs/:runId/cancel` | Cancel a run |
+| `POST /api/runs/:runId/approvals/:approvalId` | Approve or decline a pending tool call: `{ "decision": "approve" \| "decline", "reason"? }` (404 unknown run, 409 not pending) |
 
 Try it from PowerShell:
 
@@ -96,7 +97,7 @@ $run = Invoke-RestMethod -Method Post -ContentType 'application/json' `
 curl.exe -N "http://127.0.0.1:8787/api/runs/$($run.runId)/events"
 ```
 
-Limits (env): `MAX_CONCURRENT_RUNS` (4), `RUN_MAX_TIMEOUT_MS` (120000), `SSE_DISCONNECT_GRACE_MS` (5000) — a run whose last viewer disconnects is cancelled after the grace period.
+Limits (env): `MAX_CONCURRENT_RUNS` (4), `RUN_MAX_TIMEOUT_MS` (120000), `SSE_DISCONNECT_GRACE_MS` (5000) — a run whose last viewer disconnects is cancelled after the grace period; `APPROVAL_TIMEOUT_MS` (300000) — a run waiting for a human approval auto-declines after this (the run deadline is paused while waiting).
 
 ## Learner experience
 

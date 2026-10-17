@@ -88,6 +88,13 @@ export const HomeIcon = (p: IconProps) => (
 export const LogoMark = (p: IconProps) => (
   <svg viewBox="0 0 32 32" width="1em" height="1em" aria-hidden="true" focusable="false" {...p}>
     <rect width="32" height="32" rx="8" fill="var(--mlp-accent)" />
-    <path d="M8 23V9l8 8 8-8v14" fill="none" stroke="var(--mlp-accent-fg)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+    <path
+      d="M8 23V9l8 8 8-8v14"
+      fill="none"
+      stroke="var(--mlp-accent-fg)"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
 );

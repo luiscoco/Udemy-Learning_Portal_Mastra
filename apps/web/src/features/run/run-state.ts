@@ -17,6 +17,16 @@ export interface StepView {
   durationMs?: number;
 }
 
+export interface ApprovalView {
+  approvalId: string;
+  toolName: string;
+  args: unknown;
+  message: string;
+  expiresAt: string;
+  status: 'pending' | 'approve' | 'decline';
+  by?: 'user' | 'timeout';
+}
+
 export interface RunError {
   code: string;
   message: string;
@@ -33,6 +43,7 @@ export interface RunState {
   tokenCount: number;
   tools: ToolCallView[];
   steps: StepView[];
+  approvals: ApprovalView[];
   output?: unknown;
   validation?: ValidationResult;
   effective?: Record<string, unknown>;
@@ -56,7 +67,10 @@ export const initialRunState: RunState = {
   tokenCount: 0,
   tools: [],
   steps: [],
+  approvals: [],
 };
+
+export const pendingApprovals = (state: RunState) => state.approvals.filter((a) => a.status === 'pending');
 
 export function runReducer(state: RunState, action: RunAction): RunState {
   switch (action.type) {
@@ -100,6 +114,24 @@ export function runReducer(state: RunState, action: RunAction): RunState {
             : [...state.steps, view];
           break;
         }
+        case 'approval-request':
+          next.approvals = [
+            ...state.approvals,
+            {
+              approvalId: e.approvalId,
+              toolName: e.toolName,
+              args: e.args,
+              message: e.message,
+              expiresAt: e.expiresAt,
+              status: 'pending',
+            },
+          ];
+          break;
+        case 'approval-resolved':
+          next.approvals = state.approvals.map((a) =>
+            a.approvalId === e.approvalId ? { ...a, status: e.decision, by: e.by } : a,
+          );
+          break;
         case 'result':
           next.output = e.output;
           next.validation = e.validation;

@@ -33,10 +33,7 @@ describe('unknown routes and bad input', () => {
   });
 
   it('returns 400 for malformed JSON', async () => {
-    const res = await request(app)
-      .post('/api/anything')
-      .set('content-type', 'application/json')
-      .send('{bad json');
+    const res = await request(app).post('/api/anything').set('content-type', 'application/json').send('{bad json');
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('BAD_REQUEST');
   });
@@ -53,7 +50,9 @@ describe('catalog ⇔ registry consistency', () => {
   it('marks exactly the registered labs as available', async () => {
     const { registry } = createApp({ config: parseConfig({ NODE_ENV: 'test' }), logger: createLogger('silent') });
     const res = await request(app).get('/api/catalog').expect(200);
-    const available = (res.body.labs as { id: string; status: string }[]).filter((l) => l.status === 'available').map((l) => l.id);
+    const available = (res.body.labs as { id: string; status: string }[])
+      .filter((l) => l.status === 'available')
+      .map((l) => l.id);
     expect(available.sort()).toEqual(registry.ids().sort());
   });
 });

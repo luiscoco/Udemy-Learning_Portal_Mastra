@@ -42,6 +42,7 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
       maxConcurrentRuns: config.MAX_CONCURRENT_RUNS,
       serverMaxTimeoutMs: config.RUN_MAX_TIMEOUT_MS,
       disconnectGraceMs: config.SSE_DISCONNECT_GRACE_MS,
+      approvalTimeoutMs: config.APPROVAL_TIMEOUT_MS,
       secrets,
       logger,
     });

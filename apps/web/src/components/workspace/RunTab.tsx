@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import type { LabDefinition, RuntimeMode } from '@mlp/contracts';
 import { fetchPreflight } from '../../api/runs';
+import { pendingApprovals } from '../../features/run/run-state';
 import { useLabRun } from '../../features/run/useLabRun';
 import { cn } from '../../lib/cn';
 import { useProgressActions } from '../../lib/progress-actions';
 import { useAsync } from '../../lib/use-async';
 import { Badge, Button, Card } from '../ui/primitives';
+import { ApprovalPanel } from './ApprovalPanel';
 import { DynamicForm } from './DynamicForm';
 import { buildInput, initialRawValues, serverDetailsToFieldErrors, type FieldErrors, type RawValues } from './form-model';
 import { JsonView, RunTimeline, TraceView } from './RunTimeline';
@@ -49,7 +51,8 @@ const STATUS_TEXT = {
 } as const;
 
 export function RunTab({ definition }: { definition: LabDefinition }) {
-  const { state, run, cancel, reset } = useLabRun(definition.id);
+  const { state, run, cancel, decide, reset } = useLabRun(definition.id);
+  const waiting = pendingApprovals(state);
   const { update } = useProgressActions(definition.id);
   const example = definition.exampleInput;
   const [raw, setRaw] = useState<RawValues>(() => initialRawValues(definition.inputs, example));
@@ -58,7 +61,10 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
   const busy = state.phase === 'starting' || state.phase === 'streaming';
   const id = `${definition.id}-run`;
 
-  const server = serverDetailsToFieldErrors(state.error?.code === 'VALIDATION_FAILED' ? state.error.details : undefined, definition.inputs);
+  const server = serverDetailsToFieldErrors(
+    state.error?.code === 'VALIDATION_FAILED' ? state.error.details : undefined,
+    definition.inputs,
+  );
   const fieldErrors = { ...server.errors, ...clientErrors };
 
   const onRun = async () => {
@@ -77,7 +83,9 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
       ? state.terminal === 'succeeded'
         ? `Run succeeded${state.validation ? (state.validation.passed ? ' — all checks passed' : ' — some checks failed') : ''}`
         : `Run ${state.terminal ?? 'failed'}`
-      : STATUS_TEXT[state.phase];
+      : waiting.length > 0
+        ? 'Waiting for your approval…'
+        : STATUS_TEXT[state.phase];
 
   return (
     <div className="flex flex-col gap-8">
@@ -133,7 +141,10 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
                 );
               })}
             </div>
-            <p className={cn('text-sm', mode === 'live' ? 'font-medium text-warning' : 'text-fg-muted')} data-testid="cost-notice">
+            <p
+              className={cn('text-sm', mode === 'live' ? 'font-medium text-warning' : 'text-fg-muted')}
+              data-testid="cost-notice"
+            >
               {mode === 'live' ? `Cost notice: ${definition.execution.costNotice}` : definition.execution.costNotice}
             </p>
           </fieldset>
@@ -185,6 +196,8 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
           ) : null}
         </div>
       ) : null}
+
+      <ApprovalPanel approvals={waiting} onDecide={decide} />
 
       <Section title="Live output" id={`${id}-output`}>
         <Card className="min-h-20 p-4">

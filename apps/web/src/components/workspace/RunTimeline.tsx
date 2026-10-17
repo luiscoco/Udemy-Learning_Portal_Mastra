@@ -25,6 +25,10 @@ function describe(e: ExecutionEvent): string {
       return `${e.toolName} ${e.status} in ${Math.round(e.durationMs)} ms`;
     case 'workflow-step':
       return `step ${e.stepId}: ${e.status}`;
+    case 'approval-request':
+      return `approval needed for ${e.toolName}: ${e.message}`;
+    case 'approval-resolved':
+      return `approval ${e.decision === 'approve' ? 'approved' : 'declined'} (${e.by === 'user' ? 'by you' : 'timed out'})`;
     case 'result':
       return e.validation ? `result — checks ${e.validation.passed ? 'passed' : 'failed'}` : 'result';
     case 'error':
@@ -40,6 +44,8 @@ const TONE: Partial<Record<ExecutionEvent['type'], 'accent' | 'success' | 'dange
   'tool-start': 'accent',
   'tool-finish': 'accent',
   'workflow-step': 'warning',
+  'approval-request': 'warning',
+  'approval-resolved': 'accent',
   result: 'success',
   error: 'danger',
   complete: 'neutral',
@@ -98,7 +104,9 @@ export function TraceView({ state }: { state: RunState }) {
             <li key={t.toolCallId} className="rounded-md border border-border p-3">
               <div className="flex items-center justify-between">
                 <span className="font-mono font-medium">{t.toolName}</span>
-                <Badge tone={t.status === 'success' ? 'success' : t.status === 'running' ? 'warning' : 'danger'}>{t.status}</Badge>
+                <Badge tone={t.status === 'success' ? 'success' : t.status === 'running' ? 'warning' : 'danger'}>
+                  {t.status}
+                </Badge>
               </div>
               <p className="mt-2 text-xs text-fg-muted">Arguments</p>
               <JsonView value={t.args} label={`${t.toolName} arguments`} />

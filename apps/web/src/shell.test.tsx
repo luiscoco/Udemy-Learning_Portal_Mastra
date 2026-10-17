@@ -119,7 +119,9 @@ describe('routing', () => {
     expect(screen.getByRole('heading', { level: 1, name: new RegExp(locked.title) })).toBeInTheDocument();
     expect(screen.getByText('This lab is not available yet')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /run/i })).toBeNull();
-    expect(within(screen.getByRole('main')).getByRole('link', { name: new RegExp(`${prereq.id}: ${prereq.title}`) })).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('main')).getByRole('link', { name: new RegExp(`${prereq.id}: ${prereq.title}`) }),
+    ).toBeInTheDocument();
   });
 
   it('shows 404 for unknown labs and routes', () => {

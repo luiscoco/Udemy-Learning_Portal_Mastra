@@ -54,7 +54,11 @@ beforeEach(() => {
       if (url === '/api/labs/lab-00') return jsonResponse(DEF);
       if (url === '/api/health') return jsonResponse({ status: 'ok' });
       if (url === '/api/labs/lab-00/preflight')
-        return jsonResponse({ labId: 'lab-00', ready: true, checks: [{ id: 'mastra-installed', label: 'Mastra runtime is installed', passed: true }] });
+        return jsonResponse({
+          labId: 'lab-00',
+          ready: true,
+          checks: [{ id: 'mastra-installed', label: 'Mastra runtime is installed', passed: true }],
+        });
       if (url === '/api/labs/lab-00/source')
         return sourceOk
           ? jsonResponse({
@@ -67,7 +71,8 @@ beforeEach(() => {
             })
           : jsonResponse({ error: { code: 'INTERNAL', message: 'Source unavailable' } }, 500);
       if (url === '/api/labs/lab-00/runs') return runResponder(init);
-      if (url === '/api/runs/run-1/events') return new Response(eventsBody(), { headers: { 'content-type': 'text/event-stream' } });
+      if (url === '/api/runs/run-1/events')
+        return new Response(eventsBody(), { headers: { 'content-type': 'text/event-stream' } });
       if (url === '/api/runs/run-1/cancel')
         return jsonResponse({
           runId: 'run-1',
@@ -154,7 +159,13 @@ describe('Run tab', () => {
     const user = userEvent.setup();
     runResponder = () =>
       jsonResponse(
-        { error: { code: 'VALIDATION_FAILED', message: 'Input does not match the lab schema', details: [{ path: 'input.delayMs', message: 'Too big' }] } },
+        {
+          error: {
+            code: 'VALIDATION_FAILED',
+            message: 'Input does not match the lab schema',
+            details: [{ path: 'input.delayMs', message: 'Too big' }],
+          },
+        },
         422,
       );
     renderApp('/labs/lab-00?tab=run');
@@ -165,7 +176,8 @@ describe('Run tab', () => {
 
   it('shows retryable API errors such as 429', async () => {
     const user = userEvent.setup();
-    runResponder = () => jsonResponse({ error: { code: 'TOO_MANY_REQUESTS', message: 'Too many active runs', retryable: true } }, 429);
+    runResponder = () =>
+      jsonResponse({ error: { code: 'TOO_MANY_REQUESTS', message: 'Too many active runs', retryable: true } }, 429);
     renderApp('/labs/lab-00?tab=run');
     await user.click(await screen.findByRole('button', { name: 'Run' }));
     const alert = await screen.findByRole('alert');
@@ -245,7 +257,10 @@ describe('quiz, notes and instructor', () => {
   it('exports the instructor script as JSON', async () => {
     const user = userEvent.setup();
     const created: Blob[] = [];
-    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: (b: Blob) => (created.push(b), 'blob:x'), revokeObjectURL: () => {} }));
+    vi.stubGlobal(
+      'URL',
+      Object.assign(URL, { createObjectURL: (b: Blob) => (created.push(b), 'blob:x'), revokeObjectURL: () => {} }),
+    );
     const clicks: string[] = [];
     const orig = HTMLAnchorElement.prototype.click;
     HTMLAnchorElement.prototype.click = function () {

@@ -9,8 +9,8 @@ export function NotFoundPage({ what = 'page' }: { what?: string }) {
       <p className="font-mono text-sm text-fg-subtle">404</p>
       <PageHeading className="mt-2">We couldn’t find that {what}</PageHeading>
       <p className="mt-4 text-fg-muted">
-        The link may be mistyped or the lab may not exist. Lab addresses look like <code className="font-mono">/labs/lab-07</code>.
-        Use the search box (press <kbd className="rounded border border-border px-1 font-mono text-xs">/</kbd>) to find a lab.
+        The link may be mistyped or the lab may not exist. Lab addresses look like <code className="font-mono">/labs/lab-07</code>
+        . Use the search box (press <kbd className="rounded border border-border px-1 font-mono text-xs">/</kbd>) to find a lab.
       </p>
       <Link
         to="/"

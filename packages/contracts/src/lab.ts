@@ -118,10 +118,10 @@ export const InstructorOutlineSchema = z
       )
       .min(2),
   })
-  .refine(
-    (o) => Math.abs(o.segments.reduce((s, seg) => s + seg.minutes, 0) - o.durationMinutes) < 0.01,
-    { message: 'Segment minutes must add up to durationMinutes', path: ['segments'] },
-  );
+  .refine((o) => Math.abs(o.segments.reduce((s, seg) => s + seg.minutes, 0) - o.durationMinutes) < 0.01, {
+    message: 'Segment minutes must add up to durationMinutes',
+    path: ['segments'],
+  });
 export type InstructorOutline = z.infer<typeof InstructorOutlineSchema>;
 
 /** Relative path inside the lab's own folder. No traversal, no absolute paths. */

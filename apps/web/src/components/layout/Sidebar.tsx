@@ -30,7 +30,13 @@ function onRovingKeyDown(e: KeyboardEvent<HTMLElement>) {
   if (idx === -1) return;
   e.preventDefault();
   const next =
-    e.key === 'Home' ? 0 : e.key === 'End' ? items.length - 1 : e.key === 'ArrowDown' ? Math.min(idx + 1, items.length - 1) : Math.max(idx - 1, 0);
+    e.key === 'Home'
+      ? 0
+      : e.key === 'End'
+        ? items.length - 1
+        : e.key === 'ArrowDown'
+          ? Math.min(idx + 1, items.length - 1)
+          : Math.max(idx - 1, 0);
   items[next]?.focus();
 }
 
@@ -133,7 +139,9 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                         className={({ isActive }) =>
                           cn(
                             'flex items-start gap-2 rounded-md px-2 py-1.5 text-sm',
-                            isActive ? 'bg-accent-soft font-medium text-accent' : 'text-fg-muted hover:bg-surface-muted hover:text-fg',
+                            isActive
+                              ? 'bg-accent-soft font-medium text-accent'
+                              : 'text-fg-muted hover:bg-surface-muted hover:text-fg',
                             lab.status === 'locked' && !isActive && 'text-fg-subtle',
                           )
                         }

@@ -76,4 +76,26 @@ describe.skipIf(!LIVE)('live provider runs', () => {
     },
     90_000,
   );
+
+  it.skipIf(!hasOpenAI)(
+    'lab-15 pauses a real model run for a human decision and resumes it',
+    async () => {
+      const lab = allLabs.find((l) => l.implementation.definition.id === 'lab-15')!;
+      const input = { ...lab.implementation.definition.exampleInput, userDecision: 'ask', modelId: 'openai/gpt-5-mini' };
+      const run = runner.start('lab-15', { input, mode: 'live' });
+      let approvalId = '';
+      for (let i = 0; i < 600 && !approvalId && runner.get(run.runId)?.status === 'running'; i++) {
+        const e = runner.events(run.runId).find((x) => x.type === 'approval-request');
+        if (e?.type === 'approval-request') approvalId = e.approvalId;
+        else await new Promise((r) => setTimeout(r, 100));
+      }
+      expect(approvalId, 'the live model never requested the refund').not.toBe('');
+      runner.resolveApproval(run.runId, approvalId, 'approve');
+      const snap = await runner.waitFor(run.runId);
+      const result = runner.events(run.runId).find((e) => e.type === 'result');
+      expect(snap.status).toBe('succeeded');
+      expect(result).toMatchObject({ validation: { passed: true }, output: { refundExecutions: 1 } });
+    },
+    90_000,
+  );
 });

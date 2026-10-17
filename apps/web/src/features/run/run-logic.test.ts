@@ -56,7 +56,10 @@ describe('runReducer', () => {
 
   it('records error then cancelled completion', () => {
     seq = 0;
-    let s = runReducer(initialRunState, { type: 'event', event: ev({ type: 'error', code: 'CANCELLED', message: 'stop', retryable: false }) });
+    let s = runReducer(initialRunState, {
+      type: 'event',
+      event: ev({ type: 'error', code: 'CANCELLED', message: 'stop', retryable: false }),
+    });
     s = runReducer(s, { type: 'event', event: ev({ type: 'complete', status: 'cancelled', durationMs: 1 }) });
     expect(s).toMatchObject({ terminal: 'cancelled', error: { code: 'CANCELLED' } });
   });
@@ -114,5 +117,31 @@ describe('quiz scoring and progress', () => {
     r = applyProgressPatch(r, 'lab-00', { quiz: { score: 4, total: 4, passed: true, attempts: 1, answers: {} } });
     expect(r.status).toBe('completed');
     expect(applyProgressPatch(emptyProgress('lab-00'), 'lab-00', {}).status).toBe('not-started');
+  });
+});
+
+describe('runReducer approvals', () => {
+  it('tracks pending approvals until resolved', async () => {
+    const { pendingApprovals } = await import('./run-state');
+    seq = 100;
+    let s = runReducer(initialRunState, { type: 'started', runId: 'r', correlationId: 'c' });
+    s = runReducer(s, {
+      type: 'event',
+      event: ev({
+        type: 'approval-request',
+        approvalId: 'a1',
+        toolName: 'issueRefund',
+        args: { amountCents: 4500 },
+        message: 'Refund €45.00',
+        expiresAt: new Date().toISOString(),
+      }),
+    });
+    expect(pendingApprovals(s).map((a) => a.approvalId)).toEqual(['a1']);
+    s = runReducer(s, {
+      type: 'event',
+      event: ev({ type: 'approval-resolved', approvalId: 'a1', decision: 'decline', by: 'timeout' }),
+    });
+    expect(pendingApprovals(s)).toEqual([]);
+    expect(s.approvals[0]).toMatchObject({ status: 'decline', by: 'timeout' });
   });
 });

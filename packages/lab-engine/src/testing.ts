@@ -58,7 +58,7 @@ export function makeTestDefinition(overrides: Partial<LabDefinitionInput> = {}):
 export const TestInputSchema = z.object({
   text: z.string().min(1).max(100),
   delayMs: z.number().int().min(0).max(10_000).default(0),
-  behavior: z.enum(['ok', 'lab-error', 'crash', 'ignore-abort', 'leak-secret', 'flood']).default('ok'),
+  behavior: z.enum(['ok', 'lab-error', 'crash', 'ignore-abort', 'leak-secret', 'flood', 'approval']).default('ok'),
   secret: z.string().optional(),
 });
 export type TestInput = z.infer<typeof TestInputSchema>;
@@ -82,6 +82,15 @@ export function makeTestLab(defOverrides: Partial<LabDefinitionInput> = {}): Lab
         case 'ignore-abort':
           await new Promise((r) => setTimeout(r, input.delayMs)); // deliberately ignores ctx.signal
           break;
+        case 'approval': {
+          const outcome = await ctx.requestApproval({
+            toolName: 'echo',
+            args: { text: input.text },
+            message: `Echo "${input.text}"?`,
+          });
+          await sleep(input.delayMs, ctx.signal);
+          return { echo: outcome.decision === 'approve' ? input.text : `declined (${outcome.by})` };
+        }
         case 'flood':
           for (let i = 0; i < 50; i++) ctx.emit({ type: 'token', text: String(i) });
           break;

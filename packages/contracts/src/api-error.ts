@@ -18,9 +18,7 @@ export const ApiErrorSchema = z.object({
   error: z.object({
     code: ApiErrorCodeSchema,
     message: z.string(),
-    details: z
-      .array(z.object({ path: z.string(), message: z.string() }))
-      .optional(),
+    details: z.array(z.object({ path: z.string(), message: z.string() })).optional(),
     retryable: z.boolean().optional(),
     requestId: z.string().optional(),
   }),

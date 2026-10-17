@@ -92,3 +92,53 @@ describe('lab-15 approval flow (native requireApproval)', () => {
     expect(out.answer).toContain('need a manager');
   });
 });
+
+describe('lab-15 interactive approval (userDecision: ask)', () => {
+  const interactive = new LabRunner({
+    registry: new LabRegistry([lab15]),
+    services: createLabServices({ serverMode: 'offline', env: {} }),
+    liveEnabled: false,
+    approvalTimeoutMs: 200,
+  });
+  afterAll(() => interactive.dispose());
+
+  async function pendingApproval(runId: string) {
+    for (let i = 0; i < 200; i++) {
+      const e = interactive.events(runId).find((x) => x.type === 'approval-request');
+      if (e?.type === 'approval-request') return e;
+      await new Promise((r) => setTimeout(r, 5));
+    }
+    throw new Error('no approval request');
+  }
+
+  it.each([
+    ['approve', 1, 'approved'],
+    ['decline', 0, 'declined'],
+  ] as const)('learner %s during the run', async (choice, refunds, decision) => {
+    const r = interactive.start('lab-15', { input: { ...lab15.definition.exampleInput, userDecision: 'ask' } });
+    const req = await pendingApproval(r.runId);
+    expect(req).toMatchObject({ toolName: 'issueRefund', message: expect.stringContaining('Refund €45.00 on ORD-1001') });
+    interactive.resolveApproval(r.runId, req.approvalId, choice);
+    await interactive.waitFor(r.runId);
+    const result = interactive.events(r.runId).find((e) => e.type === 'result') as {
+      output: Lab15Output;
+      validation: { passed: boolean };
+    };
+    expect(result.validation.passed).toBe(true);
+    expect(result.output.ledger).toHaveLength(refunds);
+    expect(result.output.approvals).toEqual([expect.objectContaining({ decision, by: 'user' })]);
+  });
+
+  it('auto-declines when nobody answers', async () => {
+    const r = interactive.start('lab-15', { input: { ...lab15.definition.exampleInput, userDecision: 'ask' } });
+    await interactive.waitFor(r.runId);
+    const result = interactive.events(r.runId).find((e) => e.type === 'result') as {
+      output: Lab15Output;
+      validation: { passed: boolean };
+    };
+    expect(result.validation.passed).toBe(true);
+    expect(result.output.ledger).toEqual([]);
+    expect(result.output.approvals).toEqual([expect.objectContaining({ decision: 'declined', by: 'timeout' })]);
+    expect(result.output.audit.find((e) => e.decision === 'declined')?.actor).toBe('system (approval timeout)');
+  });
+});

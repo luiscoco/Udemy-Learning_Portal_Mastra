@@ -34,7 +34,8 @@ export function buildInput(fields: InputField[], raw: RawValues): { values: Inpu
     switch (f.kind) {
       case 'text':
       case 'textarea':
-        if (f.minLength !== undefined && s.trim().length < f.minLength) errors[f.name] = `Enter at least ${f.minLength} characters.`;
+        if (f.minLength !== undefined && s.trim().length < f.minLength)
+          errors[f.name] = `Enter at least ${f.minLength} characters.`;
         else if (s.length > f.maxLength) errors[f.name] = `Use at most ${f.maxLength} characters.`;
         else values[f.name] = s;
         break;

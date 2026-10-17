@@ -39,7 +39,7 @@ The API SHALL list registered labs and return a lab's `LabDefinition` by id, res
 - **THEN** the server removes the subscriber and, if no subscriber reconnects within the grace period, aborts the run and releases its resources
 
 ### Requirement: Cancellation and deadlines
-Runs SHALL be cancellable via `POST /api/runs/:runId/cancel` and SHALL be aborted when their deadline (`min(requested, lab maximum, server maximum)`) passes; lab code receives an `AbortSignal`.
+Runs SHALL be cancellable via `POST /api/runs/:runId/cancel` and SHALL be aborted when their deadline (`min(requested, lab maximum, server maximum)`) passes; lab code receives an `AbortSignal`. Time spent waiting for a human approval SHALL NOT count against the deadline.
 
 #### Scenario: Cancel
 - **WHEN** a client cancels an active run
@@ -48,6 +48,14 @@ Runs SHALL be cancellable via `POST /api/runs/:runId/cancel` and SHALL be aborte
 #### Scenario: Timeout
 - **WHEN** a run exceeds its deadline
 - **THEN** it emits `error` with code `TIMEOUT` and `complete` with status `timeout`, even if the lab ignores the signal
+
+#### Scenario: Deadline paused while waiting
+- **WHEN** a run with a 300 ms deadline waits 600 ms for approval and is then approved
+- **THEN** it completes with status `succeeded`
+
+#### Scenario: Cancel while waiting
+- **WHEN** a run waiting for approval is cancelled
+- **THEN** it ends with status `cancelled`
 
 ### Requirement: Error mapping and safe logging
 Lab failures SHALL be mapped to canonical error codes; unknown errors become `INTERNAL` with a generic message, and any configured secret value is redacted from event payloads and logs.
@@ -69,3 +77,26 @@ The registry SHALL contain Dummy Lab 00, a deterministic offline lab that emits 
 #### Scenario: Deterministic output
 - **WHEN** Dummy Lab 00 runs twice with the same input
 - **THEN** both runs produce identical result payloads and the validation passes
+
+### Requirement: Human approval during a run
+Lab code SHALL be able to pause a run with `ctx.requestApproval()`; the run SHALL emit `approval-request` and resume when `POST /api/runs/:runId/approvals/:approvalId` records a decision, emitting `approval-resolved`.
+
+#### Scenario: Approve while running
+- **WHEN** a run is waiting for approval and the client posts `{ "decision": "approve" }`
+- **THEN** the response is 200, an `approval-resolved` event with `by: "user"` is emitted and the lab continues with the decision
+
+#### Scenario: Duplicate or late decision
+- **WHEN** a decision is posted for an approval that is already resolved, or for a finished run
+- **THEN** the response is 409 `CONFLICT` and the run is unaffected
+
+#### Scenario: Unknown run
+- **WHEN** a decision is posted for an unknown run id
+- **THEN** the response is 404 `NOT_FOUND`
+
+#### Scenario: Invalid body
+- **WHEN** the decision is not `approve` or `decline`
+- **THEN** the response is 422 `VALIDATION_FAILED`
+
+#### Scenario: Approval timeout
+- **WHEN** nobody decides within the approval timeout
+- **THEN** the approval resolves as `decline` with `by: "timeout"`

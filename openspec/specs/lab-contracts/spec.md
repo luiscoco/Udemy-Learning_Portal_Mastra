@@ -24,7 +24,7 @@ A `LessonGuide` SHALL contain an ordered procedure, a prediction prompt, exactly
 - **THEN** hints are returned as levels 1, 2 and 3 in that order
 
 ### Requirement: Execution event contract
-Execution events SHALL be a discriminated union on `type` with values `log`, `token`, `tool-start`, `tool-finish`, `workflow-step`, `result`, `error`, `complete`, each carrying `runId`, `correlationId`, a monotonically increasing `seq`, an ISO `timestamp` and optional `annotations`.
+Execution events SHALL be a discriminated union on `type` with values `log`, `token`, `tool-start`, `tool-finish`, `workflow-step`, `approval-request`, `approval-resolved`, `result`, `error`, `complete`, each carrying `runId`, `correlationId`, a monotonically increasing `seq`, an ISO `timestamp` and optional `annotations`.
 
 #### Scenario: Unknown event type
 - **WHEN** an event with `type: "debug"` is parsed
@@ -33,6 +33,10 @@ Execution events SHALL be a discriminated union on `type` with values `log`, `to
 #### Scenario: Terminal event
 - **WHEN** a run ends for any reason
 - **THEN** exactly one `complete` event is the last event, with status `succeeded`, `failed`, `cancelled` or `timeout`
+
+#### Scenario: Approval events
+- **WHEN** an `approval-request` event is parsed
+- **THEN** it carries `approvalId`, `toolName`, `args`, `message` and an ISO `expiresAt`, and the matching `approval-resolved` carries `approvalId`, `decision` (`approve` or `decline`) and `by` (`user` or `timeout`)
 
 ### Requirement: Validation, quiz and progress records
 The contracts SHALL define `ValidationResult` (overall `passed` plus per-check id, label, passed, message), `QuizQuestion` (prompt, 2–6 choices, correct index, explanation) and `ProgressRecord` (lab id, status, flags for lesson read, successful run, checks passed, quiz score, notes, updated timestamp).

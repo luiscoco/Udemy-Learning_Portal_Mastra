@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
-import type { ExecutionRequest } from '@mlp/contracts';
+import type { ApprovalDecision, ExecutionRequest } from '@mlp/contracts';
 import { ApiClientError } from '../../api/client';
-import { cancelRun, startRun, streamRunEvents } from '../../api/runs';
+import { cancelRun, decideApproval, startRun, streamRunEvents } from '../../api/runs';
 import { initialRunState, runReducer, type RunState } from './run-state';
 
 function toRunError(err: unknown) {
@@ -15,6 +15,8 @@ export interface LabRunControls {
   state: RunState;
   run: (request: ExecutionRequest) => Promise<RunState | undefined>;
   cancel: () => Promise<void>;
+  /** Sends a decision for a pending approval; rejects with ApiClientError so the caller can show it inline. */
+  decide: (approvalId: string, decision: ApprovalDecision) => Promise<void>;
   reset: () => void;
 }
 
@@ -64,10 +66,17 @@ export function useLabRun(labId: string): LabRunControls {
     }
   }, []);
 
+  const decide = useCallback(async (approvalId: string, decision: ApprovalDecision) => {
+    const runId = latest.current.runId;
+    if (!runId) return;
+    // The UI updates from the approval-resolved event on the stream, not from this response.
+    await decideApproval(runId, approvalId, decision);
+  }, []);
+
   const reset = useCallback(() => {
     streamCtrl.current?.abort();
     dispatch({ type: 'reset' });
   }, []);
 
-  return { state, run, cancel, reset };
+  return { state, run, cancel, decide, reset };
 }

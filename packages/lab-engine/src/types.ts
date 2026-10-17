@@ -1,5 +1,6 @@
 import type { ZodType } from 'zod';
 import type {
+  ApprovalDecision,
   CheckResult,
   ExecutionEvent,
   ExecutionEventPayload,
@@ -24,6 +25,21 @@ export interface ResultExtras {
   annotations?: Record<string, string | number | boolean | null>;
 }
 
+export interface ApprovalRequest {
+  toolName: string;
+  args: unknown;
+  /** What will happen if the human approves, in plain words. */
+  message: string;
+}
+
+export interface ApprovalOutcome {
+  approvalId: string;
+  decision: ApprovalDecision;
+  reason?: string;
+  /** user = a person decided; timeout = nobody answered in time and the request was auto-declined. */
+  by: 'user' | 'timeout';
+}
+
 /** Everything a lab implementation receives for one run. */
 export interface RunContext<S = unknown> {
   readonly runId: string;
@@ -32,7 +48,7 @@ export interface RunContext<S = unknown> {
   readonly labId: string;
   readonly mode: RuntimeMode;
   readonly signal: AbortSignal;
-  /** Epoch milliseconds after which the run is aborted with TIMEOUT. */
+  /** Epoch milliseconds after which the run is aborted with TIMEOUT (moves later while waiting for approvals). */
   readonly deadline: number;
   /** Server-side adapters (models, storage…). Never sent to the client. */
   readonly services: S;
@@ -41,6 +57,12 @@ export interface RunContext<S = unknown> {
   /** Attach usage / effective options to the final result event. */
   setResultExtras(extras: ResultExtras): void;
   throwIfAborted(): void;
+  /**
+   * Pauses the run until a human approves or declines via the API (emits approval-request /
+   * approval-resolved). The deadline clock stops while waiting; unanswered requests auto-decline after
+   * the runner's approval timeout. Rejects with the abort reason if the run is cancelled meanwhile.
+   */
+  requestApproval(request: ApprovalRequest): Promise<ApprovalOutcome>;
 }
 
 export interface PreflightEnv {

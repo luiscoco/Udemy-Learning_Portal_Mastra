@@ -51,7 +51,11 @@ describe('LabRunner.start validation', () => {
   });
 
   it('refuses live mode when the server is offline', () => {
-    const registry = new LabRegistry([makeTestLab({ execution: { modes: ['offline', 'live'], defaultTimeoutMs: 1000, maxTimeoutMs: 2000, budget: {}, costNotice: 'x' } })]);
+    const registry = new LabRegistry([
+      makeTestLab({
+        execution: { modes: ['offline', 'live'], defaultTimeoutMs: 1000, maxTimeoutMs: 2000, budget: {}, costNotice: 'x' },
+      }),
+    ]);
     const r = new LabRunner({ registry, services: {}, liveEnabled: false });
     runners.push(r);
     expect(() => r.start('lab-99', { input: { text: 'a' }, mode: 'live' })).toThrowError(
@@ -212,5 +216,83 @@ describe('LabRegistry', () => {
 
   it('rejects duplicate ids', () => {
     expect(() => new LabRegistry([makeTestLab(), makeTestLab()])).toThrow(/already registered/);
+  });
+});
+
+describe('LabRunner approvals', () => {
+  async function waitForApproval(runner: LabRunner, runId: string) {
+    for (let i = 0; i < 100; i++) {
+      const req = runner.events(runId).find((e) => e.type === 'approval-request');
+      if (req && req.type === 'approval-request') return req;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    throw new Error('no approval-request event');
+  }
+
+  it('pauses until a decision arrives and emits request/resolved events', async () => {
+    const r = setup();
+    const run = r.start('lab-99', { input: { text: 'hi', behavior: 'approval' } });
+    const req = await waitForApproval(r, run.runId);
+    expect(ExecutionEventSchema.parse(req)).toMatchObject({ toolName: 'echo', args: { text: 'hi' }, message: 'Echo "hi"?' });
+    expect(r.get(run.runId)).toMatchObject({ status: 'running', pendingApprovals: 1 });
+    expect(r.resolveApproval(run.runId, req.approvalId, 'approve').pendingApprovals).toBe(0);
+    const snap = await r.waitFor(run.runId);
+    expect(snap.status).toBe('succeeded');
+    const events = r.events(run.runId);
+    expect(events.find((e) => e.type === 'approval-resolved')).toMatchObject({ decision: 'approve', by: 'user' });
+    expect(events.find((e) => e.type === 'result')).toMatchObject({ output: { echo: 'hi' } });
+  });
+
+  it('first decision wins; later or unknown decisions are CONFLICT, unknown runs NOT_FOUND', async () => {
+    const r = setup();
+    const run = r.start('lab-99', { input: { text: 'hi', behavior: 'approval' } });
+    const req = await waitForApproval(r, run.runId);
+    expect(() => r.resolveApproval(run.runId, 'nope', 'approve')).toThrowError(expect.objectContaining({ code: 'CONFLICT' }));
+    r.resolveApproval(run.runId, req.approvalId, 'decline', 'not today');
+    expect(() => r.resolveApproval(run.runId, req.approvalId, 'approve')).toThrowError(
+      expect.objectContaining({ code: 'CONFLICT' }),
+    );
+    await r.waitFor(run.runId);
+    expect(r.events(run.runId).find((e) => e.type === 'result')).toMatchObject({ output: { echo: 'declined (user)' } });
+    expect(r.events(run.runId).find((e) => e.type === 'approval-resolved')).toMatchObject({ reason: 'not today' });
+    expect(() => r.resolveApproval(run.runId, req.approvalId, 'approve')).toThrowError(
+      expect.objectContaining({ code: 'CONFLICT' }),
+    );
+    expect(() => r.resolveApproval('missing', req.approvalId, 'approve')).toThrowError(
+      expect.objectContaining({ code: 'NOT_FOUND' }),
+    );
+  });
+
+  it('auto-declines after the approval timeout', async () => {
+    const r = setup({ approvalTimeoutMs: 50 });
+    const run = r.start('lab-99', { input: { text: 'hi', behavior: 'approval' } });
+    expect((await r.waitFor(run.runId)).status).toBe('succeeded');
+    expect(r.events(run.runId).find((e) => e.type === 'approval-resolved')).toMatchObject({ decision: 'decline', by: 'timeout' });
+    expect(r.events(run.runId).find((e) => e.type === 'result')).toMatchObject({ output: { echo: 'declined (timeout)' } });
+  });
+
+  it('does not count waiting time against the deadline, but resumes the clock afterwards', async () => {
+    const r = setup();
+    const ok = r.start('lab-99', { input: { text: 'hi', behavior: 'approval' }, timeoutMs: 300 });
+    const req = await waitForApproval(r, ok.runId);
+    await new Promise((res) => setTimeout(res, 600));
+    r.resolveApproval(ok.runId, req.approvalId, 'approve');
+    expect((await r.waitFor(ok.runId)).status).toBe('succeeded');
+
+    const slow = r.start('lab-99', { input: { text: 'hi', behavior: 'approval', delayMs: 2000 }, timeoutMs: 300 });
+    r.resolveApproval(slow.runId, (await waitForApproval(r, slow.runId)).approvalId, 'approve');
+    expect((await r.waitFor(slow.runId)).status).toBe('timeout');
+  });
+
+  it('cancelling a waiting run ends it as cancelled', async () => {
+    const r = setup();
+    const run = r.start('lab-99', { input: { text: 'hi', behavior: 'approval' } });
+    const req = await waitForApproval(r, run.runId);
+    r.cancel(run.runId);
+    expect((await r.waitFor(run.runId)).status).toBe('cancelled');
+    expect(r.get(run.runId)?.pendingApprovals).toBe(0);
+    expect(() => r.resolveApproval(run.runId, req.approvalId, 'approve')).toThrowError(
+      expect.objectContaining({ code: 'CONFLICT' }),
+    );
   });
 });

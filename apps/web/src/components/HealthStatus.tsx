@@ -2,10 +2,7 @@ import { useEffect, useState } from 'react';
 import type { HealthResponse } from '@mlp/contracts';
 import { fetchHealth } from '../api/client';
 
-type State =
-  | { kind: 'loading' }
-  | { kind: 'ok'; health: HealthResponse }
-  | { kind: 'error'; message: string };
+type State = { kind: 'loading' } | { kind: 'ok'; health: HealthResponse } | { kind: 'error'; message: string };
 
 export function HealthStatus({ load = fetchHealth }: { load?: typeof fetchHealth }) {
   const [state, setState] = useState<State>({ kind: 'loading' });

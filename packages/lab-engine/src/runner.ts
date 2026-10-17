@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import {
   ExecutionRequestSchema,
+  type ApprovalDecision,
   redactSecrets,
   type ExecutionEvent,
   type ExecutionEventPayload,
@@ -12,7 +13,14 @@ import {
 } from '@mlp/contracts';
 import { LabError, RunAbortedError, toCanonicalError, zodDetails } from './errors.js';
 import type { LabRegistry } from './registry.js';
-import { silentLogger, type EngineLogger, type ResultExtras, type RunContext } from './types.js';
+import {
+  silentLogger,
+  type ApprovalOutcome,
+  type ApprovalRequest,
+  type EngineLogger,
+  type ResultExtras,
+  type RunContext,
+} from './types.js';
 import { redactValue } from './util.js';
 
 export interface RunnerOptions<S> {
@@ -24,6 +32,8 @@ export interface RunnerOptions<S> {
   /** Server-wide hard cap applied on top of each lab's maxTimeoutMs. */
   serverMaxTimeoutMs?: number;
   disconnectGraceMs?: number;
+  /** How long a run may wait for a human approval before it is auto-declined (default 5 min). */
+  approvalTimeoutMs?: number;
   retentionMs?: number;
   maxEventsPerRun?: number;
   /** Secret values to redact from events and logs. */
@@ -54,6 +64,12 @@ interface RunRecord {
   controller: AbortController;
   truncated: boolean;
   graceTimer?: NodeJS.Timeout;
+  /** Deadline bookkeeping: the clock is paused while approvals are pending. */
+  deadlineTimer?: NodeJS.Timeout;
+  deadlineAt: number;
+  remainingMs: number;
+  /** Pending approvals: approvalId → settle function. */
+  approvals: Map<string, (outcome: Omit<ApprovalOutcome, 'approvalId'>) => void>;
   extras: ResultExtras;
   done: Promise<void>;
 }
@@ -74,6 +90,7 @@ export class LabRunner<S = unknown> {
       maxConcurrentRuns: 4,
       serverMaxTimeoutMs: 120_000,
       disconnectGraceMs: 5_000,
+      approvalTimeoutMs: 300_000,
       retentionMs: 10 * 60_000,
       maxEventsPerRun: 5_000,
       secrets: [],
@@ -126,12 +143,20 @@ export class LabRunner<S = unknown> {
     }
 
     if (this.activeCount >= this.opts.maxConcurrentRuns) {
-      throw new LabError('TOO_MANY_REQUESTS', `Too many active runs (max ${this.opts.maxConcurrentRuns}). Wait for one to finish.`, {
-        retryable: true,
-      });
+      throw new LabError(
+        'TOO_MANY_REQUESTS',
+        `Too many active runs (max ${this.opts.maxConcurrentRuns}). Wait for one to finish.`,
+        {
+          retryable: true,
+        },
+      );
     }
 
-    const deadlineMs = Math.min(timeoutMs ?? def.execution.defaultTimeoutMs, def.execution.maxTimeoutMs, this.opts.serverMaxTimeoutMs);
+    const deadlineMs = Math.min(
+      timeoutMs ?? def.execution.defaultTimeoutMs,
+      def.execution.maxTimeoutMs,
+      this.opts.serverMaxTimeoutMs,
+    );
     const requestId = meta.requestId ?? randomUUID();
     const record: RunRecord = {
       id: randomUUID(),
@@ -146,6 +171,9 @@ export class LabRunner<S = unknown> {
       listeners: new Set(),
       controller: new AbortController(),
       truncated: false,
+      deadlineAt: 0,
+      remainingMs: deadlineMs,
+      approvals: new Map(),
       extras: {},
       done: Promise.resolve(),
     };
@@ -165,7 +193,7 @@ export class LabRunner<S = unknown> {
   private async execute(record: RunRecord, input: unknown): Promise<void> {
     const lab = this.opts.registry.require(record.labId);
     const { signal } = record.controller;
-    const timer = setTimeout(() => record.controller.abort(new RunAbortedError('timeout')), record.deadlineMs);
+    this.armDeadline(record);
     const aborted = new Promise<never>((_, reject) => {
       const onAbort = () => reject(signal.reason);
       if (signal.aborted) onAbort();
@@ -180,7 +208,9 @@ export class LabRunner<S = unknown> {
       labId: record.labId,
       mode: record.mode,
       signal,
-      deadline: record.startedAt + record.deadlineMs,
+      get deadline() {
+        return record.approvals.size > 0 ? Number.POSITIVE_INFINITY : record.deadlineAt;
+      },
       services: this.opts.services,
       emit: (e) => {
         if (e.type === 'complete' || e.type === 'result' || e.type === 'error') {
@@ -195,6 +225,7 @@ export class LabRunner<S = unknown> {
       throwIfAborted: () => {
         if (signal.aborted) throw signal.reason;
       },
+      requestApproval: (request) => this.requestApproval(record, request),
     };
 
     try {
@@ -204,7 +235,9 @@ export class LabRunner<S = unknown> {
       if (lab.outputSchema) {
         const parsed = lab.outputSchema.safeParse(raw);
         if (!parsed.success) {
-          throw new LabError('VALIDATION_FAILED', 'Lab output did not match its declared schema', { details: zodDetails(parsed.error) });
+          throw new LabError('VALIDATION_FAILED', 'Lab output did not match its declared schema', {
+            details: zodDetails(parsed.error),
+          });
         }
         output = parsed.data;
       }
@@ -246,9 +279,83 @@ export class LabRunner<S = unknown> {
         err instanceof RunAbortedError ? (err.kind === 'timeout' ? 'timeout' : 'cancelled') : 'failed';
       this.finish(record, status);
     } finally {
-      clearTimeout(timer);
+      clearTimeout(record.deadlineTimer);
       if (record.graceTimer) clearTimeout(record.graceTimer);
     }
+  }
+
+  private armDeadline(record: RunRecord): void {
+    record.deadlineAt = this.opts.now() + record.remainingMs;
+    record.deadlineTimer = setTimeout(() => record.controller.abort(new RunAbortedError('timeout')), record.remainingMs);
+  }
+
+  private pauseDeadline(record: RunRecord): void {
+    clearTimeout(record.deadlineTimer);
+    record.deadlineTimer = undefined;
+    record.remainingMs = Math.max(0, record.deadlineAt - this.opts.now());
+  }
+
+  private requestApproval(record: RunRecord, request: ApprovalRequest): Promise<ApprovalOutcome> {
+    const { signal } = record.controller;
+    if (signal.aborted) return Promise.reject(signal.reason);
+    const approvalId = randomUUID();
+    if (record.approvals.size === 0) this.pauseDeadline(record);
+    const timeoutMs = this.opts.approvalTimeoutMs;
+    return new Promise<ApprovalOutcome>((resolve, reject) => {
+      const cleanup = () => {
+        clearTimeout(expiry);
+        signal.removeEventListener('abort', onAbort);
+        record.approvals.delete(approvalId);
+        if (record.approvals.size === 0 && !signal.aborted && record.status === 'running') this.armDeadline(record);
+      };
+      const settle = (outcome: Omit<ApprovalOutcome, 'approvalId'>) => {
+        if (!record.approvals.has(approvalId)) return;
+        record.approvals.delete(approvalId); // before the event, so snapshots/listeners see it resolved
+        this.push(record, {
+          type: 'approval-resolved',
+          approvalId,
+          decision: outcome.decision,
+          by: outcome.by,
+          ...(outcome.reason ? { reason: outcome.reason } : {}),
+        });
+        cleanup();
+        resolve({ approvalId, ...outcome });
+      };
+      const onAbort = () => {
+        cleanup();
+        reject(signal.reason);
+      };
+      const expiry = setTimeout(
+        () => settle({ decision: 'decline', reason: 'Nobody answered before the approval timeout', by: 'timeout' }),
+        timeoutMs,
+      );
+      expiry.unref?.();
+      signal.addEventListener('abort', onAbort, { once: true });
+      record.approvals.set(approvalId, settle);
+      this.push(record, {
+        type: 'approval-request',
+        approvalId,
+        toolName: request.toolName,
+        args: request.args,
+        message: request.message,
+        expiresAt: new Date(this.opts.now() + timeoutMs).toISOString(),
+      });
+    });
+  }
+
+  /**
+   * Records a human decision for a pending approval. Throws NOT_FOUND for an unknown run and CONFLICT
+   * when the run has finished or the approval is unknown or already resolved (first decision wins).
+   */
+  resolveApproval(runId: string, approvalId: string, decision: ApprovalDecision, reason?: string): RunSnapshot {
+    const record = this.runs.get(runId);
+    if (!record) throw new LabError('NOT_FOUND', `Unknown run "${runId}"`);
+    const settle = record.status === 'running' ? record.approvals.get(approvalId) : undefined;
+    if (!settle)
+      throw new LabError('CONFLICT', 'This approval is not pending (already decided, expired, or the run has finished).');
+    this.opts.logger.info('approval resolved', { runId, approvalId, decision });
+    settle({ decision, by: 'user', ...(reason ? { reason } : {}) });
+    return this.snapshot(record);
   }
 
   private push(record: RunRecord, payload: ExecutionEventPayload): void {
@@ -383,6 +490,7 @@ export class LabRunner<S = unknown> {
       ...(r.finishedAt !== undefined ? { finishedAt: new Date(r.finishedAt).toISOString() } : {}),
       deadlineMs: r.deadlineMs,
       eventCount: r.events.length,
+      pendingApprovals: r.approvals.size,
     };
   }
 }

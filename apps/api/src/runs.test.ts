@@ -107,7 +107,11 @@ describe('lab discovery', () => {
 
 describe('run lifecycle over HTTP + SSE', () => {
   it('starts, streams every event type and closes after complete', async () => {
-    const res = await startRun('lab-00', { input: { message: 'Hello SSE', delayMs: 0 } }, { 'x-correlation-id': 'course-demo-1' });
+    const res = await startRun(
+      'lab-00',
+      { input: { message: 'Hello SSE', delayMs: 0 } },
+      { 'x-correlation-id': 'course-demo-1' },
+    );
     expect(res.status).toBe(202);
     const start = StartRunResponseSchema.parse(await res.json());
     expect(start.correlationId).toBe('course-demo-1');
@@ -127,7 +131,9 @@ describe('run lifecycle over HTTP + SSE', () => {
   });
 
   it('honours Last-Event-ID when reconnecting', async () => {
-    const start = StartRunResponseSchema.parse(await (await startRun('lab-00', { input: { message: 'resume me', delayMs: 0 } })).json());
+    const start = StartRunResponseSchema.parse(
+      await (await startRun('lab-00', { input: { message: 'resume me', delayMs: 0 } })).json(),
+    );
     await api.runner.waitFor(start.runId);
     const { events } = await readSse(`${base}/api/runs/${start.runId}/events`, { headers: { 'last-event-id': '5' } });
     expect(events[0]?.seq).toBe(6);
@@ -201,13 +207,70 @@ describe('run lifecycle over HTTP + SSE', () => {
 
 describe('secret isolation', () => {
   it('never returns the configured key from any endpoint or event', async () => {
-    const start = StartRunResponseSchema.parse(await (await startRun('lab-00', { input: { message: 'leak?', delayMs: 0 } })).json());
+    const start = StartRunResponseSchema.parse(
+      await (await startRun('lab-00', { input: { message: 'leak?', delayMs: 0 } })).json(),
+    );
     const { events } = await readSse(`${base}/api/runs/${start.runId}/events`);
     const bodies = await Promise.all(
-      ['/api/health', '/api/catalog', '/api/labs', '/api/labs/lab-00', '/api/labs/lab-00/source', '/api/labs/lab-00/preflight'].map(
-        async (p) => (await fetch(base + p)).text(),
-      ),
+      [
+        '/api/health',
+        '/api/catalog',
+        '/api/labs',
+        '/api/labs/lab-00',
+        '/api/labs/lab-00/source',
+        '/api/labs/lab-00/preflight',
+      ].map(async (p) => (await fetch(base + p)).text()),
     );
     for (const text of [...bodies, JSON.stringify(events)]) expect(text).not.toContain(SECRET);
+  });
+});
+
+describe('approvals API', () => {
+  const decide = (runId: string, approvalId: string, body: unknown) =>
+    fetch(`${base}/api/runs/${runId}/approvals/${approvalId}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  const askInput = {
+    request: 'Please refund 45.00 on order ORD-1001, the mug arrived broken.',
+    role: 'support-agent',
+    userDecision: 'ask',
+    modelId: 'openai/gpt-5-mini',
+  };
+
+  it('pauses a run, accepts one decision, then rejects duplicates and bad input', async () => {
+    const start = StartRunResponseSchema.parse(await (await startRun('lab-15', { input: askInput })).json());
+    // Wait for the run to reach its approval request.
+    let approvalId = '';
+    for (let i = 0; i < 200 && !approvalId; i++) {
+      const e = api.runner.events(start.runId).find((x) => x.type === 'approval-request');
+      if (e?.type === 'approval-request') approvalId = e.approvalId;
+      else await new Promise((r) => setTimeout(r, 10));
+    }
+    expect(approvalId).not.toBe('');
+
+    const streaming = readSse(`${base}/api/runs/${start.runId}/events`);
+    const bad = await decide(start.runId, approvalId, { decision: 'maybe' });
+    expect(bad.status).toBe(422);
+    expect(ApiErrorSchema.parse(await bad.json()).error.code).toBe('VALIDATION_FAILED');
+
+    const ok = await decide(start.runId, approvalId, { decision: 'approve' });
+    expect(ok.status).toBe(200);
+    expect(await ok.json()).toEqual({ runId: start.runId, approvalId, decision: 'approve' });
+
+    const again = await decide(start.runId, approvalId, { decision: 'decline' });
+    expect(again.status).toBe(409);
+    expect(ApiErrorSchema.parse(await again.json()).error.code).toBe('CONFLICT');
+
+    const { events } = await streaming;
+    expect(events.find((e) => e.type === 'approval-resolved')).toMatchObject({ decision: 'approve', by: 'user' });
+    expect(events.at(-1)).toMatchObject({ type: 'complete', status: 'succeeded' });
+    expect(events.find((e) => e.type === 'result')).toMatchObject({ output: { refundExecutions: 1 } });
+  });
+
+  it('404 for an unknown run', async () => {
+    const res = await decide('nope', 'x', { decision: 'approve' });
+    expect(res.status).toBe(404);
   });
 });

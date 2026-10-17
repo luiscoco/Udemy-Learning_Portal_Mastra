@@ -1,9 +1,12 @@
 import {
+  ApprovalDecisionResponseSchema,
   ExecutionEventSchema,
   LabSourceResponseSchema,
   PreflightResultSchema,
   RunSnapshotSchema,
   StartRunResponseSchema,
+  type ApprovalDecision,
+  type ApprovalDecisionResponse,
   type ExecutionEvent,
   type ExecutionRequest,
   type LabSourceResponse,
@@ -35,6 +38,26 @@ export async function cancelRun(runId: string): Promise<RunSnapshot> {
   const res = await fetch(`/api/runs/${encodeURIComponent(runId)}/cancel`, { method: 'POST' });
   if (!res.ok) throw await toApiClientError(res);
   return RunSnapshotSchema.parse(await res.json());
+}
+
+/** Approves or declines a tool call the run is waiting on. */
+export async function decideApproval(
+  runId: string,
+  approvalId: string,
+  decision: ApprovalDecision,
+): Promise<ApprovalDecisionResponse> {
+  let res: Response;
+  try {
+    res = await fetch(`/api/runs/${encodeURIComponent(runId)}/approvals/${encodeURIComponent(approvalId)}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify({ decision }),
+    });
+  } catch {
+    throw new ApiClientError('NETWORK', 'Cannot reach the API to send your decision.', 0, undefined, true);
+  }
+  if (!res.ok) throw await toApiClientError(res);
+  return ApprovalDecisionResponseSchema.parse(await res.json());
 }
 
 export async function fetchSource(labId: string, signal?: AbortSignal): Promise<LabSourceResponse> {

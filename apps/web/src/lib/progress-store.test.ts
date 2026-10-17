@@ -21,7 +21,10 @@ describe('LocalStorageProgressStore', () => {
   it('drops individually invalid records', () => {
     localStorage.setItem(
       'mlp.progress.v1',
-      JSON.stringify({ version: 1, records: { 'lab-00': { labId: 'lab-00', status: 'hacked' }, 'lab-01': emptyProgress('lab-01') } }),
+      JSON.stringify({
+        version: 1,
+        records: { 'lab-00': { labId: 'lab-00', status: 'hacked' }, 'lab-01': emptyProgress('lab-01') },
+      }),
     );
     expect(Object.keys(new LocalStorageProgressStore().getAll())).toEqual(['lab-01']);
   });

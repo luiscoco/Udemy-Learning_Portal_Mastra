@@ -32,7 +32,8 @@ const MAX_APPROVAL_ROUNDS = 3;
 export const Lab15InputSchema = z.object({
   request: z.string().trim().min(1).max(500),
   role: z.enum(ROLES),
-  userDecision: z.enum(['approve', 'decline']),
+  /** ask = pause the run and let the learner decide in the Run tab; approve/decline = deterministic presets. */
+  userDecision: z.enum(['ask', 'approve', 'decline']),
   modelId: z.enum(DEFAULT_LIVE_MODELS),
 });
 export type Lab15Input = z.infer<typeof Lab15InputSchema>;
@@ -41,11 +42,19 @@ export interface Lab15Output {
   role: Lab15Input['role'];
   allowedTools: string[];
   answer: string;
-  approvals: { toolName: string; args: unknown; decision: 'approved' | 'declined' }[];
+  approvals: { toolName: string; args: unknown; decision: 'approved' | 'declined'; by: 'preset' | 'user' | 'timeout' }[];
   toolCalls: ToolTrace[];
   audit: AuditEntry[];
   ledger: LedgerEntry[];
   refundExecutions: number;
+}
+
+/** Plain-language summary shown to the human approver. */
+export function describeCall(toolName: string, args: unknown): string {
+  const a = (args ?? {}) as { orderId?: string; amountCents?: number; reason?: string };
+  if (toolName === 'issueRefund' && typeof a.amountCents === 'number')
+    return `Refund ${eur(a.amountCents)} on ${a.orderId ?? '?'}${a.reason ? ` (reason: ${a.reason})` : ''}. This moves money.`;
+  return `Run ${toolName} with ${JSON.stringify(args)}.`;
 }
 
 /** Extracts the intent the offline model acts on: an order id, a euro amount and the requested action. */
@@ -162,15 +171,30 @@ export const lab15: LabImplementation<Lab15Input, Lab15Output, LabServices> = {
         reason: 'requireApproval',
         actor: 'system',
       });
-      const decision = input.userDecision === 'approve' ? 'approved' : 'declined';
-      approvals.push({ toolName: pending.toolName, args: pending.args, decision });
+      let decision: 'approved' | 'declined';
+      let by: 'preset' | 'user' | 'timeout' = 'preset';
+      let why = 'decision preset in the lab input';
+      if (input.userDecision === 'ask') {
+        ctx.log('info', 'Waiting for your decision in the Run tab (the run deadline is paused).');
+        const outcome = await ctx.requestApproval({
+          toolName: pending.toolName,
+          args: pending.args,
+          message: describeCall(pending.toolName, pending.args),
+        });
+        decision = outcome.decision === 'approve' ? 'approved' : 'declined';
+        by = outcome.by;
+        why = outcome.reason ?? (by === 'timeout' ? 'no answer before the approval timeout' : 'decided by the learner');
+      } else {
+        decision = input.userDecision === 'approve' ? 'approved' : 'declined';
+      }
+      approvals.push({ toolName: pending.toolName, args: pending.args, decision, by });
       audit.append({
         toolName: pending.toolName,
         toolCallId: pending.toolCallId,
         args: pending.args,
         decision,
-        reason: 'decision supplied in the lab input',
-        actor: 'human approver',
+        reason: why,
+        actor: by === 'timeout' ? 'system (approval timeout)' : 'human approver',
       });
       ctx.emit({ type: 'workflow-step', stepId: `approval-${pending.toolName}`, status: 'success', output: { decision } });
       const options = { runId: res.runId!, toolCallId: pending.toolCallId, abortSignal: ctx.signal, maxSteps: 4 };

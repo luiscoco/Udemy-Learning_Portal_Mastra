@@ -20,6 +20,8 @@ export const ConfigSchema = z.object({
   MAX_CONCURRENT_RUNS: z.coerce.number().int().min(1).max(100).default(4),
   RUN_MAX_TIMEOUT_MS: z.coerce.number().int().min(1000).max(300_000).default(120_000),
   SSE_DISCONNECT_GRACE_MS: z.coerce.number().int().min(0).max(60_000).default(5_000),
+  /** How long a run waits for a human approval before auto-declining. */
+  APPROVAL_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(1_800_000).default(300_000),
   SSE_HEARTBEAT_MS: z.coerce.number().int().min(1000).max(60_000).default(15_000),
   /** When set, the API also serves the built web app (apps/web/dist) on the same origin. */
   WEB_DIST_DIR: z.string().min(1).optional(),
@@ -32,7 +34,10 @@ export const ConfigSchema = z.object({
 export type AppConfig = z.infer<typeof ConfigSchema>;
 
 export class ConfigError extends Error {
-  constructor(public readonly keys: string[], message: string) {
+  constructor(
+    public readonly keys: string[],
+    message: string,
+  ) {
     super(message);
     this.name = 'ConfigError';
   }
@@ -43,9 +48,7 @@ export function parseConfig(env: Record<string, string | undefined>): AppConfig 
   const result = ConfigSchema.safeParse(env);
   if (!result.success) {
     const keys = [...new Set(result.error.issues.map((i) => String(i.path[0] ?? '(root)')))];
-    const detail = result.error.issues
-      .map((i) => `${String(i.path[0] ?? '(root)')}: ${i.message}`)
-      .join('; ');
+    const detail = result.error.issues.map((i) => `${String(i.path[0] ?? '(root)')}: ${i.message}`).join('; ');
     throw new ConfigError(keys, `Invalid configuration (${detail})`);
   }
   return result.data;
