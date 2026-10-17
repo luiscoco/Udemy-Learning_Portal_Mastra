@@ -2,6 +2,7 @@ import { createRequire } from 'node:module';
 
 export * from './scripted-model.js';
 export * from './models.js';
+export * from './memory-store.js';
 
 const require = createRequire(import.meta.url);
 

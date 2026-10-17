@@ -22,7 +22,10 @@ What is still required:
 
 ## 2. Durable state
 
-- ☐ **Persistent storage adapter.** Introduce it with the memory labs (L21–L23) through its own OpenSpec change. Paused approval runs and conversation history must survive a restart.
+- ☐ **Persistent storage adapter.** Partly done.
+  - ☑ **Conversation history** is durable since L21: `@mastra/libsql` on local files via `services.memory`. Its survival across a real process restart is covered by an integration test.
+  - ☐ **Paused approval runs** are still in memory and do not survive a restart.
+  - ☐ **Hosting.** A public host needs a remote libSQL/Turso or Postgres adapter, with backups, instead of local files.
 - ☐ **Learner progress on the server.** Progress is in browser storage today. Move it server-side if learners switch devices.
 
 ## 3. Hosting hardening

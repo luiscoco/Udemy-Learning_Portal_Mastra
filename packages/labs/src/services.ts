@@ -1,13 +1,18 @@
 import type { RuntimeMode } from '@mlp/contracts';
 import { LabError } from '@mlp/lab-engine';
+import { join } from 'node:path';
 import {
   checkModelId,
   getMastraVersion,
   liveModelCatalog,
+  openMemory,
   ScriptedLanguageModel,
   type LiveModelInfo,
+  type MemoryOptions,
+  type OpenedMemory,
   type ScriptedModelOptions,
 } from '@mlp/mastra-runtime';
+import { dataDir } from './paths.js';
 
 export interface ResolvedModel {
   /** Value to pass as `Agent.model`: a scripted LanguageModelV2 offline, a "provider/model" router id live. */
@@ -33,6 +38,24 @@ export interface ModelService {
   }): ResolvedModel;
 }
 
+/** Durable Mastra memory for labs: one SQLite file per name under <dataDir>/memory. */
+export interface MemoryService {
+  /** Absolute path of the database file for a name (no file is created). */
+  file(name: string): string;
+  /** Opens durable memory; the caller must close() it. */
+  open(name: string, options?: MemoryOptions): Promise<OpenedMemory>;
+}
+
+const STORE_NAME = /^[a-z0-9][a-z0-9-]{0,63}$/;
+
+export function createMemoryService(baseDir: () => string = () => join(dataDir(), 'memory')): MemoryService {
+  const file = (name: string) => {
+    if (!STORE_NAME.test(name)) throw new LabError('VALIDATION_FAILED', `Invalid memory store name "${name}"`);
+    return join(baseDir(), `${name}.db`);
+  };
+  return { file, open: (name, options) => openMemory(file(name), options) };
+}
+
 /**
  * Server-side adapters handed to every lab through RunContext.services.
  * Values never reach the client.
@@ -41,12 +64,15 @@ export interface LabServices {
   readonly serverMode: RuntimeMode;
   readonly mastraVersion: string;
   readonly models: ModelService;
+  readonly memory: MemoryService;
 }
 
 export interface LabServicesConfig {
   serverMode: RuntimeMode;
   /** Environment used only to check which provider keys exist (values are never read into results). */
   env?: Record<string, string | undefined>;
+  /** Directory for memory databases (tests pass a temporary one). Defaults to <dataDir>/memory. */
+  memoryDir?: string;
 }
 
 export function createModelService(env: Record<string, string | undefined>): ModelService {
@@ -82,5 +108,6 @@ export function createLabServices(config: LabServicesConfig): LabServices {
     serverMode: config.serverMode,
     mastraVersion: getMastraVersion(),
     models: createModelService(config.env ?? {}),
+    memory: createMemoryService(config.memoryDir ? () => config.memoryDir! : undefined),
   };
 }

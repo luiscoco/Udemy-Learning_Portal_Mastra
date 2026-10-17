@@ -6,6 +6,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import type { ExecutionEvent } from '@mlp/contracts';
 import { LabRunner } from '@mlp/lab-engine';
 import { allLabs, createLabRegistry, createLabServices, labsPackageDir } from './index.js';
+import { testMemoryDir } from './test-memory.js';
 
 const LIVE = process.env.RUN_LIVE_TESTS === '1';
 const envFile = join(labsPackageDir(), '..', '..', '.env');
@@ -20,7 +21,7 @@ const secrets = [process.env.OPENAI_API_KEY, process.env.ANTHROPIC_API_KEY, proc
 
 const runner = new LabRunner({
   registry: createLabRegistry(),
-  services: createLabServices({ serverMode: 'live', env: process.env }),
+  services: createLabServices({ serverMode: 'live', env: process.env, memoryDir: testMemoryDir('live') }),
   liveEnabled: true,
   maxConcurrentRuns: 2,
   secrets,

@@ -101,6 +101,8 @@ curl.exe -N "http://127.0.0.1:8787/api/runs/$($run.runId)/events"
 
 Limits (env): `MAX_CONCURRENT_RUNS` (4), `RUN_MAX_TIMEOUT_MS` (120000), `SSE_DISCONNECT_GRACE_MS` (5000) — a run whose last viewer disconnects is cancelled after the grace period; `APPROVAL_TIMEOUT_MS` (300000) — a run waiting for a human approval auto-declines after this (the run deadline is paused while waiting); `MAX_PENDING_APPROVALS` (20) — runs waiting for a human do not use a `MAX_CONCURRENT_RUNS` slot, but at most this many may wait at once (further approval requests are auto-declined).
 
+Durable memory (from L21): conversation history is stored with `@mastra/libsql` in local SQLite files under `.data/memory/` (one file per lab, gitignored; override the data directory with `MLP_DATA_DIR`). Delete a file to reset that lab's history. Tests use `.data/test-memory/` and never touch learner data.
+
 Run token: `POST /api/labs/:labId/runs` returns a secret `runToken`. Cancelling a run or deciding its approvals requires it in the `X-Run-Token` header, so only the client that started a run can change it. Reading a run (snapshot, events) needs only the run id. The platform has no user accounts; the token protects each run, not each person.
 
 ## Learner experience

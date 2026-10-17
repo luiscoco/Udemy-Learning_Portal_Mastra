@@ -7,6 +7,8 @@ Exact versions are locked in `package-lock.json` (`save-exact=true`). This table
 | Node.js | 24.14.1 (CI: 24.x) | `@mastra/core` requires `>=22.13.0` |
 | npm | 11.12.0 | |
 | @mastra/core | 1.78.0 | server-only (`packages/mastra-runtime`); peer `zod ^3.25 \|\| ^4` |
+| @mastra/memory | 1.38.0 | peer `@mastra/core >=1.4.1-0 <2`; durable memory from L21 |
+| @mastra/libsql | 1.26.2 | peer `@mastra/core >=1.76.0-0 <2`; local SQLite files under `.data/memory/` (native `libsql` binary, kept external to the API bundle) |
 | zod | 4.6.7 | |
 | express | 5.3.0 | |
 | react / react-dom | 19.3.1 | |
@@ -51,6 +53,9 @@ Exact versions are locked in `package-lock.json` (`save-exact=true`). This table
 | Reasoning tokens count against `maxOutputTokens`: gpt-5-mini at effort `low` with 600 tokens hit `length` on a short plan (767 output tokens over 2 calls) | live (L19) | L19 example uses 1500 |
 | Processors (`@mastra/core/processors`): `new Agent({ inputProcessors, outputProcessors })`; custom processors are typed `InputProcessor` (`id` + `processInput({ messages, abort })`). `abort(reason, { metadata })` does **not throw**: `generate()` resolves with `text: ''`, `finishReason: 'other'`, `tripwire: { reason, metadata, processorId }`, and the model is not called | spike (L20) | L20 |
 | `UnicodeNormalizer({ stripControlChars, collapseWhitespace, trim })` rewrites input before later processors and the model; `RegexFilterProcessor` `block` tripwire metadata is `{ processorId: 'regex-filter', matches: [{ rule, match: '[REDACTED_MATCH]' }] }` (top-level `processorId` is `<agentId>-input-processor`); the `secrets` preset only has api-key assignments, Bearer tokens and AWS keys (**not** raw `sk-…` keys); `presets: ['pii']` + `redact` on output redacts text and structured-output objects (`[EMAIL]`, `[PHONE]`) | spike + live (L20) | L20 |
+| Memory: `new Memory({ storage: new LibSQLStore({ id, url: 'file:<path>' }), options: { lastMessages } })` on `new Agent({ memory })`; each call names the conversation with `memory: { thread, resource }`; user and assistant messages are stored and the next call receives earlier messages; `memory.recall({ threadId, resourceId })` returns `{ messages, total, page, perPage, hasMore }` chronologically (`role`, `createdAt`, `content.parts`); `getThreadById`, `listThreads({ filter: { resourceId } })`, `deleteThread`; `lastMessages` counts user + assistant messages | spike + lab21 tests | L21 |
+| History survives a **real process restart**: a child process writes and exits, a new process recalls the thread and its agent turn receives the history | `lab21.restart.test.ts` | L21 (DoD) |
+| **Windows:** `@libsql/client` keeps the database file locked after `close()` until garbage collection (`-wal`/`-shm` remain; `rmSync` fails with EPERM/EBUSY; `global.gc()` releases it). Not a leak in a long-running server, but tests cannot delete their own database: test DBs live in `.data/test-memory/run-<pid>-*` and are cleared by later runs | probe (L21) | `test-memory.ts` |
 
 ## Environment notes
 

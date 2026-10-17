@@ -4,6 +4,7 @@ import { ExecutionEventSchema, LabDefinitionSchema, type ExecutionEvent } from '
 import { getLab } from '@mlp/lab-catalog';
 import { LabRunner } from '@mlp/lab-engine';
 import { allLabs, createLabRegistry, createLabServices, resolveLabSourcePath } from './index.js';
+import { testMemoryDir } from './test-memory.js';
 
 /** Counts sentences in plain prose (terminal punctuation followed by space or end). */
 export function countSentences(text: string): number {
@@ -16,7 +17,8 @@ export function countSentences(text: string): number {
 const registry = createLabRegistry();
 const runner = new LabRunner({
   registry,
-  services: createLabServices({ serverMode: 'offline' }),
+  // Test databases never touch the learner's .data/memory.
+  services: createLabServices({ serverMode: 'offline', memoryDir: testMemoryDir('conformance') }),
   liveEnabled: false,
   maxConcurrentRuns: 50,
 });
