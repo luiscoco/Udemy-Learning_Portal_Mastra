@@ -54,14 +54,14 @@ export function RunTimeline({ state }: { state: RunState }) {
   return (
     <ol className="flex flex-col gap-1 font-mono text-xs" aria-label="Event timeline" data-testid="timeline">
       {rows.map((e) => (
-        <li key={e.seq} className="flex items-start gap-2 rounded-md px-2 py-1 odd:bg-surface-muted">
+        <li key={e.seq} className="flex flex-wrap items-start gap-x-2 gap-y-0.5 rounded-md px-2 py-1 odd:bg-surface-muted">
           <span className="w-8 shrink-0 text-right text-fg-subtle">{e.seq}</span>
           <Badge tone={TONE[e.type] ?? 'neutral'} className="shrink-0 font-sans">
             {e.type}
           </Badge>
           <span className={cn('break-words', e.type === 'error' ? 'text-danger' : 'text-fg')}>{describe(e)}</span>
           {e.annotations ? (
-            <span className="ml-auto shrink-0 text-fg-subtle">{JSON.stringify(e.annotations)}</span>
+            <span className="ml-auto min-w-0 break-all text-fg-subtle">{JSON.stringify(e.annotations)}</span>
           ) : null}
         </li>
       ))}

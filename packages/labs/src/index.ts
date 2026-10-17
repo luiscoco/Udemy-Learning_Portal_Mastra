@@ -17,6 +17,8 @@ import { lab06 } from './lab-06/run.js';
 import { lab06Fixtures } from './lab-06/fixtures.js';
 import { lab07 } from './lab-07/run.js';
 import { lab07Fixtures } from './lab-07/fixtures.js';
+import { lab08 } from './lab-08/run.js';
+import { lab08Fixtures } from './lab-08/fixtures.js';
 
 export * from './services.js';
 export { labSourceDir, labsPackageDir, dataDir, resolveLabSourcePath } from './paths.js';
@@ -42,6 +44,7 @@ export const allLabs: RegisteredLab[] = [
   reg(lab05, lab05Fixtures),
   reg(lab06, lab06Fixtures),
   reg(lab07, lab07Fixtures),
+  reg(lab08, lab08Fixtures),
 ];
 
 export function createLabRegistry(): LabRegistry<LabServices> {
