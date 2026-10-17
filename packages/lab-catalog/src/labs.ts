@@ -61,13 +61,37 @@ const OUTLINE_TITLES: Record<number, string> = {
   51: 'Two collaborating agents',
   52: 'Agent handoffs',
   53: 'Supervisor pattern',
+  54: 'Coordinated agent workflow',
+  55: 'Research team capstone',
+  56: 'Trace events',
+  57: 'Custom scorer',
+  58: 'Evaluation dataset',
+  59: 'Compare experiments',
+  60: 'Quality dashboard',
+  61: 'Authenticated API',
+  62: 'Tenant isolation',
+  63: 'Untrusted input and prompt injection',
+  64: 'Tool approval policies',
+  65: 'Timeouts and failure testing',
+  66: 'React client integration',
+  67: 'Streaming chat UI',
+  68: 'Workflow visualizer',
+  69: 'Voice assistant',
+  70: 'Interactive agent workspace',
+  71: 'Durable production persistence',
+  72: 'Configuration and packaging',
+  73: 'Deploy application',
+  74: 'Production regression suite',
+  75: 'Enterprise AI Assistant capstone',
 };
 
 /**
  * Labs whose implementation is registered on the server. Flip a lab here when its
  * OpenSpec change lands (the API test keeps this list and the registry in sync).
  */
-export const AVAILABLE_LAB_NUMBERS: ReadonlySet<number> = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]);
+export const AVAILABLE_LAB_NUMBERS: ReadonlySet<number> = new Set([
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+]);
 
 export const labId = (n: number) => `lab-${String(n).padStart(2, '0')}`;
 export const moduleIdForLab = (n: number) =>

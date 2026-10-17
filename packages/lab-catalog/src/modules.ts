@@ -14,11 +14,10 @@ const MODULE_TITLES: { number: number; title: string; confirmed: boolean }[] = [
   { number: 9, title: 'Advanced RAG', confirmed: true },
   { number: 10, title: 'Model Context Protocol', confirmed: true },
   { number: 11, title: 'Multi-Agent Architectures', confirmed: true },
-  ...Array.from({ length: 4 }, (_, i) => ({
-    number: i + 12,
-    title: `Module ${String(i + 12).padStart(2, '0')} — title pending`,
-    confirmed: false,
-  })),
+  { number: 12, title: 'Evaluation and Observability', confirmed: true },
+  { number: 13, title: 'Security and Reliability', confirmed: true },
+  { number: 14, title: 'Full-Stack AI Applications', confirmed: true },
+  { number: 15, title: 'Production and Capstone', confirmed: true },
 ];
 
 /**
