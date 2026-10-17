@@ -62,6 +62,7 @@ describe.each(allLabs.map((l) => [l.implementation.definition.id, l] as const))(
       const events = runner.events(run.runId);
       const result = events.find((e) => e.type === 'result');
       expect(snap.status, JSON.stringify(events.filter((e) => e.type === 'error'))).toBe('succeeded');
+      expectNoServerInternals(events);
       expect(result?.type === 'result' && result.validation?.passed).toBe(true);
       // Every declared check id is reported.
       const reported = result?.type === 'result' ? (result.validation?.checks.map((c) => c.id) ?? []) : [];
@@ -81,6 +82,7 @@ describe.each(allLabs.map((l) => [l.implementation.definition.id, l] as const))(
       const snap = await runner.waitFor(run.runId);
       const events: readonly ExecutionEvent[] = runner.events(run.runId);
       for (const e of events) ExecutionEventSchema.parse(e);
+      expectNoServerInternals(events);
       expect(snap.status).toBe(fixture.expect.status);
       expect(events.filter((e) => e.type === 'complete')).toHaveLength(1);
       const result = events.find((e) => e.type === 'result');
@@ -128,3 +130,11 @@ describe('countSentences', () => {
     expect(countSentences('One. Two! Three? Four.')).toBe(4);
   });
 });
+
+/** Events reach the browser: they must never carry stack traces or server file paths. */
+function expectNoServerInternals(events: readonly ExecutionEvent[]) {
+  const text = JSON.stringify(events);
+  expect(text, 'stack frame in events').not.toMatch(/\n\s+at\s/);
+  // Paths, not words: "node_modules/…" (or JSON-escaped "node_modules\\…"), file URLs, Windows drive paths.
+  expect(text, 'server path in events').not.toMatch(/node_modules(?:\/|\\\\)|file:\/\/\/|[A-Za-z]:(?:\/|\\\\)(?:Users|00\.)/);
+}

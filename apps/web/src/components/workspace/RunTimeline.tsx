@@ -65,7 +65,10 @@ export function RunTimeline({ state }: { state: RunState }) {
           <Badge tone={TONE[e.type] ?? 'neutral'} className="shrink-0 font-sans">
             {e.type}
           </Badge>
-          <span className={cn('break-words', e.type === 'error' ? 'text-danger' : 'text-fg')}>{describe(e)}</span>
+          {/* min-w-0 + overflow-wrap:anywhere so long unbroken tokens (ids, dotted names) wrap on phones */}
+          <span className={cn('min-w-0 [overflow-wrap:anywhere]', e.type === 'error' ? 'text-danger' : 'text-fg')}>
+            {describe(e)}
+          </span>
           {e.annotations ? (
             <span className="ml-auto min-w-0 break-all text-fg-subtle">{JSON.stringify(e.annotations)}</span>
           ) : null}

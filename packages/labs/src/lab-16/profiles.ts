@@ -79,4 +79,8 @@ export function settingsFrom(requestContext: RequestContext<SupportContext>): Su
 }
 
 /** Compares text the way a reader would: Intl uses (narrow) no-break spaces that models often replace. */
-export const normalize = (s: string) => s.replace(/[\u00a0\u202f]/g, ' ').replace(/\s+/g, ' ').trim();
+export const normalize = (s: string) =>
+  s
+    .replace(/[\u00a0\u202f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
