@@ -25,7 +25,8 @@ What is still required:
 - ☐ **Persistent storage adapter.** Partly done.
   - ☑ **Conversation history** is durable since L21: `@mastra/libsql` on local files via `services.memory`. Its survival across a real process restart is covered by an integration test.
   - ☑ **Suspended workflow runs** are durable since L32: Mastra snapshots in libSQL (`lab-32-workflows.db`). Resuming in a new process is covered by an integration test.
-  - ☐ **Paused approval runs** are still in memory and do not survive a restart. (L33 should move them onto workflow suspend/resume).
+  - ☑ **Durable approvals** are available since L33. A workflow gate suspends with a deadline, and decisions, expiry sweeps and late or duplicate approvals all work across restarts. This is the pattern to use for any approval that matters.
+  - ☐ **In-run approval prompts** (`ctx.requestApproval`, used by L15 tool approvals and L33 `ask`) still wait in memory, and a restart loses the prompt. In L33 the refund itself stays suspended in storage and can still be decided or expired. Move L15-style tool approvals onto the same pattern before relying on them in production.
   - ☐ **Workflow run ownership.** Workflow runs are tagged `resourceId: "learner"`, and resume or inspect needs only the unguessable run id. Bind runs to the authenticated learner and check ownership before resuming.
   - ☐ **Hosting.** A public host needs a remote libSQL/Turso or Postgres adapter, with backups, instead of local files.
 - ☐ **Learner progress on the server.** Progress is in browser storage today. Move it server-side if learners switch devices.
