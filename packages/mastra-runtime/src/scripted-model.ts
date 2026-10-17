@@ -30,6 +30,8 @@ export interface ScriptedTurn {
   finishReason?: LanguageModelV2FinishReason;
   /** Throw this error instead of answering (fault injection). */
   error?: Error;
+  /** Wait this long before answering or failing (simulates a slow provider; honours abort). */
+  delayMs?: number;
 }
 
 export interface PromptView {
@@ -131,11 +133,25 @@ export class ScriptedLanguageModel implements LanguageModelV2 {
     this.tokenDelayMs = opts.tokenDelayMs ?? 0;
   }
 
-  private turn(options: LanguageModelV2CallOptions): { view: PromptView; turn: ScriptedTurn } {
-    if (options.abortSignal?.aborted) throw abortError(options.abortSignal);
+  private async turn(options: LanguageModelV2CallOptions): Promise<{ view: PromptView; turn: ScriptedTurn }> {
+    const signal = options.abortSignal;
+    if (signal?.aborted) throw abortError(signal);
     const view = viewPrompt(options, this.calls.length);
     this.calls.push(view);
     const turn = this.script(view);
+    if (turn.delayMs && turn.delayMs > 0) {
+      await new Promise<void>((resolve, reject) => {
+        const t = setTimeout(() => {
+          signal?.removeEventListener('abort', onAbort);
+          resolve();
+        }, turn.delayMs);
+        const onAbort = () => {
+          clearTimeout(t);
+          reject(abortError(signal));
+        };
+        signal?.addEventListener('abort', onAbort, { once: true });
+      });
+    }
     if (turn.error) throw turn.error;
     return { view, turn };
   }
@@ -150,7 +166,7 @@ export class ScriptedLanguageModel implements LanguageModelV2 {
   }
 
   async doGenerate(options: LanguageModelV2CallOptions) {
-    const { view, turn } = this.turn(options);
+    const { view, turn } = await this.turn(options);
     const text = turn.text ?? '';
     const toolCalls = this.toolCallContent(turn);
     const content: LanguageModelV2Content[] = [...(text ? [{ type: 'text' as const, text }] : []), ...toolCalls];
@@ -165,7 +181,7 @@ export class ScriptedLanguageModel implements LanguageModelV2 {
   }
 
   async doStream(options: LanguageModelV2CallOptions) {
-    const { view, turn } = this.turn(options);
+    const { view, turn } = await this.turn(options);
     const text = turn.text ?? '';
     const toolCalls = this.toolCallContent(turn);
     const delay = this.tokenDelayMs;

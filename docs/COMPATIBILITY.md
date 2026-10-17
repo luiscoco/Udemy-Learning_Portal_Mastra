@@ -38,6 +38,11 @@ Exact versions are locked in `package-lock.json` (`save-exact=true`). This table
 | Provider registry at runtime: `getProviderConfig`, `parseModelString`, `modelSupportsTemperature`, `modelSupportsStructuredOutput` from `@mastra/core/llm` | runtime probe; `models.test.ts` | model validation |
 | API key variables: OpenAI `OPENAI_API_KEY`, Anthropic `ANTHROPIC_API_KEY`, Google `GOOGLE_API_KEY` or `GOOGLE_GENERATIVE_AI_API_KEY` | `getProviderConfig(p).apiKeyEnvVar` | config, L01 |
 | `mastra` CLI 1.34.2 project scripts `mastra dev` / `mastra build` / `mastra start`; Studio on `http://localhost:4111` | CLI bundle (`dist/*.js`) | L01, L05 |
+| `agent.stream().fullStream` chunks: start, step-start, text-start, **text-delta (`payload.text`)**, text-end, step-finish, finish; aborting the signal ends the loop quietly (no throw) | spike (L08) | L08 |
+| An aborted `agent.generate()` **resolves with empty text** instead of rejecting — check the signal yourself | spike (L10) | L10 retry policy |
+| `structuredOutput: { schema, errorStrategy }`: strict throws MastraError `STRUCTURED_OUTPUT_SCHEMA_VALIDATION_FAILED`; warn → `object` undefined; fallback → `fallbackValue` with `usedFallbackValue: true`; JSON inside a json code fence is parsed | spike (L09) | L09 |
+| Agent `maxRetries` (default 0) and model fallback arrays `model: [{ model, maxRetries }, …]` | `agent/types.d.ts` | L10 (taught) |
+| `openai/gpt-5-mini` live latency is often > 1.5 s per call (reasoning model) | live tests | L10 timeouts guidance |
 
 ## Environment notes
 
