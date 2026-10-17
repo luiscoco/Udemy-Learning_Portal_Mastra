@@ -23,11 +23,13 @@ describe('lab catalog', () => {
     expect(lab).toMatchObject({ title: 'Dummy Lab 00', status: 'available', zeroCost: true, offline: true });
   });
 
-  it('uses confirmed outline titles for labs 01–24 and marks the rest pending', () => {
+  it('uses confirmed outline titles for labs 01–53 and marks the rest pending', () => {
     expect(getLab('lab-01')).toMatchObject({ title: 'Create a Mastra project', titleConfirmed: true, moduleId: 'module-01' });
     expect(getLab('lab-24')).toMatchObject({ title: 'Semantic recall', titleConfirmed: true, moduleId: 'module-05' });
-    expect(getLab('lab-25')).toMatchObject({ titleConfirmed: false, moduleId: 'module-05' });
-    expect(getLab('lab-25')?.title).toContain('title pending');
+    expect(getLab('lab-26')).toMatchObject({ title: 'First typed workflow', titleConfirmed: true, moduleId: 'module-06' });
+    expect(getLab('lab-53')).toMatchObject({ title: 'Supervisor pattern', titleConfirmed: true, moduleId: 'module-11' });
+    expect(getLab('lab-54')).toMatchObject({ titleConfirmed: false, moduleId: 'module-11' });
+    expect(getLab('lab-54')?.title).toContain('title pending');
     expect(getLab('lab-75')).toMatchObject({ moduleId: 'module-15' });
   });
 
@@ -55,5 +57,16 @@ describe('lab catalog', () => {
         labs: [lab],
       }),
     ).toThrow(/prerequisite/);
+  });
+});
+
+describe('module outline titles', () => {
+  it('confirms modules 06–11 and keeps 12–15 pending', async () => {
+    const { MODULES } = await import('./modules.js');
+    const byNumber = (n: number) => MODULES.find((m) => m.number === n)!;
+    expect(byNumber(6)).toMatchObject({ title: 'Workflow Foundations', titleConfirmed: true });
+    expect(byNumber(11)).toMatchObject({ title: 'Multi-Agent Architectures', titleConfirmed: true });
+    expect(byNumber(12)).toMatchObject({ titleConfirmed: false });
+    expect(MODULES).toHaveLength(16);
   });
 });

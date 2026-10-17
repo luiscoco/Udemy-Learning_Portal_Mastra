@@ -32,13 +32,44 @@ const OUTLINE_TITLES: Record<number, string> = {
   22: 'Threads and user boundaries',
   23: 'Working memory',
   24: 'Semantic recall',
+  25: 'Observational memory',
+  26: 'First typed workflow',
+  27: 'Sequential steps',
+  28: 'Parallel branches',
+  29: 'Conditional branching',
+  30: 'Foreach processing',
+  31: 'Nested workflows',
+  32: 'Suspend and resume',
+  33: 'Human approval',
+  34: 'Long-running reliability',
+  35: 'Business process capstone',
+  36: 'Document ingestion',
+  37: 'Chunking strategies',
+  38: 'Embeddings and store',
+  39: 'Vector retrieval',
+  40: 'RAG question-answering agent',
+  41: 'Metadata filters',
+  42: 'Hybrid search',
+  43: 'Reranking',
+  44: 'Citation-aware generation',
+  45: 'RAG quality evaluation',
+  46: 'Connect MCP server',
+  47: 'Discover MCP tools',
+  48: 'MCP resources and prompts',
+  49: 'Expose Mastra over MCP',
+  50: 'Multi-server MCP agent',
+  51: 'Two collaborating agents',
+  52: 'Agent handoffs',
+  53: 'Supervisor pattern',
 };
 
 /**
  * Labs whose implementation is registered on the server. Flip a lab here when its
  * OpenSpec change lands (the API test keeps this list and the registry in sync).
  */
-export const AVAILABLE_LAB_NUMBERS: ReadonlySet<number> = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]);
+export const AVAILABLE_LAB_NUMBERS: ReadonlySet<number> = new Set([
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+]);
 
 export const labId = (n: number) => `lab-${String(n).padStart(2, '0')}`;
 export const moduleIdForLab = (n: number) =>
