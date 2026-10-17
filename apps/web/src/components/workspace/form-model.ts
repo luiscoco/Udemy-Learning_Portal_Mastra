@@ -1,7 +1,32 @@
-import type { InputField, InputValues } from '@mlp/contracts';
+import type { InputField, InputValues, VisibleWhen } from '@mlp/contracts';
 
 /** Raw form state: strings for text-like/number/json fields, booleans for checkboxes. */
 export type RawValues = Record<string, string | boolean>;
+
+const holds = (cond: VisibleWhen | undefined, raw: RawValues) => !cond || cond.in.includes(String(raw[cond.field] ?? ''));
+
+/** Whether a field is shown for the current values (its visibleWhen condition, if any, holds). */
+export const isVisible = (f: InputField, raw: RawValues) => holds(f.visibleWhen, raw);
+
+/** The select options offered for the current values. */
+export function visibleOptions(f: Extract<InputField, { kind: 'select' }>, raw: RawValues) {
+  return f.options.filter((o) => holds(o.visibleWhen, raw));
+}
+
+/**
+ * Keeps the form consistent after a change: a selected option that became hidden is replaced by the
+ * first visible one (fields are evaluated top-down, so chains of dependencies settle in one pass).
+ */
+export function reconcile(fields: InputField[], raw: RawValues): RawValues {
+  const next = { ...raw };
+  for (const f of fields) {
+    if (f.kind !== 'select' || !isVisible(f, next)) continue;
+    const options = visibleOptions(f, next);
+    const current = String(next[f.name] ?? '');
+    if (current !== '' && !options.some((o) => o.value === current)) next[f.name] = options[0]?.value ?? '';
+  }
+  return next;
+}
 
 export function initialRawValues(fields: InputField[], example: InputValues): RawValues {
   const raw: RawValues = {};
@@ -21,6 +46,7 @@ export function buildInput(fields: InputField[], raw: RawValues): { values: Inpu
   const values: InputValues = {};
   const errors: FieldErrors = {};
   for (const f of fields) {
+    if (!isVisible(f, raw)) continue; // hidden fields are never submitted
     const r = raw[f.name];
     if (f.kind === 'boolean') {
       values[f.name] = Boolean(r);
@@ -47,7 +73,7 @@ export function buildInput(fields: InputField[], raw: RawValues): { values: Inpu
         break;
       }
       case 'select':
-        if (!f.options.some((o) => o.value === s)) errors[f.name] = 'Choose one of the options.';
+        if (!visibleOptions(f, raw).some((o) => o.value === s)) errors[f.name] = 'Choose one of the options.';
         else values[f.name] = s;
         break;
       case 'json': {

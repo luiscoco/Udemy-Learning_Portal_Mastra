@@ -145,3 +145,55 @@ describe('runReducer approvals', () => {
     expect(s.approvals[0]).toMatchObject({ status: 'decline', by: 'timeout' });
   });
 });
+
+describe('conditional visibility (visibleWhen)', () => {
+  const fields = [
+    {
+      kind: 'select',
+      name: 'modelId',
+      label: 'Model',
+      required: true,
+      options: [
+        { value: 'reasoner', label: 'R' },
+        { value: 'classic', label: 'C' },
+      ],
+    },
+    {
+      kind: 'select',
+      name: 'temperature',
+      label: 'T',
+      required: true,
+      visibleWhen: { field: 'modelId', in: ['classic'] },
+      options: [{ value: '0.3', label: '0.3' }],
+    },
+    {
+      kind: 'select',
+      name: 'effort',
+      label: 'E',
+      required: true,
+      options: [
+        { value: 'minimal', label: 'minimal', visibleWhen: { field: 'modelId', in: ['reasoner'] } },
+        { value: 'default', label: 'default' },
+      ],
+    },
+  ] as InputField[];
+
+  it('hides fields and options and does not submit hidden fields', async () => {
+    const { isVisible, visibleOptions, reconcile } = await import('../../components/workspace/form-model');
+    const raw = { modelId: 'reasoner', temperature: '0.3', effort: 'minimal' };
+    expect(isVisible(fields[1]!, raw)).toBe(false);
+    expect(buildInput(fields, raw)).toEqual({ values: { modelId: 'reasoner', effort: 'minimal' }, errors: {} });
+    const classic = reconcile(fields, { ...raw, modelId: 'classic' });
+    expect(visibleOptions(fields[2] as Extract<InputField, { kind: 'select' }>, classic).map((o) => o.value)).toEqual([
+      'default',
+    ]);
+    expect(classic.effort).toBe('default'); // the hidden option was replaced by the first visible one
+    expect(buildInput(fields, classic).values).toEqual({ modelId: 'classic', temperature: '0.3', effort: 'default' });
+  });
+
+  it('rejects a hidden option even if forced into the raw state', () => {
+    expect(buildInput(fields, { modelId: 'classic', temperature: '0.3', effort: 'minimal' }).errors).toEqual({
+      effort: 'Choose one of the options.',
+    });
+  });
+});

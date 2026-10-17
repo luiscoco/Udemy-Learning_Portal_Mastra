@@ -27,6 +27,8 @@ export interface AgentRunResult {
   tools: ToolTrace[];
   /** Tool calls suspended by `requireApproval`, waiting for approveToolCall / declineToolCall. */
   pendingApprovals: PendingApproval[];
+  /** Agent-loop steps completed in this stream (one model call each, plus its tool executions). */
+  steps: number;
   runId: string | null;
   finishReason: string | null;
   usage?: { inputTokens?: number; outputTokens?: number; totalTokens?: number };
@@ -66,6 +68,7 @@ export async function consumeStream(
   const tools: ToolTrace[] = [];
   const pendingApprovals: PendingApproval[] = [];
   let text = '';
+  let steps = 0;
   const since = (id: string) => Date.now() - (started.get(id) ?? Date.now());
 
   for await (const chunk of stream.fullStream) {
@@ -138,6 +141,9 @@ export async function consumeStream(
         });
         break;
       }
+      case 'step-finish':
+        steps += 1;
+        break;
       case 'tool-output-denied': {
         const trace: ToolTrace = {
           toolCallId: id,
@@ -167,6 +173,7 @@ export async function consumeStream(
     text,
     tools,
     pendingApprovals,
+    steps,
     runId: stream.runId ?? null,
     finishReason: (await stream.finishReason) ?? null,
     usage: usageOf(await stream.usage),

@@ -9,7 +9,14 @@ import { useAsync } from '../../lib/use-async';
 import { Badge, Button, Card } from '../ui/primitives';
 import { ApprovalPanel } from './ApprovalPanel';
 import { DynamicForm } from './DynamicForm';
-import { buildInput, initialRawValues, serverDetailsToFieldErrors, type FieldErrors, type RawValues } from './form-model';
+import {
+  buildInput,
+  initialRawValues,
+  reconcile,
+  serverDetailsToFieldErrors,
+  type FieldErrors,
+  type RawValues,
+} from './form-model';
 import { JsonView, RunTimeline, TraceView } from './RunTimeline';
 import { Section } from './Section';
 
@@ -55,7 +62,7 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
   const waiting = pendingApprovals(state);
   const { update } = useProgressActions(definition.id);
   const example = definition.exampleInput;
-  const [raw, setRaw] = useState<RawValues>(() => initialRawValues(definition.inputs, example));
+  const [raw, setRaw] = useState<RawValues>(() => reconcile(definition.inputs, initialRawValues(definition.inputs, example)));
   const [clientErrors, setClientErrors] = useState<FieldErrors>({});
   const [mode, setMode] = useState<RuntimeMode>(definition.execution.modes[0] ?? 'offline');
   const busy = state.phase === 'starting' || state.phase === 'streaming';
@@ -115,7 +122,7 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
             disabled={busy}
             idPrefix={id}
             onChange={(name, value) => {
-              setRaw((r) => ({ ...r, [name]: value }));
+              setRaw((r) => reconcile(definition.inputs, { ...r, [name]: value }));
               setClientErrors(({ [name]: _gone, ...rest }) => rest);
             }}
           />
@@ -160,7 +167,7 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
               variant="ghost"
               disabled={busy}
               onClick={() => {
-                setRaw(initialRawValues(definition.inputs, example));
+                setRaw(reconcile(definition.inputs, initialRawValues(definition.inputs, example)));
                 setClientErrors({});
                 reset();
               }}

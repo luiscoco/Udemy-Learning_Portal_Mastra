@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ExecutionEventSchema } from './events.js';
-import { InstructorOutlineSchema, LessonGuideSchema, QuizQuestionSchema } from './lab.js';
+import { InstructorOutlineSchema, LabDefinitionSchema, LessonGuideSchema, QuizQuestionSchema } from './lab.js';
 import { deriveProgressStatus, emptyProgress } from './progress.js';
 
 const hints = [
@@ -77,3 +77,69 @@ describe('deriveProgressStatus', () => {
     expect(deriveProgressStatus({ ...p, lessonRead: true, runSucceeded: true, checksPassed: true, quiz })).toBe('completed');
   });
 });
+
+describe('conditional input visibility', () => {
+  const base = (inputs: unknown[]) => ({ ...makeDefinitionForVisibility(), inputs });
+  const model = {
+    kind: 'select',
+    name: 'modelId',
+    label: 'Model',
+    options: [
+      { value: 'a', label: 'A' },
+      { value: 'b', label: 'B' },
+    ],
+  };
+
+  it('accepts a reference to an earlier field (on a field and on an option)', () => {
+    const temperature = {
+      kind: 'select',
+      name: 'temperature',
+      label: 'T',
+      visibleWhen: { field: 'modelId', in: ['a'] },
+      options: [{ value: '0', label: '0', visibleWhen: { field: 'modelId', in: ['a'] } }],
+    };
+    expect(LabDefinitionSchema.safeParse(base([model, temperature])).success).toBe(true);
+  });
+
+  it('rejects unknown, later or self references', () => {
+    const bad = (visibleWhen: unknown, order: 'before' | 'after' = 'after') => {
+      const t = { kind: 'text', name: 'note', label: 'N', maxLength: 10, visibleWhen };
+      return LabDefinitionSchema.safeParse(base(order === 'after' ? [model, t] : [t, model]));
+    };
+    const unknown = bad({ field: 'nope', in: ['a'] });
+    expect(unknown.success).toBe(false);
+    expect(unknown.error?.issues[0]?.message).toContain('"nope"');
+    expect(bad({ field: 'modelId', in: ['a'] }, 'before').success).toBe(false);
+    expect(bad({ field: 'note', in: ['x'] }).success).toBe(false);
+  });
+});
+
+/** A minimal valid definition (contracts cannot import the engine's test helpers). */
+function makeDefinitionForVisibility() {
+  const q = (id: string) => ({ id, prompt: 'p', choices: ['a', 'b'], correctIndex: 0, explanation: 'e' });
+  return {
+    id: 'lab-98',
+    number: 98,
+    title: 'T',
+    moduleId: 'module-00',
+    summary: 's',
+    concept: 'c',
+    objectives: ['a', 'b', 'c'],
+    prerequisites: [],
+    exampleInput: {},
+    expectedOutput: { description: 'd', example: {} },
+    guide,
+    quiz: [q('q1'), q('q2'), q('q3')],
+    sourceFiles: [{ path: 'run.ts', title: 'Run' }],
+    exercise: { instructions: 'i' },
+    checks: [{ id: 'c', label: 'C' }],
+    instructorOutline: {
+      durationMinutes: 3,
+      segments: [
+        { title: 's1', minutes: 1, talkingPoints: ['x'] },
+        { title: 's2', minutes: 2, talkingPoints: ['y'] },
+      ],
+    },
+    execution: { modes: ['offline'], defaultTimeoutMs: 1000, maxTimeoutMs: 2000, budget: {}, costNotice: 'free' },
+  };
+}

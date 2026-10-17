@@ -1,6 +1,6 @@
 import type { InputField } from '@mlp/contracts';
 import { cn } from '../../lib/cn';
-import type { FieldErrors, RawValues } from './form-model';
+import { isVisible, visibleOptions, type FieldErrors, type RawValues } from './form-model';
 
 const inputClass =
   'w-full rounded-lg border bg-surface px-3 py-2 text-sm text-fg disabled:opacity-60 aria-[invalid=true]:border-danger';
@@ -23,6 +23,7 @@ export function DynamicForm({
   return (
     <div className="flex flex-col gap-5">
       {fields.map((f) => {
+        if (!isVisible(f, values)) return null; // only supported / applicable inputs are offered
         const id = `${idPrefix}-${f.name}`;
         const err = errors[f.name];
         const describedBy = [f.help ? `${id}-help` : null, err ? `${id}-error` : null].filter(Boolean).join(' ') || undefined;
@@ -92,7 +93,7 @@ export function DynamicForm({
                 className={cn(inputClass, 'border-border-strong sm:max-w-sm')}
               >
                 {!f.required ? <option value="">—</option> : null}
-                {f.options.map((o) => (
+                {visibleOptions(f, values).map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>

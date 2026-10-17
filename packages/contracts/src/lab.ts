@@ -8,11 +8,22 @@ export type LabModule = z.infer<typeof LabModuleSchema>;
 
 // ---------- Inputs ----------
 
+/**
+ * Shows a field or select option only while an earlier field's current value (as a string) is one of
+ * `in`. Hidden fields are not submitted; the server must still enforce the same rule.
+ */
+export const VisibleWhenSchema = z.object({
+  field: z.string().regex(/^[a-zA-Z][a-zA-Z0-9_]*$/),
+  in: z.array(z.string()).min(1),
+});
+export type VisibleWhen = z.infer<typeof VisibleWhenSchema>;
+
 const fieldBase = {
   name: z.string().regex(/^[a-zA-Z][a-zA-Z0-9_]*$/, 'Field names are identifiers'),
   label: z.string().min(1),
   help: z.string().optional(),
   required: z.boolean().default(true),
+  visibleWhen: VisibleWhenSchema.optional(),
 };
 
 export const InputFieldSchema = z.discriminatedUnion('kind', [
@@ -44,7 +55,7 @@ export const InputFieldSchema = z.discriminatedUnion('kind', [
   z.object({
     ...fieldBase,
     kind: z.literal('select'),
-    options: z.array(z.object({ value: z.string(), label: z.string() })).min(1),
+    options: z.array(z.object({ value: z.string(), label: z.string(), visibleWhen: VisibleWhenSchema.optional() })).min(1),
     default: z.string().optional(),
   }),
   z.object({
@@ -164,28 +175,46 @@ export const ExecutionLimitsSchema = z
   });
 export type ExecutionLimits = z.infer<typeof ExecutionLimitsSchema>;
 
-export const LabDefinitionSchema = z.object({
-  id: LabIdSchema,
-  number: z.number().int().min(0).max(99),
-  title: z.string().min(1),
-  moduleId: ModuleIdSchema,
-  summary: z.string().min(1),
-  /** Plain-language explanation, 5–10 sentences (checked by the conformance suite). */
-  concept: z.string().min(1),
-  objectives: z.array(z.string().min(1)).min(3).max(5),
-  prerequisites: z.array(LabIdSchema),
-  inputs: z.array(InputFieldSchema).min(1),
-  exampleInput: InputValuesSchema,
-  expectedOutput: z.object({ description: z.string().min(1), example: z.unknown() }),
-  guide: LessonGuideSchema,
-  quiz: z.array(QuizQuestionSchema).min(3).max(5),
-  sourceFiles: z.array(SourceFileRefSchema).min(1),
-  exercise: ExerciseSchema,
-  checks: z.array(CheckDescriptorSchema).min(1),
-  instructorOutline: InstructorOutlineSchema,
-  execution: ExecutionLimitsSchema,
-  tags: z.array(z.string()).default([]),
-});
+export const LabDefinitionSchema = z
+  .object({
+    id: LabIdSchema,
+    number: z.number().int().min(0).max(99),
+    title: z.string().min(1),
+    moduleId: ModuleIdSchema,
+    summary: z.string().min(1),
+    /** Plain-language explanation, 5–10 sentences (checked by the conformance suite). */
+    concept: z.string().min(1),
+    objectives: z.array(z.string().min(1)).min(3).max(5),
+    prerequisites: z.array(LabIdSchema),
+    inputs: z.array(InputFieldSchema).min(1),
+    exampleInput: InputValuesSchema,
+    expectedOutput: z.object({ description: z.string().min(1), example: z.unknown() }),
+    guide: LessonGuideSchema,
+    quiz: z.array(QuizQuestionSchema).min(3).max(5),
+    sourceFiles: z.array(SourceFileRefSchema).min(1),
+    exercise: ExerciseSchema,
+    checks: z.array(CheckDescriptorSchema).min(1),
+    instructorOutline: InstructorOutlineSchema,
+    execution: ExecutionLimitsSchema,
+    tags: z.array(z.string()).default([]),
+  })
+  .superRefine((def, ctx) => {
+    // visibleWhen may only depend on a field declared earlier (so the form can evaluate it top-down).
+    const seen = new Set<string>();
+    def.inputs.forEach((f, i) => {
+      const refs = [f.visibleWhen, ...(f.kind === 'select' ? f.options.map((o) => o.visibleWhen) : [])];
+      for (const ref of refs) {
+        if (ref && !seen.has(ref.field)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['inputs', i, 'visibleWhen'],
+            message: `visibleWhen on "${f.name}" references "${ref.field}", which is not an earlier input field`,
+          });
+        }
+      }
+      seen.add(f.name);
+    });
+  });
 export type LabDefinition = z.infer<typeof LabDefinitionSchema>;
 export type LabDefinitionInput = z.input<typeof LabDefinitionSchema>;
 
