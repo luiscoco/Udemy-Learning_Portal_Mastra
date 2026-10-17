@@ -31,7 +31,8 @@ export function runsRouter(deps: { runner: LabRunner<LabServices>; heartbeatMs: 
     res.status(200);
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
-    res.setHeader('Connection', 'keep-alive');
+    // No manual `Connection` header: Node manages it. Forcing keep-alive on a response that may
+    // end in the same tick (finished runs replay instantly) made proxies hang the stream.
     res.setHeader('X-Accel-Buffering', 'no');
     res.flushHeaders();
     res.write('retry: 2000\n\n');

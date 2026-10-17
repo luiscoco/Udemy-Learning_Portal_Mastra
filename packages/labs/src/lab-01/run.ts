@@ -113,7 +113,7 @@ export const lab01: LabImplementation<Lab01Input, Lab01Output> = {
 
       const get = (p: string) => files.find((f) => f.path === p)?.content ?? '';
       const envExample = get('.env.example');
-      ctx.setResultExtras({ effective: { mode: ctx.mode, modelId, typescript: 'compiler API (worker thread)' } });
+      ctx.setResultExtras({ effective: { mode: ctx.mode, modelId, typescript: 'compiler API (child process)' } });
       return {
         projectName: input.projectName,
         nodeVersion,

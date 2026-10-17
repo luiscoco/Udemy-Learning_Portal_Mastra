@@ -22,9 +22,12 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "check:bundle-secrets": "node scripts/check-bundle-secrets.mjs",
-    "verify": "npm run lint && npm run typecheck && npm test && npm run build && npm run check:bundle-secrets",
+    "verify": "npm run check:env-example && npm run lint && npm run typecheck && npm test && npm run build && npm run check:bundle-secrets",
     "openspec": "openspec",
-    "studio": "npm run dev -w course-project"
+    "studio": "npm run dev -w course-project",
+    "test:live": "cross-env RUN_LIVE_TESTS=1 vitest run packages/labs/src/live.test.ts apps/api/src/live.test.ts",
+    "test:e2e:live": "cross-env E2E_LIVE=1 playwright test",
+    "check:env-example": "node scripts/check-env-example.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
@@ -33,6 +36,7 @@
     "@playwright/test": "1.64.1",
     "@types/node": "24.19.2",
     "concurrently": "10.0.6",
+    "cross-env": "10.1.0",
     "eslint": "10.13.0",
     "eslint-plugin-react-hooks": "7.1.1",
     "globals": "17.13.0",

@@ -30,6 +30,7 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm run check:bundle-secrets
+      - run: npm run check:env-example
       - run: npx openspec validate --all --strict
 
   e2e:

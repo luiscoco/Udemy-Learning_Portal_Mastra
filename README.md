@@ -43,11 +43,13 @@ macOS/Linux: same commands, use `cp .env.example .env`.
 | --- | --- |
 | `npm run dev` | API (tsx watch) + web (Vite) with `/api` proxy |
 | `npm run build` | Bundle API (tsup) and web (Vite) |
-| `npm start` | Run the built API |
+| `npm start` | Run the built API (set `WEB_DIST_DIR=apps/web/dist` to also serve the web app on the same origin) |
 | `npm run lint` | ESLint, zero warnings |
 | `npm run typecheck` | `tsc` in every workspace |
 | `npm test` | Vitest unit + integration tests (offline, deterministic) |
-| `npm run test:e2e` | Playwright desktop + mobile (first time: `npx playwright install chromium`) |
+| `npm run test:e2e` | Playwright desktop + mobile against the production build (API serves the web app; first time: `npx playwright install chromium`) |
+| `npm run test:live` | **Live, costs money:** Vitest runs live-capable labs and the HTTP/SSE API against real providers using keys in `.env` |
+| `npm run test:e2e:live` | **Live, costs money:** Playwright runs labs in the browser with Live mode selected |
 | `npm run check:bundle-secrets` | Fails if secret names/values appear in `apps/web/dist` |
 | `npm run verify` | lint → typecheck → test → build → secret scan (what CI runs) |
 
@@ -64,7 +66,8 @@ Open Studio in its own browser tab. Chatting with agents in Studio needs a provi
 ## Offline vs live mode
 
 - `MASTRA_MODE=offline` (default): labs use deterministic mock models, no network, zero cost. All automated tests use this.
-- `MASTRA_MODE=live`: labs may call real providers **if** you set a provider key in `.env` (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`). Live calls are billed by the provider. A ChatGPT or Claude.ai subscription does **not** include API access; create an API key in the provider console.
+- `MASTRA_MODE=live`: labs that support it may call real providers **if** their key is set in `.env` (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`). Restart the API after changing `.env`, then pick **Live** in a lab's Run tab; the cost notice appears before you run. Models offered live come from `LIVE_MODELS` (validated against the installed Mastra registry). Live calls are billed by the provider. A ChatGPT or Claude.ai subscription does **not** include API access; create an API key in the provider console.
+- Live tests never run in `npm test` or CI; run `npm run test:live` / `npm run test:e2e:live` explicitly.
 
 Keys are read only by `apps/api`. The web bundle only receives variables prefixed `VITE_PUBLIC_`.
 

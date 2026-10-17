@@ -172,7 +172,7 @@ export const lab01Definition = {
   sourceFiles: [
     { path: 'run.ts', title: 'Lab run', description: 'Validation, workflow steps, build and checks.' },
     { path: 'scaffold.ts', title: 'Renderer', description: 'Turns the template plus your choices into project files.' },
-    { path: 'typecheck.ts', title: 'Build step', description: 'TypeScript compiler API in a worker thread.' },
+    { path: 'typecheck.ts', title: 'Build step', description: 'TypeScript compiler API in a separate process.' },
     { path: 'template/src/mastra/index.ts', title: 'Template: entry point' },
     { path: 'template/src/mastra/agents/assistant-agent.ts', title: 'Template: agent' },
     { path: 'template/package.json', title: 'Template: package.json' },

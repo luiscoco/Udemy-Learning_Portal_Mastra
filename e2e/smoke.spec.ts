@@ -7,7 +7,7 @@ test('home loads and reports a healthy offline API', async ({ page }) => {
   await expect(page.getByRole('link', { name: /Start Dummy Lab 00/ })).toBeVisible();
 });
 
-test('API health is reachable through the web proxy', async ({ request }) => {
+test('API health is reachable from the web origin', async ({ request }) => {
   const res = await request.get('/api/health');
   expect(res.ok()).toBe(true);
   expect((await res.json()).status).toBe('ok');

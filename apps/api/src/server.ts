@@ -23,14 +23,17 @@ function main(): void {
       config: describeConfig(config),
     });
   });
-  const shutdown = () => {
-    logger.info('shutting down');
+  const shutdown = (signal: string) => {
+    // warn level: an unexpected signal-driven exit must always be visible in the logs.
+    logger.warn('shutting down', { signal, activeRuns: runner.activeCount });
     void runner.dispose();
     server.close(() => process.exit(0));
     setTimeout(() => process.exit(0), 3000).unref();
   };
-  process.on('SIGINT', shutdown);
-  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGHUP', () => shutdown('SIGHUP'));
+  process.on('exit', (code) => logger.warn('process exit', { code }));
 }
 
 main();

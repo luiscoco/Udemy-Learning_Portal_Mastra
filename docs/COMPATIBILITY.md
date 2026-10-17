@@ -38,3 +38,10 @@ Exact versions are locked in `package-lock.json` (`save-exact=true`). This table
 | Provider registry at runtime: `getProviderConfig`, `parseModelString`, `modelSupportsTemperature`, `modelSupportsStructuredOutput` from `@mastra/core/llm` | runtime probe; `models.test.ts` | model validation |
 | API key variables: OpenAI `OPENAI_API_KEY`, Anthropic `ANTHROPIC_API_KEY`, Google `GOOGLE_API_KEY` or `GOOGLE_GENERATIVE_AI_API_KEY` | `getProviderConfig(p).apiKeyEnvVar` | config, L01 |
 | `mastra` CLI 1.34.2 project scripts `mastra dev` / `mastra build` / `mastra start`; Studio on `http://localhost:4111` | CLI bundle (`dist/*.js`) | L01, L05 |
+
+## Environment notes
+
+| Issue | Symptom | Mitigation |
+| --- | --- | --- |
+| Windows ephemeral-port exhaustion (16,384 dynamic ports; sockets linger ~2–4 min in TIME_WAIT) | Random `ETIMEDOUT` / `ERR_CONNECTION_TIMED_OUT` in e2e or dev after heavy traffic | E2E uses the single-origin production build (no dev proxy); the Vite dev proxy uses a keep-alive agent. Check with `(Get-NetTCPConnection -State TimeWait).Count`; if near 16k, wait or find the process creating connections. |
+| `tsx watch` silently restarting / dev proxy churn | Lost SSE streams in long e2e runs | E2E never uses `npm run dev`; it builds and runs `node apps/api/dist/server.js`. |

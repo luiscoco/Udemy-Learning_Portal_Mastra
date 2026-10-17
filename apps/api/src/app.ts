@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import express, { type ErrorRequestHandler, type Express } from 'express';
 import { HealthResponseSchema, redactSecrets, type HealthResponse } from '@mlp/contracts';
 import { catalog } from '@mlp/lab-catalog';
@@ -74,6 +76,16 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
   app.use('/api', (req, _res, next) => {
     next(new LabError('NOT_FOUND', `No API route for ${req.method} ${req.originalUrl}`));
   });
+
+  // Production topology: serve the built web app from the same origin (no dev proxy needed).
+  if (config.WEB_DIST_DIR) {
+    const dist = resolve(config.WEB_DIST_DIR);
+    const indexHtml = join(dist, 'index.html');
+    if (!existsSync(indexHtml)) throw new Error(`WEB_DIST_DIR has no index.html: ${dist} (run npm run build)`);
+    app.use(express.static(dist, { index: false, maxAge: '1h' }));
+    // SPA fallback: client-side routes like /labs/lab-03 load index.html.
+    app.get(/^(?!\/api\/).*/, (_req, res) => res.sendFile(indexHtml));
+  }
 
   const onError: ErrorRequestHandler = (err: unknown, req, res, _next) => {
     const requestId = req.requestId;

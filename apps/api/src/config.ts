@@ -21,6 +21,8 @@ export const ConfigSchema = z.object({
   RUN_MAX_TIMEOUT_MS: z.coerce.number().int().min(1000).max(300_000).default(120_000),
   SSE_DISCONNECT_GRACE_MS: z.coerce.number().int().min(0).max(60_000).default(5_000),
   SSE_HEARTBEAT_MS: z.coerce.number().int().min(1000).max(60_000).default(15_000),
+  /** When set, the API also serves the built web app (apps/web/dist) on the same origin. */
+  WEB_DIST_DIR: z.string().min(1).optional(),
   OPENAI_API_KEY: optionalSecret,
   ANTHROPIC_API_KEY: optionalSecret,
   GOOGLE_API_KEY: optionalSecret,
