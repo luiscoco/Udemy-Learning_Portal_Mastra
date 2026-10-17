@@ -8,6 +8,7 @@ import {
   openMemory,
   ScriptedLanguageModel,
   type LiveModelInfo,
+  type MemoryExtras,
   type MemoryOptions,
   type OpenedMemory,
   type ScriptedModelOptions,
@@ -42,8 +43,8 @@ export interface ModelService {
 export interface MemoryService {
   /** Absolute path of the database file for a name (no file is created). */
   file(name: string): string;
-  /** Opens durable memory; the caller must close() it. */
-  open(name: string, options?: MemoryOptions): Promise<OpenedMemory>;
+  /** Opens durable memory (optionally with a vector store and embedder); the caller must close() it. */
+  open(name: string, options?: MemoryOptions, extras?: MemoryExtras): Promise<OpenedMemory>;
 }
 
 const STORE_NAME = /^[a-z0-9][a-z0-9-]{0,63}$/;
@@ -53,7 +54,7 @@ export function createMemoryService(baseDir: () => string = () => join(dataDir()
     if (!STORE_NAME.test(name)) throw new LabError('VALIDATION_FAILED', `Invalid memory store name "${name}"`);
     return join(baseDir(), `${name}.db`);
   };
-  return { file, open: (name, options) => openMemory(file(name), options) };
+  return { file, open: (name, options, extras) => openMemory(file(name), options, extras) };
 }
 
 /**

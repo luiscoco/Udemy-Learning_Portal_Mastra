@@ -3,8 +3,14 @@ import { basename, dirname } from 'node:path';
 import { LibSQLStore } from '@mastra/libsql';
 import { Memory } from '@mastra/memory';
 
+type MemoryConfig = NonNullable<ConstructorParameters<typeof Memory>[0]>;
 /** Options accepted by `new Memory({ options })` in the installed @mastra/memory. */
-export type MemoryOptions = NonNullable<NonNullable<ConstructorParameters<typeof Memory>[0]>['options']>;
+export type MemoryOptions = NonNullable<MemoryConfig['options']>;
+/** Vector store and embedder, required by Mastra when semantic recall is enabled. */
+export interface MemoryExtras {
+  vector?: MemoryConfig['vector'];
+  embedder?: MemoryConfig['embedder'];
+}
 
 export interface OpenedMemory {
   /** Absolute path of the SQLite file backing this store. */
@@ -23,11 +29,11 @@ export const fileUrl = (file: string) => `file:${file.replace(/\\/g, '/')}`;
  * if needed and the schema is initialised before the memory is returned. Callers own the lifecycle:
  * call close() when done (also on errors and cancellation).
  */
-export async function openMemory(file: string, options: MemoryOptions = {}): Promise<OpenedMemory> {
+export async function openMemory(file: string, options: MemoryOptions = {}, extras: MemoryExtras = {}): Promise<OpenedMemory> {
   mkdirSync(dirname(file), { recursive: true });
   const storage = new LibSQLStore({ id: `mlp-${basename(file).replace(/\.db$/, '')}`, url: fileUrl(file) });
   await storage.init();
-  const memory = new Memory({ storage, options });
+  const memory = new Memory({ storage, options, ...extras });
   let closed = false;
   return {
     file,
