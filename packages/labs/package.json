@@ -12,6 +12,10 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@ai-sdk/provider": "2.0.3",
+    "@mastra/core": "1.78.0",
+    "@mastra/libsql": "1.26.2",
+    "@mastra/memory": "1.38.0",
     "@mlp/contracts": "0.1.0",
     "@mlp/lab-catalog": "0.1.0",
     "@mlp/lab-engine": "0.1.0",
