@@ -58,6 +58,7 @@ export async function streamWorkflow<T = unknown>(
   const onAbort = () => void run.cancel().catch(() => {});
   ctx.signal.addEventListener('abort', onAbort, { once: true });
   const started = new Map<string, number>();
+  const startInputs = new Map<string, unknown>();
   const steps: StepTrace[] = [];
   const iterations: IterationTrace[] = [];
   const t0 = Date.now();
@@ -72,6 +73,7 @@ export async function streamWorkflow<T = unknown>(
           break;
         case 'workflow-step-start':
           started.set(id, Date.now());
+          startInputs.set(id, p.payload);
           ctx.emit({ type: 'workflow-step', workflowId, stepId: id, status: 'running', input: p.payload });
           break;
         case 'workflow-step-result': {
@@ -81,7 +83,7 @@ export async function streamWorkflow<T = unknown>(
           steps.push({
             stepId: id,
             status: String(p.status ?? 'unknown'),
-            input: undefined,
+            input: startInputs.get(id),
             output: p.output,
             ...(error ? { error } : {}),
             durationMs,
