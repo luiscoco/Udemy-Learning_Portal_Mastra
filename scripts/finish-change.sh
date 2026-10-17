@@ -11,7 +11,8 @@ grep -E "passed|flaky" .data/e2e.log | tail -2
 sed -i 's/^- \[ \] /- [x] /' "openspec/changes/$change/tasks.md"
 npx openspec archive "$change" -y > /dev/null
 for f in $(grep -rl "TBD - created by archiving change $change" openspec/specs); do
-  sed -i "s/^TBD - created by archiving change $change. Update Purpose after archive./$purpose/" "$f"
+  # node, not sed: the purpose text may contain "/" or "&"
+  PURPOSE="$purpose" CHANGE="$change" node -e 'const fs=require("fs"),f=process.argv[1];fs.writeFileSync(f,fs.readFileSync(f,"utf8").replace(`TBD - created by archiving change ${process.env.CHANGE}. Update Purpose after archive.`,()=>process.env.PURPOSE))' "$f"
 done
 npx openspec validate --all --strict | tail -1
 git add -A
