@@ -235,7 +235,8 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
                 <span aria-hidden="true" className={c.passed ? 'text-success' : 'text-danger'}>
                   {c.passed ? '✓' : '✗'}
                 </span>
-                <span>
+                {/* min-w-0 + overflow-wrap:anywhere: check messages may hold long unbroken JSON */}
+                <span className="min-w-0 [overflow-wrap:anywhere]">
                   {c.label}
                   <span className="sr-only">{c.passed ? ' — passed' : ' — failed'}</span>
                   {c.message ? <span className="ml-2 text-xs text-fg-muted">({c.message})</span> : null}
