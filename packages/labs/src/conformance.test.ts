@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { afterAll, describe, expect, it } from 'vitest';
-import { ExecutionEventSchema, LabDefinitionSchema, type ExecutionEvent } from '@mlp/contracts';
+import { ExecutionEventSchema, LabDefinitionSchema, type ExecutionEvent, type InputField } from '@mlp/contracts';
 import { getLab } from '@mlp/lab-catalog';
 import { LabRunner } from '@mlp/lab-engine';
 import { allLabs, createLabRegistry, createLabServices, resolveLabSourcePath } from './index.js';
@@ -12,6 +12,21 @@ export function countSentences(text: string): number {
     .split(/(?<=[.!?])\s+/)
     .map((s) => s.trim())
     .filter((s) => s.length > 0).length;
+}
+
+/**
+ * Mirrors apps/web form-model buildInput: hidden fields (visibleWhen not met) are never submitted,
+ * and empty text values are omitted.
+ */
+function asFormSubmits(fields: InputField[], values: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const f of fields) {
+    if (f.visibleWhen && !f.visibleWhen.in.includes(String(values[f.visibleWhen.field]))) continue;
+    const v = values[f.name];
+    if (v === undefined || ((f.kind === 'text' || f.kind === 'textarea') && String(v).trim() === '')) continue;
+    out[f.name] = v;
+  }
+  return out;
 }
 
 const registry = createLabRegistry();
@@ -54,6 +69,14 @@ describe.each(allLabs.map((l) => [l.implementation.definition.id, l] as const))(
   it('declares at least one automated check and one fixture', () => {
     expect(def.checks.length).toBeGreaterThan(0);
     expect(lab.fixtures.length).toBeGreaterThan(0);
+  });
+
+  it('accepts the example and fixture inputs exactly as the web form submits them', () => {
+    for (const [name, input] of [['example', def.exampleInput], ...lab.fixtures.map((f) => [f.name, f.input] as const)] as const) {
+      const submitted = asFormSubmits(def.inputs, input as Record<string, unknown>);
+      const parsed = lab.implementation.inputSchema.safeParse(submitted);
+      expect(parsed.success, `${name}: ${parsed.success ? '' : parsed.error.message}`).toBe(true);
+    }
   });
 
   it(

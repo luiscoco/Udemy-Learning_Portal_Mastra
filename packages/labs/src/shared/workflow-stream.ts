@@ -76,6 +76,7 @@ export async function streamWorkflow<T = unknown>(
           startInputs.set(id, p.payload);
           ctx.emit({ type: 'workflow-step', workflowId, stepId: id, status: 'running', input: p.payload });
           break;
+        case 'workflow-step-suspended': // the step called suspend(); payload carries suspendPayload
         case 'workflow-step-result': {
           const durationMs = Date.now() - (started.get(id) ?? Date.now());
           const ok = p.status === 'success';
@@ -93,7 +94,7 @@ export async function streamWorkflow<T = unknown>(
             workflowId,
             stepId: id,
             status: ok ? 'success' : p.status === 'suspended' ? 'suspended' : 'failed',
-            output: ok ? p.output : { error },
+            output: ok ? p.output : p.status === 'suspended' ? { suspendPayload: p.suspendPayload } : { error },
             durationMs,
           });
           break;

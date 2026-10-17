@@ -24,9 +24,10 @@ export const Lab24InputSchema = z.object({
   question: z.string().trim().min(1).max(300),
   expectedFact: z.string().trim().min(1).max(300),
   semanticRecall: z.boolean(),
-  topK: z.number().int().min(1).max(5),
-  messageRange: z.number().int().min(0).max(2),
-  scope: z.enum(['resource', 'thread']),
+  // Hidden (not submitted) by the form when semanticRecall is off: defaults match the definition.
+  topK: z.number().int().min(1).max(5).default(2),
+  messageRange: z.number().int().min(0).max(2).default(0),
+  scope: z.enum(['resource', 'thread']).default('resource'),
   lastMessages: z.number().int().min(1).max(10),
   vectorBackend: z.enum(['libsql', 'in-memory']),
   modelId: z.enum(DEFAULT_LIVE_MODELS),
