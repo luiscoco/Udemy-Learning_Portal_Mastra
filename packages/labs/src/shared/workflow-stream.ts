@@ -16,6 +16,8 @@ export interface WorkflowRunResult<T = unknown> {
   result: T | undefined;
   stepExecutionPath: string[];
   steps: StepTrace[];
+  /** Mastra's own per-step record (status, output, startedAt/endedAt epoch ms): measured, not estimated. */
+  stepRecords: Record<string, { status?: string; output?: unknown; startedAt?: number; endedAt?: number }>;
   error?: string;
 }
 
@@ -99,13 +101,16 @@ export async function streamWorkflow<T = unknown>(
       status: string;
       result?: T;
       stepExecutionPath?: string[];
+      steps?: Record<string, unknown>;
       error?: { message?: string } | string;
     };
+    const { input: _input, ...stepRecords } = (final.steps ?? {}) as Record<string, unknown>;
     return {
       status: final.status,
       result: final.result,
       stepExecutionPath: final.stepExecutionPath ?? steps.map((s) => s.stepId),
       steps,
+      stepRecords: stepRecords as WorkflowRunResult['stepRecords'],
       ...(final.error
         ? { error: typeof final.error === 'string' ? final.error : String(final.error.message ?? final.error) }
         : {}),
