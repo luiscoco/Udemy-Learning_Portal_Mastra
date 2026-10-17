@@ -79,7 +79,8 @@ describe('home and sidebar', () => {
     expect(btn).toHaveAttribute('aria-expanded', 'false');
     await user.click(btn);
     expect(btn).toHaveAttribute('aria-expanded', 'true');
-    expect(within(nav).getByRole('link', { name: /lab-11: First custom tool \(Locked\)/ })).toBeVisible();
+    // The module's labs become visible (whatever their current status).
+    expect(within(nav).getByRole('link', { name: /^lab-11: First custom tool \(/ })).toBeVisible();
   });
 
   it('marks locked labs as locked and never as completed', () => {
