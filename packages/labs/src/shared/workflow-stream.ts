@@ -11,11 +11,25 @@ export interface StepTrace {
   durationMs: number;
 }
 
+/** One .foreach() iteration as Mastra reported it (workflow-step-progress chunk). */
+export interface IterationTrace {
+  stepId: string;
+  index: number;
+  status: string;
+  output?: unknown;
+  completedCount: number;
+  totalCount: number;
+  /** Milliseconds since the workflow started, when the iteration was reported. */
+  atMs: number;
+}
+
 export interface WorkflowRunResult<T = unknown> {
   status: string;
   result: T | undefined;
   stepExecutionPath: string[];
   steps: StepTrace[];
+  /** Per-item progress of .foreach() steps, in completion order. */
+  iterations: IterationTrace[];
   /** Mastra's own per-step record (status, output, startedAt/endedAt epoch ms): measured, not estimated. */
   stepRecords: Record<string, { status?: string; output?: unknown; startedAt?: number; endedAt?: number }>;
   error?: string;
@@ -45,6 +59,7 @@ export async function streamWorkflow<T = unknown>(
   ctx.signal.addEventListener('abort', onAbort, { once: true });
   const started = new Map<string, number>();
   const steps: StepTrace[] = [];
+  const iterations: IterationTrace[] = [];
   const t0 = Date.now();
   try {
     const stream = run.stream({ inputData });
@@ -81,6 +96,28 @@ export async function streamWorkflow<T = unknown>(
           });
           break;
         }
+        case 'workflow-step-progress': {
+          const index = Number(p.currentIndex);
+          const status = String(p.iterationStatus ?? 'unknown');
+          const it = {
+            stepId: id,
+            index,
+            status,
+            output: p.iterationOutput,
+            completedCount: Number(p.completedCount),
+            totalCount: Number(p.totalCount),
+            atMs: Date.now() - t0,
+          };
+          iterations.push(it);
+          ctx.emit({
+            type: 'workflow-step',
+            workflowId,
+            stepId: `${id}[${index}]`,
+            status: status === 'success' ? 'success' : 'failed',
+            output: { ...(status === 'success' ? { item: p.iterationOutput } : {}), progress: `${it.completedCount}/${it.totalCount}` },
+          });
+          break;
+        }
         case 'workflow-finish': {
           const status = String(p.workflowStatus ?? 'unknown');
           ctx.emit({
@@ -110,6 +147,7 @@ export async function streamWorkflow<T = unknown>(
       result: final.result,
       stepExecutionPath: final.stepExecutionPath ?? steps.map((s) => s.stepId),
       steps,
+      iterations,
       stepRecords: stepRecords as WorkflowRunResult['stepRecords'],
       ...(final.error
         ? { error: typeof final.error === 'string' ? final.error : String(final.error.message ?? final.error) }
