@@ -44,6 +44,7 @@ Exact versions are locked in `package-lock.json` (`save-exact=true`). This table
 | Agent `maxRetries` (default 0) and model fallback arrays `model: [{ model, maxRetries }, …]` | `agent/types.d.ts` | L10 (taught) |
 | `openai/gpt-5-mini` live latency is often > 1.5 s per call (reasoning model) | live tests | L10 timeouts guidance |
 | Tool `requireApproval: true` (or a function of the input) → stream emits `tool-call-approval { toolCallId, toolName, args }` and ends without `execute()`; `agent.approveToolCall({ runId, toolCallId })` resumes with `tool-call-resumed`, `tool-result` (executes once); `agent.declineToolCall({ runId, toolCallId, reason })` resumes with `tool-output-denied` (never executes; reason shown to the model). Works in memory when the agent is registered on `new Mastra({ agents })` | `agent/agent.d.ts`, `tools/types.d.ts`; spike + live probe (L15) | L15 |
+| `instructions` accepts `({ requestContext, mastra }) => string`; `RequestContext` from `@mastra/core/request-context` (`new RequestContext([[k, v]])`, `get`/`set`/`has`); per-call `requestContext` in `generate`/`stream` keeps parallel calls on one agent isolated; `requestContextSchema` rejects invalid context with MastraError `AGENT_REQUEST_CONTEXT_VALIDATION_FAILED` before instructions or the model run. A module variable written before `await generate()` leaks under `Promise.all` (all calls see the last write) | `types/dynamic-argument.d.ts`, `agent/types.d.ts`; spike + live (L16) | L16 |
 
 ## Environment notes
 
