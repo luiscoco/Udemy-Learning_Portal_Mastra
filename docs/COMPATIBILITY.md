@@ -16,13 +16,13 @@ Exact versions are locked in `package-lock.json` (`save-exact=true`). This table
 | eslint | 10.13.0 | flat config |
 | vitest | 5.0.5 | root `projects` config |
 | @playwright/test | 1.64.1 | Chromium |
-| @fission-ai/openspec | 1.14.2 | dev-only |
+| @fission-ai/openspec | 1.14.3 | dev-only (1.14.3 drops the vulnerable fast-glob → micromatch → braces chain) |
 
 ## Known issues
 
 | Issue | Impact | Status |
 | --- | --- | --- |
-| `npm audit`: `braces` (GHSA-vfj7-8cjw-p6xm, high) via `@fission-ai/openspec` → fast-glob → micromatch | Dev-only CLI, not shipped | No patched `braces` release; the suggested fix downgrades OpenSpec to 0.17. Accepted. |
+| `npm audit`: `braces` / `micromatch` / `fast-glob` (high) via `mastra` CLI → `@mastra/deployer` → find-workspaces | Dev-only (`npm run studio`), not shipped in the API bundle | No fixed `mastra` release yet (1.34.2 is latest, 2026-10-17). OpenSpec's copy of the chain was removed by upgrading to 1.14.3. Re-check on each Mastra upgrade. |
 | `npm audit`: `sprintf-js` (GHSA-hp3w-g68c-fv3c, moderate) via `@mastra/core` → gray-matter → js-yaml 3 → argparse | Server-side transitive; not reachable from request input in this app | Suggested fix downgrades Mastra to 1.0.4. Accepted pending upstream. |
 | Tailwind Vite plugin emits a `SOURCEMAP_BROKEN` warning during build | Cosmetic (CSS sourcemap) | Upstream |
 | Vite binds `localhost` to IPv6 on some Windows setups | Playwright could not reach it | Dev server pinned to `127.0.0.1` |

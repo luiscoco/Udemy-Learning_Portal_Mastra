@@ -10,6 +10,8 @@ Interactive learning platform for the **Mastra AI Agents 2026** Udemy course: a 
 | `packages/lab-catalog` | Modules and labs registry |
 | `packages/mastra-runtime` | Server-only Mastra adapters |
 
+> **Local, single-learner use only for now.** Before exposing the platform publicly (a public host or a shared network), complete [docs/RELEASE-GATES.md](docs/RELEASE-GATES.md). Run authorization comes first.
+
 ## Requirements
 
 - Node.js **24 LTS** (minimum 22.13, required by `@mastra/core`)
