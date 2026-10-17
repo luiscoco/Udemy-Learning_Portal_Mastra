@@ -65,7 +65,10 @@ export const lab03: LabImplementation<Lab03Input, Lab03Output, LabServices> = {
       instructions: input.instructions,
       model: resolved.model,
     });
-    ctx.log('info', `new Agent({ id: '${agent.id}', name: '${agent.name}', model: '${input.modelId}'${resolved.simulated ? ' (offline simulation)' : ''} })`);
+    ctx.log(
+      'info',
+      `new Agent({ id: '${agent.id}', name: '${agent.name}', model: '${input.modelId}'${resolved.simulated ? ' (offline simulation)' : ''} })`,
+    );
     ctx.emit({ type: 'workflow-step', stepId: 'define-agent', status: 'success', output: { id: agent.id, name: agent.name } });
 
     ctx.emit({ type: 'workflow-step', stepId: 'register', status: 'running' });
@@ -80,10 +83,24 @@ export const lab03: LabImplementation<Lab03Input, Lab03Output, LabServices> = {
       ctx.emit({ type: 'tool-start', toolCallId: callId, toolName: name, args });
       try {
         const found = fn();
-        ctx.emit({ type: 'tool-finish', toolCallId: callId, toolName: name, status: 'success', result: { id: found.id, name: found.name }, durationMs: 0 });
+        ctx.emit({
+          type: 'tool-finish',
+          toolCallId: callId,
+          toolName: name,
+          status: 'success',
+          result: { id: found.id, name: found.name },
+          durationMs: 0,
+        });
         return found;
       } catch (err) {
-        ctx.emit({ type: 'tool-finish', toolCallId: callId, toolName: name, status: 'error', error: err instanceof Error ? err.message : String(err), durationMs: 0 });
+        ctx.emit({
+          type: 'tool-finish',
+          toolCallId: callId,
+          toolName: name,
+          status: 'error',
+          error: err instanceof Error ? err.message : String(err),
+          durationMs: 0,
+        });
         return null;
       }
     };
@@ -99,10 +116,20 @@ export const lab03: LabImplementation<Lab03Input, Lab03Output, LabServices> = {
     ctx.emit({ type: 'workflow-step', stepId: 'generate', status: 'success', durationMs: Date.now() - started });
 
     const usage = res.usage
-      ? { inputTokens: res.usage.inputTokens ?? undefined, outputTokens: res.usage.outputTokens ?? undefined, totalTokens: res.usage.totalTokens ?? undefined }
+      ? {
+          inputTokens: res.usage.inputTokens ?? undefined,
+          outputTokens: res.usage.outputTokens ?? undefined,
+          totalTokens: res.usage.totalTokens ?? undefined,
+        }
       : undefined;
     ctx.setResultExtras({
-      effective: { mode: ctx.mode, modelId: input.modelId, simulated: resolved.simulated, agentKey: input.agentKey, agentId: input.agentId },
+      effective: {
+        mode: ctx.mode,
+        modelId: input.modelId,
+        simulated: resolved.simulated,
+        agentKey: input.agentKey,
+        agentId: input.agentId,
+      },
       ...(usage ? { usage } : {}),
     });
     return {

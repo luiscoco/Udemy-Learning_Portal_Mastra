@@ -152,7 +152,8 @@ export const lab11Definition = {
         'From .env',
       ],
       correctIndex: 1,
-      explanation: 'Registering tools on the Mastra instance makes them discoverable by key or id (mastra.listTools() lists both).',
+      explanation:
+        'Registering tools on the Mastra instance makes them discoverable by key or id (mastra.listTools() lists both).',
     },
   ],
   sourceFiles: [

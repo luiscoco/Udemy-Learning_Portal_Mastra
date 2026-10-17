@@ -2,7 +2,13 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
 
-export const LAYER_DIRS = ['apps/web', 'apps/api', 'packages/mastra-runtime', 'packages/contracts', 'packages/lab-catalog'] as const;
+export const LAYER_DIRS = [
+  'apps/web',
+  'apps/api',
+  'packages/mastra-runtime',
+  'packages/contracts',
+  'packages/lab-catalog',
+] as const;
 export const ENTRY_FILES = [
   'packages/labs/src/lab-01/template/src/mastra/index.ts',
   'apps/api/src/server.ts',
@@ -62,11 +68,19 @@ export function evidenceFor(layer: Layer, candidate: string): Evidence[] {
     case 'api':
       return [
         { description: 'package.json depends on express', file: `${candidate}/package.json`, test: (t) => 'express' in deps(t) },
-        { description: 'src/server.ts starts an HTTP listener', file: `${candidate}/src/server.ts`, test: (t) => t.includes('.listen(') },
+        {
+          description: 'src/server.ts starts an HTTP listener',
+          file: `${candidate}/src/server.ts`,
+          test: (t) => t.includes('.listen('),
+        },
       ];
     case 'runtime':
       return [
-        { description: 'package.json depends on @mastra/core', file: `${candidate}/package.json`, test: (t) => '@mastra/core' in deps(t) },
+        {
+          description: 'package.json depends on @mastra/core',
+          file: `${candidate}/package.json`,
+          test: (t) => '@mastra/core' in deps(t),
+        },
         {
           description: 'is described as server-only',
           file: `${candidate}/package.json`,

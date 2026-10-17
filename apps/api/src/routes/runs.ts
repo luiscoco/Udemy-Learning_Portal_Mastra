@@ -18,7 +18,9 @@ export function runsRouter(deps: { runner: LabRunner<LabServices>; heartbeatMs: 
     res.json(snap);
   });
 
+  // Mutations require the run token returned at start (X-Run-Token); reads are keyed by run id only.
   router.post('/:runId/cancel', (req, res) => {
+    runner.authorize(req.params.runId, req.header('x-run-token'));
     res.json(runner.cancel(req.params.runId));
   });
 
@@ -26,6 +28,7 @@ export function runsRouter(deps: { runner: LabRunner<LabServices>; heartbeatMs: 
   router.post('/:runId/approvals/:approvalId', (req, res) => {
     const { runId, approvalId } = req.params;
     const body = ApprovalDecisionRequestSchema.parse(req.body ?? {});
+    runner.authorize(runId, req.header('x-run-token'));
     runner.resolveApproval(runId, approvalId, body.decision, body.reason);
     const response: ApprovalDecisionResponse = { runId, approvalId, decision: body.decision };
     res.json(response);

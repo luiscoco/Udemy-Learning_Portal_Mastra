@@ -142,3 +142,25 @@ describe('lab-15 interactive approval (userDecision: ask)', () => {
     expect(result.output.audit.find((e) => e.decision === 'declined')?.actor).toBe('system (approval timeout)');
   });
 });
+
+describe('lab-15 approval capacity', () => {
+  it('a limit decline is recorded as a system decision and nothing is refunded', async () => {
+    const full = new LabRunner({
+      registry: new LabRegistry([lab15]),
+      services: createLabServices({ serverMode: 'offline', env: {} }),
+      liveEnabled: false,
+      maxPendingApprovals: 0,
+    });
+    const r = full.start('lab-15', { input: { ...lab15.definition.exampleInput, userDecision: 'ask' } });
+    await full.waitFor(r.runId);
+    const result = full.events(r.runId).find((e) => e.type === 'result') as {
+      output: Lab15Output;
+      validation: { passed: boolean };
+    };
+    await full.dispose();
+    expect(result.validation.passed).toBe(true);
+    expect(result.output.ledger).toEqual([]);
+    expect(result.output.approvals).toEqual([expect.objectContaining({ decision: 'declined', by: 'limit' })]);
+    expect(result.output.audit.find((e) => e.decision === 'declined')?.actor).toBe('system (approval capacity)');
+  });
+});

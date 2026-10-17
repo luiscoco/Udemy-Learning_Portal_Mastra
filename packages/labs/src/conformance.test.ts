@@ -54,43 +54,51 @@ describe.each(allLabs.map((l) => [l.implementation.definition.id, l] as const))(
     expect(lab.fixtures.length).toBeGreaterThan(0);
   });
 
-  it('example input runs offline and passes its own checks', async () => {
-    const run = runner.start(labId, { input: def.exampleInput, mode: 'offline', timeoutMs: def.execution.maxTimeoutMs });
-    const snap = await runner.waitFor(run.runId);
-    const events = runner.events(run.runId);
-    const result = events.find((e) => e.type === 'result');
-    expect(snap.status, JSON.stringify(events.filter((e) => e.type === 'error'))).toBe('succeeded');
-    expect(result?.type === 'result' && result.validation?.passed).toBe(true);
-    // Every declared check id is reported.
-    const reported = result?.type === 'result' ? (result.validation?.checks.map((c) => c.id) ?? []) : [];
-    expect(reported.sort()).toEqual(def.checks.map((c) => c.id).sort());
-    // The documented expected output must match what the example input really produces (offline).
-    if (def.expectedOutput.example && typeof def.expectedOutput.example === 'object') {
-      expect(result?.type === 'result' ? result.output : undefined).toMatchObject(def.expectedOutput.example as object);
-    }
-  }, def.execution.maxTimeoutMs + 5_000);
+  it(
+    'example input runs offline and passes its own checks',
+    async () => {
+      const run = runner.start(labId, { input: def.exampleInput, mode: 'offline', timeoutMs: def.execution.maxTimeoutMs });
+      const snap = await runner.waitFor(run.runId);
+      const events = runner.events(run.runId);
+      const result = events.find((e) => e.type === 'result');
+      expect(snap.status, JSON.stringify(events.filter((e) => e.type === 'error'))).toBe('succeeded');
+      expect(result?.type === 'result' && result.validation?.passed).toBe(true);
+      // Every declared check id is reported.
+      const reported = result?.type === 'result' ? (result.validation?.checks.map((c) => c.id) ?? []) : [];
+      expect(reported.sort()).toEqual(def.checks.map((c) => c.id).sort());
+      // The documented expected output must match what the example input really produces (offline).
+      if (def.expectedOutput.example && typeof def.expectedOutput.example === 'object') {
+        expect(result?.type === 'result' ? result.output : undefined).toMatchObject(def.expectedOutput.example as object);
+      }
+    },
+    def.execution.maxTimeoutMs + 5_000,
+  );
 
-  it.each(lab.fixtures.map((f) => [f.name, f] as const))('fixture: %s', async (_name, fixture) => {
-    const run = runner.start(labId, { input: fixture.input, mode: fixture.mode ?? 'offline' });
-    const snap = await runner.waitFor(run.runId);
-    const events: readonly ExecutionEvent[] = runner.events(run.runId);
-    for (const e of events) ExecutionEventSchema.parse(e);
-    expect(snap.status).toBe(fixture.expect.status);
-    expect(events.filter((e) => e.type === 'complete')).toHaveLength(1);
-    const result = events.find((e) => e.type === 'result');
-    if (fixture.expect.validationPassed !== undefined) {
-      expect(result?.type === 'result' && result.validation?.passed).toBe(fixture.expect.validationPassed);
-    }
-    if (fixture.expect.output !== undefined) {
-      expect(result?.type === 'result' ? result.output : undefined).toMatchObject(fixture.expect.output as object);
-    }
-    if (fixture.expect.errorCode) {
-      expect(events.find((e) => e.type === 'error')).toMatchObject({ code: fixture.expect.errorCode });
-    }
-    if (fixture.expect.eventTypes) {
-      expect(events.map((e) => e.type)).toEqual(fixture.expect.eventTypes);
-    }
-  }, def.execution.maxTimeoutMs + 5_000);
+  it.each(lab.fixtures.map((f) => [f.name, f] as const))(
+    'fixture: %s',
+    async (_name, fixture) => {
+      const run = runner.start(labId, { input: fixture.input, mode: fixture.mode ?? 'offline' });
+      const snap = await runner.waitFor(run.runId);
+      const events: readonly ExecutionEvent[] = runner.events(run.runId);
+      for (const e of events) ExecutionEventSchema.parse(e);
+      expect(snap.status).toBe(fixture.expect.status);
+      expect(events.filter((e) => e.type === 'complete')).toHaveLength(1);
+      const result = events.find((e) => e.type === 'result');
+      if (fixture.expect.validationPassed !== undefined) {
+        expect(result?.type === 'result' && result.validation?.passed).toBe(fixture.expect.validationPassed);
+      }
+      if (fixture.expect.output !== undefined) {
+        expect(result?.type === 'result' ? result.output : undefined).toMatchObject(fixture.expect.output as object);
+      }
+      if (fixture.expect.errorCode) {
+        expect(events.find((e) => e.type === 'error')).toMatchObject({ code: fixture.expect.errorCode });
+      }
+      if (fixture.expect.eventTypes) {
+        expect(events.map((e) => e.type)).toEqual(fixture.expect.eventTypes);
+      }
+    },
+    def.execution.maxTimeoutMs + 5_000,
+  );
 });
 
 describe('lab-00 determinism', () => {

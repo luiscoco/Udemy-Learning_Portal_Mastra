@@ -21,6 +21,8 @@ export const ConfigSchema = z.object({
   RUN_MAX_TIMEOUT_MS: z.coerce.number().int().min(1000).max(300_000).default(120_000),
   SSE_DISCONNECT_GRACE_MS: z.coerce.number().int().min(0).max(60_000).default(5_000),
   /** How long a run waits for a human approval before auto-declining. */
+  /** Max runs that may wait for a human approval at once (they do not use MAX_CONCURRENT_RUNS slots). */
+  MAX_PENDING_APPROVALS: z.coerce.number().int().min(1).max(200).default(20),
   APPROVAL_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(1_800_000).default(300_000),
   SSE_HEARTBEAT_MS: z.coerce.number().int().min(1000).max(60_000).default(15_000),
   /** When set, the API also serves the built web app (apps/web/dist) on the same origin. */

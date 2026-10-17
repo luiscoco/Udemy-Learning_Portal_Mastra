@@ -24,7 +24,7 @@ export interface ApprovalView {
   message: string;
   expiresAt: string;
   status: 'pending' | 'approve' | 'decline';
-  by?: 'user' | 'timeout';
+  by?: 'user' | 'timeout' | 'limit';
 }
 
 export interface RunError {

@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { checkModelId, DEFAULT_LIVE_MODELS, DEFAULT_MODEL_BY_PROVIDER, liveModelCatalog } from './models.js';
 
 describe('checkModelId', () => {
-  it.each([...DEFAULT_LIVE_MODELS, ...Object.values(DEFAULT_MODEL_BY_PROVIDER)])('%s exists in the installed Mastra registry', (id) => {
-    const c = checkModelId(id);
-    expect(c.ok, c.ok ? '' : c.reason).toBe(true);
-  });
+  it.each([...DEFAULT_LIVE_MODELS, ...Object.values(DEFAULT_MODEL_BY_PROVIDER)])(
+    '%s exists in the installed Mastra registry',
+    (id) => {
+      const c = checkModelId(id);
+      expect(c.ok, c.ok ? '' : c.reason).toBe(true);
+    },
+  );
 
   it('reports the provider API key variable name', () => {
     expect(checkModelId('openai/gpt-5-mini')).toMatchObject({ ok: true, apiKeyEnvVar: 'OPENAI_API_KEY' });

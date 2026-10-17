@@ -42,7 +42,12 @@ export interface Lab15Output {
   role: Lab15Input['role'];
   allowedTools: string[];
   answer: string;
-  approvals: { toolName: string; args: unknown; decision: 'approved' | 'declined'; by: 'preset' | 'user' | 'timeout' }[];
+  approvals: {
+    toolName: string;
+    args: unknown;
+    decision: 'approved' | 'declined';
+    by: 'preset' | 'user' | 'timeout' | 'limit';
+  }[];
   toolCalls: ToolTrace[];
   audit: AuditEntry[];
   ledger: LedgerEntry[];
@@ -172,7 +177,7 @@ export const lab15: LabImplementation<Lab15Input, Lab15Output, LabServices> = {
         actor: 'system',
       });
       let decision: 'approved' | 'declined';
-      let by: 'preset' | 'user' | 'timeout' = 'preset';
+      let by: Lab15Output['approvals'][number]['by'] = 'preset';
       let why = 'decision preset in the lab input';
       if (input.userDecision === 'ask') {
         ctx.log('info', 'Waiting for your decision in the Run tab (the run deadline is paused).');
@@ -184,6 +189,7 @@ export const lab15: LabImplementation<Lab15Input, Lab15Output, LabServices> = {
         decision = outcome.decision === 'approve' ? 'approved' : 'declined';
         by = outcome.by;
         why = outcome.reason ?? (by === 'timeout' ? 'no answer before the approval timeout' : 'decided by the learner');
+        if (by === 'limit') ctx.log('warn', `Approval auto-declined: ${why}`);
       } else {
         decision = input.userDecision === 'approve' ? 'approved' : 'declined';
       }
@@ -194,7 +200,7 @@ export const lab15: LabImplementation<Lab15Input, Lab15Output, LabServices> = {
         args: pending.args,
         decision,
         reason: why,
-        actor: by === 'timeout' ? 'system (approval timeout)' : 'human approver',
+        actor: by === 'timeout' ? 'system (approval timeout)' : by === 'limit' ? 'system (approval capacity)' : 'human approver',
       });
       ctx.emit({ type: 'workflow-step', stepId: `approval-${pending.toolName}`, status: 'success', output: { decision } });
       const options = { runId: res.runId!, toolCallId: pending.toolCallId, abortSignal: ctx.signal, maxSteps: 4 };

@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import {
   ExecutionRequestSchema,
   type ApprovalDecision,
@@ -34,6 +34,8 @@ export interface RunnerOptions<S> {
   disconnectGraceMs?: number;
   /** How long a run may wait for a human approval before it is auto-declined (default 5 min). */
   approvalTimeoutMs?: number;
+  /** Max runs that may wait for a human at once; further requests are auto-declined (default 20). */
+  maxPendingApprovals?: number;
   retentionMs?: number;
   maxEventsPerRun?: number;
   /** Secret values to redact from events and logs. */
@@ -51,6 +53,8 @@ type Listener = (event: ExecutionEvent) => void;
 
 interface RunRecord {
   id: string;
+  /** Secret returned only to the starter; never in snapshots, events or logs. */
+  token: string;
   labId: string;
   correlationId: string;
   requestId: string;
@@ -91,6 +95,7 @@ export class LabRunner<S = unknown> {
       serverMaxTimeoutMs: 120_000,
       disconnectGraceMs: 5_000,
       approvalTimeoutMs: 300_000,
+      maxPendingApprovals: 20,
       retentionMs: 10 * 60_000,
       maxEventsPerRun: 5_000,
       secrets: [],
@@ -102,17 +107,39 @@ export class LabRunner<S = unknown> {
     this.sweepTimer.unref();
   }
 
+  /** Runs doing work. Runs paused for a human approval are excluded (they only hold memory). */
   get activeCount(): number {
     let n = 0;
-    for (const r of this.runs.values()) if (r.status === 'running') n++;
+    for (const r of this.runs.values()) if (r.status === 'running' && r.approvals.size === 0) n++;
     return n;
+  }
+
+  /** Runs currently paused waiting for a human approval. */
+  get waitingCount(): number {
+    let n = 0;
+    for (const r of this.runs.values()) if (r.status === 'running' && r.approvals.size > 0) n++;
+    return n;
+  }
+
+  /**
+   * Checks the run token presented by an API caller (constant-time). Throws NOT_FOUND for an unknown
+   * run, FORBIDDEN for a missing or wrong token. In-process callers (tests, shutdown) skip this.
+   */
+  authorize(runId: string, token: string | undefined): void {
+    const record = this.runs.get(runId);
+    if (!record) throw new LabError('NOT_FOUND', `Unknown run "${runId}"`);
+    const a = Buffer.from(token ?? '');
+    const b = Buffer.from(record.token);
+    if (a.length !== b.length || !timingSafeEqual(a, b)) {
+      throw new LabError('FORBIDDEN', 'This action needs the run token returned when the run was started (X-Run-Token header).');
+    }
   }
 
   /**
    * Validates and starts a run. Throws LabError (NOT_FOUND, VALIDATION_FAILED, NOT_CONFIGURED,
    * TOO_MANY_REQUESTS) synchronously; execution continues asynchronously.
    */
-  start(labId: string, rawRequest: unknown, meta: StartMeta = {}): RunSnapshot {
+  start(labId: string, rawRequest: unknown, meta: StartMeta = {}): RunSnapshot & { runToken: string } {
     const lab = this.opts.registry.require(labId);
     const def = lab.definition;
 
@@ -160,6 +187,7 @@ export class LabRunner<S = unknown> {
     const requestId = meta.requestId ?? randomUUID();
     const record: RunRecord = {
       id: randomUUID(),
+      token: randomBytes(32).toString('base64url'),
       labId: def.id,
       correlationId: meta.correlationId ?? requestId,
       requestId,
@@ -187,7 +215,7 @@ export class LabRunner<S = unknown> {
       deadlineMs,
     });
     record.done = this.execute(record, input.data);
-    return this.snapshot(record);
+    return { ...this.snapshot(record), runToken: record.token };
   }
 
   private async execute(record: RunRecord, input: unknown): Promise<void> {
@@ -299,8 +327,26 @@ export class LabRunner<S = unknown> {
     const { signal } = record.controller;
     if (signal.aborted) return Promise.reject(signal.reason);
     const approvalId = randomUUID();
-    if (record.approvals.size === 0) this.pauseDeadline(record);
     const timeoutMs = this.opts.approvalTimeoutMs;
+    if (record.approvals.size === 0 && this.waitingCount >= this.opts.maxPendingApprovals) {
+      // Fail safe: never wait beyond the cap; decline so the side effect does not run.
+      const reason = `The server is already waiting on ${this.opts.maxPendingApprovals} approvals; try again shortly.`;
+      this.push(record, {
+        type: 'approval-request',
+        approvalId,
+        toolName: request.toolName,
+        args: request.args,
+        message: request.message,
+        expiresAt: new Date(this.opts.now()).toISOString(),
+      });
+      this.push(record, { type: 'approval-resolved', approvalId, decision: 'decline', by: 'limit', reason });
+      this.opts.logger.warn('approval capacity reached', {
+        runId: record.id,
+        maxPendingApprovals: this.opts.maxPendingApprovals,
+      });
+      return Promise.resolve({ approvalId, decision: 'decline', by: 'limit', reason });
+    }
+    if (record.approvals.size === 0) this.pauseDeadline(record);
     return new Promise<ApprovalOutcome>((resolve, reject) => {
       const cleanup = () => {
         clearTimeout(expiry);

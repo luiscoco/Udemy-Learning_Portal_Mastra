@@ -25,6 +25,9 @@ export function useLabRun(labId: string): LabRunControls {
   const [state, dispatch] = useReducer(runReducer, initialRunState);
   const streamCtrl = useRef<AbortController | null>(null);
   const latest = useRef(state);
+  // The run token is kept in memory for the current run only (never in storage or the URL).
+  const token = useRef<{ runId: string; runToken: string } | null>(null);
+  const tokenFor = (runId: string) => (token.current?.runId === runId ? token.current.runToken : '');
   useEffect(() => {
     latest.current = state;
   }, [state]);
@@ -36,6 +39,7 @@ export function useLabRun(labId: string): LabRunControls {
       streamCtrl.current?.abort();
       const ctrl = new AbortController();
       streamCtrl.current = ctrl;
+      token.current = null;
       dispatch({ type: 'start' });
       let final: RunState = { ...initialRunState, phase: 'starting' };
       const apply = (action: Parameters<typeof runReducer>[1]) => {
@@ -44,6 +48,7 @@ export function useLabRun(labId: string): LabRunControls {
       };
       try {
         const started = await startRun(labId, request, ctrl.signal);
+        token.current = { runId: started.runId, runToken: started.runToken };
         apply({ type: 'started', runId: started.runId, correlationId: started.correlationId });
         await streamRunEvents(started.runId, (event) => apply({ type: 'event', event }), ctrl.signal);
         return final;
@@ -60,7 +65,7 @@ export function useLabRun(labId: string): LabRunControls {
     const runId = latest.current.runId;
     if (!runId || latest.current.phase === 'finished') return;
     try {
-      await cancelRun(runId);
+      await cancelRun(runId, tokenFor(runId));
     } catch (err) {
       dispatch({ type: 'client-error', error: toRunError(err) });
     }
@@ -70,11 +75,12 @@ export function useLabRun(labId: string): LabRunControls {
     const runId = latest.current.runId;
     if (!runId) return;
     // The UI updates from the approval-resolved event on the stream, not from this response.
-    await decideApproval(runId, approvalId, decision);
+    await decideApproval(runId, tokenFor(runId), approvalId, decision);
   }, []);
 
   const reset = useCallback(() => {
     streamCtrl.current?.abort();
+    token.current = null;
     dispatch({ type: 'reset' });
   }, []);
 

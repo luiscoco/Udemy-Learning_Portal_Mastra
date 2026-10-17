@@ -63,9 +63,7 @@ export interface ScriptedModelOptions {
 function textOf(content: unknown): string {
   if (typeof content === 'string') return content;
   if (Array.isArray(content)) {
-    return content
-      .map((p: { type?: string; text?: string }) => (p && p.type === 'text' ? (p.text ?? '') : ''))
-      .join('');
+    return content.map((p: { type?: string; text?: string }) => (p && p.type === 'text' ? (p.text ?? '') : '')).join('');
   }
   return '';
 }

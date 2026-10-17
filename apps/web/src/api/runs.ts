@@ -34,8 +34,12 @@ export async function startRun(labId: string, body: ExecutionRequest, signal?: A
   return StartRunResponseSchema.parse(await res.json());
 }
 
-export async function cancelRun(runId: string): Promise<RunSnapshot> {
-  const res = await fetch(`/api/runs/${encodeURIComponent(runId)}/cancel`, { method: 'POST' });
+/** The run token (from startRun) proves this tab started the run; the API requires it for cancel and approvals. */
+export async function cancelRun(runId: string, runToken: string): Promise<RunSnapshot> {
+  const res = await fetch(`/api/runs/${encodeURIComponent(runId)}/cancel`, {
+    method: 'POST',
+    headers: { 'x-run-token': runToken },
+  });
   if (!res.ok) throw await toApiClientError(res);
   return RunSnapshotSchema.parse(await res.json());
 }
@@ -43,6 +47,7 @@ export async function cancelRun(runId: string): Promise<RunSnapshot> {
 /** Approves or declines a tool call the run is waiting on. */
 export async function decideApproval(
   runId: string,
+  runToken: string,
   approvalId: string,
   decision: ApprovalDecision,
 ): Promise<ApprovalDecisionResponse> {
@@ -50,7 +55,7 @@ export async function decideApproval(
   try {
     res = await fetch(`/api/runs/${encodeURIComponent(runId)}/approvals/${encodeURIComponent(approvalId)}`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', accept: 'application/json' },
+      headers: { 'content-type': 'application/json', accept: 'application/json', 'x-run-token': runToken },
       body: JSON.stringify({ decision }),
     });
   } catch {

@@ -113,6 +113,7 @@ export function labsRouter(deps: {
       runId: snapshot.runId,
       correlationId: snapshot.correlationId,
       requestId: req.requestId,
+      runToken: snapshot.runToken,
     });
   });
 

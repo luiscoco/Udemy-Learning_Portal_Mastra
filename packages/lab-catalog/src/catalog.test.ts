@@ -49,6 +49,11 @@ describe('lab catalog', () => {
 
   it('rejects unknown prerequisites', () => {
     const lab = { ...catalog.labs[0]!, prerequisites: ['lab-99'] };
-    expect(() => validateCatalog({ modules: catalog.modules.filter((m) => m.id === 'module-00').map((m) => ({ ...m, labIds: ['lab-00'] })), labs: [lab] })).toThrow(/prerequisite/);
+    expect(() =>
+      validateCatalog({
+        modules: catalog.modules.filter((m) => m.id === 'module-00').map((m) => ({ ...m, labIds: ['lab-00'] })),
+        labs: [lab],
+      }),
+    ).toThrow(/prerequisite/);
   });
 });

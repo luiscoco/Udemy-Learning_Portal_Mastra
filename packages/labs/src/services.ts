@@ -56,7 +56,8 @@ export function createModelService(env: Record<string, string | undefined>): Mod
     selectableIds: () => liveModels.map((m) => m.id),
     resolve({ mode, modelId, offline, tokenDelayMs }) {
       const check = checkModelId(modelId);
-      if (!check.ok) throw new LabError('VALIDATION_FAILED', check.reason, { details: [{ path: 'input.modelId', message: check.reason }] });
+      if (!check.ok)
+        throw new LabError('VALIDATION_FAILED', check.reason, { details: [{ path: 'input.modelId', message: check.reason }] });
       if (mode === 'offline') {
         const scripted = new ScriptedLanguageModel({ provider: 'offline-sim', modelId, script: offline, tokenDelayMs });
         return { model: scripted, modelId, simulated: true, scripted };

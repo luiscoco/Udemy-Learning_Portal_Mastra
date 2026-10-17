@@ -8,7 +8,8 @@ export const lab02Definition = {
   number: 2,
   title: 'Explore project architecture',
   moduleId: 'module-01',
-  summary: 'Map the UI, API, Mastra runtime and Mastra entry point of a real Mastra application, and check how secrets stay on the server.',
+  summary:
+    'Map the UI, API, Mastra runtime and Mastra entry point of a real Mastra application, and check how secrets stay on the server.',
   concept:
     'A production Mastra application is more than an agent file: it has a user interface, an HTTP API, and a server-side runtime where Mastra actually runs. ' +
     'The browser must never import Mastra or see API keys, so the UI talks to your own API, and only the API process loads Mastra and reads .env. ' +
@@ -27,7 +28,13 @@ export const lab02Definition = {
   inputs: [
     { kind: 'select', name: 'ui', label: 'Which folder is the UI (browser) layer?', options: dirOptions, required: true },
     { kind: 'select', name: 'api', label: 'Which folder is the HTTP API layer?', options: dirOptions, required: true },
-    { kind: 'select', name: 'runtime', label: 'Which folder holds the server-only Mastra runtime?', options: dirOptions, required: true },
+    {
+      kind: 'select',
+      name: 'runtime',
+      label: 'Which folder holds the server-only Mastra runtime?',
+      options: dirOptions,
+      required: true,
+    },
     {
       kind: 'select',
       name: 'mastraEntry',
@@ -47,7 +54,12 @@ export const lab02Definition = {
       'An inspectFile tool call per file read, three workflow steps, a manifest with workspaces, root scripts, per-layer evidence and agent registration lines, and five passing checks.',
     example: {
       layers: [
-        { layer: 'ui', path: 'apps/web', passed: true, found: ['package.json depends on react', 'has an index.html page', 'has a Vite config'] },
+        {
+          layer: 'ui',
+          path: 'apps/web',
+          passed: true,
+          found: ['package.json depends on react', 'has an index.html page', 'has a Vite config'],
+        },
         { layer: 'api', path: 'apps/api', passed: true },
         { layer: 'runtime', path: 'packages/mastra-runtime', passed: true },
         { layer: 'mastraEntry', path: 'packages/labs/src/lab-01/template/src/mastra/index.ts', passed: true },
@@ -86,7 +98,8 @@ export const lab02Definition = {
       },
     ],
     challenge: {
-      prompt: 'Using the manifest, explain in three sentences what happens from the moment a learner presses Run in the browser until a Mastra agent answers.',
+      prompt:
+        'Using the manifest, explain in three sentences what happens from the moment a learner presses Run in the browser until a Mastra agent answers.',
       successCriteria: [
         'Mentions the browser calling the API (not Mastra) ',
         'Mentions the server-only runtime loading Mastra and reading keys from .env',
@@ -142,9 +155,17 @@ export const lab02Definition = {
   instructorOutline: {
     durationMinutes: 5,
     segments: [
-      { title: 'Why architecture matters', minutes: 1, talkingPoints: ['Keys and Mastra stay on the server', 'Browser talks to our API'] },
+      {
+        title: 'Why architecture matters',
+        minutes: 1,
+        talkingPoints: ['Keys and Mastra stay on the server', 'Browser talks to our API'],
+      },
       { title: 'Predict and run', minutes: 1.5, talkingPoints: ['Pick the four layers', 'Follow the inspectFile trace'] },
-      { title: 'Read the manifest', minutes: 1.5, talkingPoints: ['Workspaces and scripts', 'Agent registration lines', 'Env hygiene'] },
+      {
+        title: 'Read the manifest',
+        minutes: 1.5,
+        talkingPoints: ['Workspaces and scripts', 'Agent registration lines', 'Env hygiene'],
+      },
       { title: 'Make a wrong mapping', minutes: 1, talkingPoints: ['UI → apps/api', 'Read the evidence-based failure'] },
     ],
   },

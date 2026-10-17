@@ -166,17 +166,29 @@ export const lab00Definition = {
       {
         title: 'Happy path run',
         minutes: 1.5,
-        talkingPoints: ['Run with the example input', 'Walk the timeline: workflow steps, tool call, tokens', 'Show the result checks'],
+        talkingPoints: [
+          'Run with the example input',
+          'Walk the timeline: workflow steps, tool call, tokens',
+          'Show the result checks',
+        ],
       },
       {
         title: 'Cancel and timeout',
         minutes: 1.5,
-        talkingPoints: ['Increase delay, press Cancel', 'Point out error CANCELLED then complete cancelled', 'Mention the deadline'],
+        talkingPoints: [
+          'Increase delay, press Cancel',
+          'Point out error CANCELLED then complete cancelled',
+          'Mention the deadline',
+        ],
       },
       {
         title: 'Errors and Source tab',
         minutes: 1,
-        talkingPoints: ['Empty message → VALIDATION_FAILED before the run', 'Simulated failure → retryable PROVIDER_ERROR', 'Open Source tab, show run.ts'],
+        talkingPoints: [
+          'Empty message → VALIDATION_FAILED before the run',
+          'Simulated failure → retryable PROVIDER_ERROR',
+          'Open Source tab, show run.ts',
+        ],
       },
     ],
   },

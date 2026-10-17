@@ -296,3 +296,59 @@ describe('LabRunner approvals', () => {
     );
   });
 });
+
+describe('LabRunner run tokens and approval capacity', () => {
+  async function waitForRequest(runner: LabRunner, runId: string) {
+    for (let i = 0; i < 100; i++) {
+      const e = runner.events(runId).find((x) => x.type === 'approval-request');
+      if (e?.type === 'approval-request') return e;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    throw new Error('no approval-request event');
+  }
+
+  it('returns a private run token and authorizes only that token', async () => {
+    const r = setup();
+    const run = r.start('lab-99', { input: { text: 'hi', behavior: 'approval' } });
+    expect(run.runToken).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(JSON.stringify(r.get(run.runId))).not.toContain(run.runToken);
+    expect(() => r.authorize(run.runId, run.runToken)).not.toThrow();
+    expect(() => r.authorize(run.runId, undefined)).toThrowError(expect.objectContaining({ code: 'FORBIDDEN' }));
+    expect(() => r.authorize(run.runId, run.runToken.slice(0, -1) + 'x')).toThrowError(
+      expect.objectContaining({ code: 'FORBIDDEN' }),
+    );
+    expect(() => r.authorize('missing', run.runToken)).toThrowError(expect.objectContaining({ code: 'NOT_FOUND' }));
+    const other = r.start('lab-99', { input: { text: 'x' } });
+    expect(() => r.authorize(run.runId, other.runToken)).toThrowError(expect.objectContaining({ code: 'FORBIDDEN' }));
+    r.resolveApproval(run.runId, (await waitForRequest(r, run.runId)).approvalId, 'approve');
+    await r.waitFor(run.runId);
+    expect(JSON.stringify(r.events(run.runId))).not.toContain(run.runToken);
+  });
+
+  it('a run waiting for approval frees its concurrency slot', async () => {
+    const r = setup({ maxConcurrentRuns: 1 });
+    const waiting = r.start('lab-99', { input: { text: 'hi', behavior: 'approval' } });
+    await waitForRequest(r, waiting.runId);
+    expect([r.activeCount, r.waitingCount]).toEqual([0, 1]);
+    const next = r.start('lab-99', { input: { text: 'next' } });
+    expect((await r.waitFor(next.runId)).status).toBe('succeeded');
+    r.cancel(waiting.runId);
+    await r.waitFor(waiting.runId);
+  });
+
+  it('auto-declines with by "limit" when too many runs are already waiting', async () => {
+    const r = setup({ maxPendingApprovals: 1 });
+    const first = r.start('lab-99', { input: { text: 'one', behavior: 'approval' } });
+    await waitForRequest(r, first.runId);
+    const second = r.start('lab-99', { input: { text: 'two', behavior: 'approval' } });
+    expect((await r.waitFor(second.runId)).status).toBe('succeeded');
+    expect(r.events(second.runId).find((e) => e.type === 'approval-resolved')).toMatchObject({
+      decision: 'decline',
+      by: 'limit',
+    });
+    expect(r.events(second.runId).find((e) => e.type === 'result')).toMatchObject({ output: { echo: 'declined (limit)' } });
+    r.resolveApproval(first.runId, (await waitForRequest(r, first.runId)).approvalId, 'approve');
+    expect(r.events(first.runId).find((e) => e.type === 'approval-resolved')).toMatchObject({ by: 'user' });
+    await r.waitFor(first.runId);
+  });
+});

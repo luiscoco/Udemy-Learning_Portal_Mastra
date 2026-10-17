@@ -28,7 +28,7 @@ function describe(e: ExecutionEvent): string {
     case 'approval-request':
       return `approval needed for ${e.toolName}: ${e.message}`;
     case 'approval-resolved':
-      return `approval ${e.decision === 'approve' ? 'approved' : 'declined'} (${e.by === 'user' ? 'by you' : 'timed out'})`;
+      return `approval ${e.decision === 'approve' ? 'approved' : 'declined'} (${e.by === 'user' ? 'by you' : e.by === 'timeout' ? 'timed out' : 'server approval limit reached'})`;
     case 'result':
       return e.validation ? `result — checks ${e.validation.passed ? 'passed' : 'failed'}` : 'result';
     case 'error':

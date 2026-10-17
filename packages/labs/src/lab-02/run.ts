@@ -72,7 +72,10 @@ export const lab02: LabImplementation<Lab02Input, Lab02Output> = {
     };
 
     ctx.emit({ type: 'workflow-step', stepId: 'read-workspace', status: 'running' });
-    const rootPkg = JSON.parse((await read('package.json', ctx)).text) as { workspaces?: string[]; scripts?: Record<string, string> };
+    const rootPkg = JSON.parse((await read('package.json', ctx)).text) as {
+      workspaces?: string[];
+      scripts?: Record<string, string>;
+    };
     ctx.log('info', `Workspaces: ${(rootPkg.workspaces ?? []).join(', ')}`);
     ctx.emit({ type: 'workflow-step', stepId: 'read-workspace', status: 'success' });
 
@@ -93,7 +96,10 @@ export const lab02: LabImplementation<Lab02Input, Lab02Output> = {
         (ok ? found : missing).push(ev.description);
       }
       const passed = missing.length === 0;
-      ctx.log(passed ? 'info' : 'warn', `${LAYER_LABELS[layer]} → ${path}: ${passed ? 'confirmed' : `missing ${missing.join('; ')}`}`);
+      ctx.log(
+        passed ? 'info' : 'warn',
+        `${LAYER_LABELS[layer]} → ${path}: ${passed ? 'confirmed' : `missing ${missing.join('; ')}`}`,
+      );
       layers.push({ layer, label: LAYER_LABELS[layer], path, passed, found, missing });
     }
     ctx.emit({ type: 'workflow-step', stepId: 'assert-layers', status: 'success' });

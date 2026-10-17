@@ -51,7 +51,10 @@ describe('lab-01 build step', () => {
   it('reports compiler diagnostics for a broken project instead of crashing', async () => {
     const dir = join(dataDir(), 'scaffolds', 'test-broken');
     await mkdir(join(dir, 'src'), { recursive: true });
-    await writeFile(join(dir, 'tsconfig.json'), JSON.stringify({ compilerOptions: { strict: true, noEmit: true }, include: ['src'] }));
+    await writeFile(
+      join(dir, 'tsconfig.json'),
+      JSON.stringify({ compilerOptions: { strict: true, noEmit: true }, include: ['src'] }),
+    );
     await writeFile(join(dir, 'src', 'index.ts'), 'const x: number = "not a number";\n');
     try {
       const r = await typecheckProject(dir, join(labsPackageDir(), 'package.json'), new AbortController().signal);
@@ -66,9 +69,9 @@ describe('lab-01 build step', () => {
 describe('lab-01 safety', () => {
   it('rejects path traversal in the project name', () => {
     expect(Lab01InputSchema.safeParse({ projectName: '../evil', provider: 'openai', agentName: 'X y' }).success).toBe(false);
-    expect(() => runner.start('lab-01', { input: { projectName: '../evil', provider: 'openai', agentName: 'Helper' } })).toThrowError(
-      expect.objectContaining({ code: 'VALIDATION_FAILED' }),
-    );
+    expect(() =>
+      runner.start('lab-01', { input: { projectName: '../evil', provider: 'openai', agentName: 'Helper' } }),
+    ).toThrowError(expect.objectContaining({ code: 'VALIDATION_FAILED' }));
   });
 
   it('cancelling during the build terminates the compiler and removes the folder', async () => {

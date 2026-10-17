@@ -82,11 +82,11 @@ All bodies are JSON validated with the Zod schemas in `packages/contracts`. Erro
 | `GET /api/labs` · `GET /api/labs/:labId` | Lab summaries · full `LabDefinition` |
 | `GET /api/labs/:labId/source` | Readonly reference source + pinned versions |
 | `GET /api/labs/:labId/preflight` | Environment checks for the lab |
-| `POST /api/labs/:labId/runs` | Start a run: `{ input, mode: "offline" \| "live", timeoutMs? }` → `202 { runId, correlationId, requestId }` |
+| `POST /api/labs/:labId/runs` | Start a run: `{ input, mode: "offline" \| "live", timeoutMs? }` → `202 { runId, correlationId, requestId, runToken }` |
 | `GET /api/runs/:runId` | Run snapshot |
 | `GET /api/runs/:runId/events` | Server-Sent Events (`log`, `token`, `tool-start`, `tool-finish`, `workflow-step`, `approval-request`, `approval-resolved`, `result`, `error`, `complete`); supports `Last-Event-ID` |
-| `POST /api/runs/:runId/cancel` | Cancel a run |
-| `POST /api/runs/:runId/approvals/:approvalId` | Approve or decline a pending tool call: `{ "decision": "approve" \| "decline", "reason"? }` (404 unknown run, 409 not pending) |
+| `POST /api/runs/:runId/cancel` | Cancel a run (header `X-Run-Token`; 403 without it) |
+| `POST /api/runs/:runId/approvals/:approvalId` | Approve or decline a pending tool call: `{ "decision": "approve" \| "decline", "reason"? }` (header `X-Run-Token`; 403 wrong or missing token, 404 unknown run, 409 not pending) |
 
 Try it from PowerShell:
 
@@ -97,7 +97,9 @@ $run = Invoke-RestMethod -Method Post -ContentType 'application/json' `
 curl.exe -N "http://127.0.0.1:8787/api/runs/$($run.runId)/events"
 ```
 
-Limits (env): `MAX_CONCURRENT_RUNS` (4), `RUN_MAX_TIMEOUT_MS` (120000), `SSE_DISCONNECT_GRACE_MS` (5000) — a run whose last viewer disconnects is cancelled after the grace period; `APPROVAL_TIMEOUT_MS` (300000) — a run waiting for a human approval auto-declines after this (the run deadline is paused while waiting).
+Limits (env): `MAX_CONCURRENT_RUNS` (4), `RUN_MAX_TIMEOUT_MS` (120000), `SSE_DISCONNECT_GRACE_MS` (5000) — a run whose last viewer disconnects is cancelled after the grace period; `APPROVAL_TIMEOUT_MS` (300000) — a run waiting for a human approval auto-declines after this (the run deadline is paused while waiting); `MAX_PENDING_APPROVALS` (20) — runs waiting for a human do not use a `MAX_CONCURRENT_RUNS` slot, but at most this many may wait at once (further approval requests are auto-declined).
+
+Run token: `POST /api/labs/:labId/runs` returns a secret `runToken`. Cancelling a run or deciding its approvals requires it in the `X-Run-Token` header, so only the client that started a run can change it. Reading a run (snapshot, events) needs only the run id. The platform has no user accounts; the token protects each run, not each person.
 
 ## Learner experience
 

@@ -14,7 +14,7 @@ export const lab03Definition = {
     'The id is a stable machine identifier, the name is what humans see, the instructions become the system prompt, and the model says which LLM answers. ' +
     'A model is written as a "provider/model" string such as openai/gpt-5-mini, which Mastra\'s model router resolves using the matching API key from your environment. ' +
     'An agent works on its own, but you register it on the Mastra instance with `new Mastra({ agents: { supportAgent } })` so the rest of your app, the API server and Studio can find it. ' +
-    'Registered agents are retrieved with `mastra.getAgent(key)`, using the object key you registered, or `mastra.getAgentById(id)`, using the agent\'s own id. ' +
+    "Registered agents are retrieved with `mastra.getAgent(key)`, using the object key you registered, or `mastra.getAgentById(id)`, using the agent's own id. " +
     'Calling `agent.generate(prompt)` sends your instructions and the prompt to the model and returns a result whose text property holds the answer. ' +
     'In offline mode this lab plugs a deterministic simulated model into the same Agent class, so the real Mastra code runs without an API key and the result shows exactly what system prompt the model received.',
   objectives: [
@@ -25,9 +25,35 @@ export const lab03Definition = {
   ],
   prerequisites: ['lab-02'],
   inputs: [
-    { kind: 'text', name: 'agentKey', label: 'Registration key (camelCase)', minLength: 2, maxLength: 40, default: 'supportAgent', required: true, help: 'The object key in new Mastra({ agents: { … } }).' },
-    { kind: 'text', name: 'agentId', label: 'Agent id (kebab-case)', minLength: 2, maxLength: 40, default: 'support-agent', required: true, help: 'Stable identifier stored on the agent.' },
-    { kind: 'text', name: 'agentName', label: 'Display name', minLength: 2, maxLength: 40, default: 'Support Agent', required: true },
+    {
+      kind: 'text',
+      name: 'agentKey',
+      label: 'Registration key (camelCase)',
+      minLength: 2,
+      maxLength: 40,
+      default: 'supportAgent',
+      required: true,
+      help: 'The object key in new Mastra({ agents: { … } }).',
+    },
+    {
+      kind: 'text',
+      name: 'agentId',
+      label: 'Agent id (kebab-case)',
+      minLength: 2,
+      maxLength: 40,
+      default: 'support-agent',
+      required: true,
+      help: 'Stable identifier stored on the agent.',
+    },
+    {
+      kind: 'text',
+      name: 'agentName',
+      label: 'Display name',
+      minLength: 2,
+      maxLength: 40,
+      default: 'Support Agent',
+      required: true,
+    },
     {
       kind: 'textarea',
       name: 'instructions',
@@ -38,8 +64,24 @@ export const lab03Definition = {
       default: 'You are a friendly support agent for an online bookstore. Answer in two sentences or fewer.',
       required: true,
     },
-    { kind: 'select', name: 'modelId', label: 'Model', options: MODEL_OPTIONS, default: 'openai/gpt-5-mini', required: true, help: 'Offline mode simulates this model; live mode calls it (needs its API key).' },
-    { kind: 'text', name: 'prompt', label: 'Prompt', minLength: 1, maxLength: 500, default: 'Do you ship to Canada?', required: true },
+    {
+      kind: 'select',
+      name: 'modelId',
+      label: 'Model',
+      options: MODEL_OPTIONS,
+      default: 'openai/gpt-5-mini',
+      required: true,
+      help: 'Offline mode simulates this model; live mode calls it (needs its API key).',
+    },
+    {
+      kind: 'text',
+      name: 'prompt',
+      label: 'Prompt',
+      minLength: 1,
+      maxLength: 500,
+      default: 'Do you ship to Canada?',
+      required: true,
+    },
   ],
   exampleInput: {
     agentKey: 'supportAgent',
@@ -50,10 +92,15 @@ export const lab03Definition = {
     prompt: 'Do you ship to Canada?',
   },
   expectedOutput: {
-    description: 'Four workflow steps (define, register, lookup, generate), two lookup tool calls, the registered keys and the agent text.',
+    description:
+      'Four workflow steps (define, register, lookup, generate), two lookup tool calls, the registered keys and the agent text.',
     example: {
       registeredKeys: ['supportAgent'],
-      lookup: { byKey: { id: 'support-agent', name: 'Support Agent' }, byId: { id: 'support-agent', name: 'Support Agent' }, sameInstance: true },
+      lookup: {
+        byKey: { id: 'support-agent', name: 'Support Agent' },
+        byId: { id: 'support-agent', name: 'Support Agent' },
+        sameInstance: true,
+      },
       model: { id: 'openai/gpt-5-mini', simulated: true },
       text: 'Hi, I\'m Support Agent. You asked: "Do you ship to Canada?". Following my instructions ("You are a friendly support agent for an online bookstore."), this is a deterministic offline answer from the simulated model.',
     },
@@ -67,20 +114,28 @@ export const lab03Definition = {
       'Change the key to "helper" but keep the id. Run again and compare which lookup uses which value.',
       'Optional (costs money): set MASTRA_MODE=live and a provider key in .env, restart, and run with live mode.',
     ],
-    prediction: 'If you register the agent as { helper: agent } with id "support-agent", what does mastra.getAgent("helper").id return?',
+    prediction:
+      'If you register the agent as { helper: agent } with id "support-agent", what does mastra.getAgent("helper").id return?',
     hints: [
       { level: 1, text: 'Registration key and agent id are two different strings.' },
       { level: 2, text: 'getAgent takes the registration key; getAgentById takes the id passed to new Agent().' },
       { level: 3, text: 'It returns "support-agent": the key only names the registry slot, the id belongs to the agent.' },
     ],
     commonMistakes: [
-      { mistake: 'Calling mastra.getAgent with the agent id.', fix: 'Use getAgentById(id), or getAgent(key) with the registration key.' },
+      {
+        mistake: 'Calling mastra.getAgent with the agent id.',
+        fix: 'Use getAgentById(id), or getAgent(key) with the registration key.',
+      },
       { mistake: 'Writing the model without the provider prefix.', fix: 'Use "provider/model", e.g. "openai/gpt-5-mini".' },
-      { mistake: 'Expecting an agent to be reachable from Studio without registering it.', fix: 'Add it to the agents object of the Mastra instance.' },
+      {
+        mistake: 'Expecting an agent to be reachable from Studio without registering it.',
+        fix: 'Add it to the agents object of the Mastra instance.',
+      },
       { mistake: 'Hard-coding the API key in the agent file.', fix: 'Mastra reads OPENAI_API_KEY (etc.) from the environment.' },
     ],
     challenge: {
-      prompt: 'Register two agents in your head: a "billingAgent" with id "billing" and a "supportAgent" with id "support-agent". Write the two lookup calls that return the billing agent.',
+      prompt:
+        'Register two agents in your head: a "billingAgent" with id "billing" and a "supportAgent" with id "support-agent". Write the two lookup calls that return the billing agent.',
       successCriteria: ['mastra.getAgent("billingAgent")', 'mastra.getAgentById("billing")'],
     },
     diagram: {
@@ -100,7 +155,7 @@ export const lab03Definition = {
     },
     {
       id: 'q2',
-      prompt: 'Which call uses the agent\'s own id?',
+      prompt: "Which call uses the agent's own id?",
       choices: ['mastra.getAgent(id)', 'mastra.getAgentById(id)', 'agent.generate(id)', 'new Mastra(id)'],
       correctIndex: 1,
       explanation: 'getAgentById looks agents up by the id passed to new Agent().',
@@ -115,7 +170,12 @@ export const lab03Definition = {
     {
       id: 'q4',
       prompt: 'Why register an agent on the Mastra instance?',
-      choices: ['It is required to call generate()', 'So the app, API server and Studio can find it by key or id', 'To make it run faster', 'To store its API key'],
+      choices: [
+        'It is required to call generate()',
+        'So the app, API server and Studio can find it by key or id',
+        'To make it run faster',
+        'To store its API key',
+      ],
       correctIndex: 1,
       explanation: 'An Agent can generate on its own; registration makes it discoverable across the app and tools.',
     },
@@ -139,9 +199,21 @@ export const lab03Definition = {
   instructorOutline: {
     durationMinutes: 6,
     segments: [
-      { title: 'Anatomy of an Agent', minutes: 1.5, talkingPoints: ['id, name, instructions, model', '"provider/model" strings'] },
-      { title: 'Register and look up', minutes: 1.5, talkingPoints: ['new Mastra({ agents })', 'getAgent(key) vs getAgentById(id)'] },
-      { title: 'Generate', minutes: 1.5, talkingPoints: ['agent.generate(prompt)', 'result.text and usage', 'systemPromptSeen proves instructions'] },
+      {
+        title: 'Anatomy of an Agent',
+        minutes: 1.5,
+        talkingPoints: ['id, name, instructions, model', '"provider/model" strings'],
+      },
+      {
+        title: 'Register and look up',
+        minutes: 1.5,
+        talkingPoints: ['new Mastra({ agents })', 'getAgent(key) vs getAgentById(id)'],
+      },
+      {
+        title: 'Generate',
+        minutes: 1.5,
+        talkingPoints: ['agent.generate(prompt)', 'result.text and usage', 'systemPromptSeen proves instructions'],
+      },
       { title: 'Live mode and costs', minutes: 1, talkingPoints: ['MASTRA_MODE=live + key in .env', 'Costs are per token'] },
       { title: 'Wrap-up', minutes: 0.5, talkingPoints: ['Next: choosing models and instructions'] },
     ],

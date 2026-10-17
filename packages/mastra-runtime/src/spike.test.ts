@@ -26,7 +26,13 @@ function toolModel() {
 
 describe('Mastra spike with ScriptedLanguageModel', () => {
   it('generate() runs instructions + tool loop and returns text', async () => {
-    const agent = new Agent({ id: 'calc-agent', name: 'Calc', instructions: 'You add numbers.', model: toolModel(), tools: { add } });
+    const agent = new Agent({
+      id: 'calc-agent',
+      name: 'Calc',
+      instructions: 'You add numbers.',
+      model: toolModel(),
+      tools: { add },
+    });
     const res = await agent.generate('What is 2 + 3?');
     expect(res.text).toContain('"sum":5');
     expect(res.text).toContain('You add numbers.');
@@ -35,7 +41,13 @@ describe('Mastra spike with ScriptedLanguageModel', () => {
   });
 
   it('stream() yields text deltas and tool chunks', async () => {
-    const agent = new Agent({ id: 'calc-agent', name: 'Calc', instructions: 'You add numbers.', model: toolModel(), tools: { add } });
+    const agent = new Agent({
+      id: 'calc-agent',
+      name: 'Calc',
+      instructions: 'You add numbers.',
+      model: toolModel(),
+      tools: { add },
+    });
     const out = await agent.stream('What is 2 + 3?');
     const types: string[] = [];
     for await (const chunk of out.fullStream) types.push(chunk.type);

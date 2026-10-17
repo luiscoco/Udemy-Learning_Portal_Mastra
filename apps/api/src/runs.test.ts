@@ -159,7 +159,10 @@ describe('run lifecycle over HTTP + SSE', () => {
     );
     const streaming = readSse(`${base}/api/runs/${start.runId}/events`);
     await new Promise((r) => setTimeout(r, 100));
-    const cancel = await fetch(`${base}/api/runs/${start.runId}/cancel`, { method: 'POST' });
+    const cancel = await fetch(`${base}/api/runs/${start.runId}/cancel`, {
+      method: 'POST',
+      headers: { 'x-run-token': start.runToken },
+    });
     expect(cancel.status).toBe(200);
     const { events } = await streaming;
     expect(events.at(-2)).toMatchObject({ type: 'error', code: 'CANCELLED' });
@@ -187,16 +190,17 @@ describe('run lifecycle over HTTP + SSE', () => {
   });
 
   it('enforces the concurrency limit with 429 retryable', async () => {
-    const ids: string[] = [];
+    const runs: { runId: string; runToken: string }[] = [];
     for (let i = 0; i < 3; i++) {
       const r = await startRun('lab-00', { input: { message: 'a b c d e f g h', delayMs: 1000 } });
-      ids.push(StartRunResponseSchema.parse(await r.json()).runId);
+      runs.push(StartRunResponseSchema.parse(await r.json()));
     }
     const res = await startRun('lab-00', { input: { message: 'one more' } });
     expect(res.status).toBe(429);
     expect(ApiErrorSchema.parse(await res.json()).error).toMatchObject({ code: 'TOO_MANY_REQUESTS', retryable: true });
-    for (const id of ids) await fetch(`${base}/api/runs/${id}/cancel`, { method: 'POST' });
-    await Promise.all(ids.map((id) => api.runner.waitFor(id)));
+    for (const r of runs)
+      await fetch(`${base}/api/runs/${r.runId}/cancel`, { method: 'POST', headers: { 'x-run-token': r.runToken } });
+    await Promise.all(runs.map((r) => api.runner.waitFor(r.runId)));
   });
 
   it('returns 404 for unknown runs', async () => {
@@ -226,10 +230,10 @@ describe('secret isolation', () => {
 });
 
 describe('approvals API', () => {
-  const decide = (runId: string, approvalId: string, body: unknown) =>
+  const decide = (runId: string, approvalId: string, body: unknown, token = '') =>
     fetch(`${base}/api/runs/${runId}/approvals/${approvalId}`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', ...(token ? { 'x-run-token': token } : {}) },
       body: JSON.stringify(body),
     });
   const askInput = {
@@ -251,22 +255,46 @@ describe('approvals API', () => {
     expect(approvalId).not.toBe('');
 
     const streaming = readSse(`${base}/api/runs/${start.runId}/events`);
-    const bad = await decide(start.runId, approvalId, { decision: 'maybe' });
+    const noToken = await decide(start.runId, approvalId, { decision: 'approve' });
+    expect(noToken.status).toBe(403);
+    expect(ApiErrorSchema.parse(await noToken.json()).error.code).toBe('FORBIDDEN');
+    const wrongToken = await decide(start.runId, approvalId, { decision: 'approve' }, 'x'.repeat(43));
+    expect(wrongToken.status).toBe(403);
+    expect(api.runner.get(start.runId)?.pendingApprovals).toBe(1);
+
+    const bad = await decide(start.runId, approvalId, { decision: 'maybe' }, start.runToken);
     expect(bad.status).toBe(422);
     expect(ApiErrorSchema.parse(await bad.json()).error.code).toBe('VALIDATION_FAILED');
 
-    const ok = await decide(start.runId, approvalId, { decision: 'approve' });
+    const ok = await decide(start.runId, approvalId, { decision: 'approve' }, start.runToken);
     expect(ok.status).toBe(200);
     expect(await ok.json()).toEqual({ runId: start.runId, approvalId, decision: 'approve' });
 
-    const again = await decide(start.runId, approvalId, { decision: 'decline' });
+    const again = await decide(start.runId, approvalId, { decision: 'decline' }, start.runToken);
     expect(again.status).toBe(409);
     expect(ApiErrorSchema.parse(await again.json()).error.code).toBe('CONFLICT');
 
     const { events } = await streaming;
+    // The token never leaks into reads.
+    expect(JSON.stringify(events)).not.toContain(start.runToken);
+    const snapshot = await (await fetch(`${base}/api/runs/${start.runId}`)).json();
+    expect(JSON.stringify(snapshot)).not.toContain(start.runToken);
     expect(events.find((e) => e.type === 'approval-resolved')).toMatchObject({ decision: 'approve', by: 'user' });
     expect(events.at(-1)).toMatchObject({ type: 'complete', status: 'succeeded' });
     expect(events.find((e) => e.type === 'result')).toMatchObject({ output: { refundExecutions: 1 } });
+  });
+
+  it('cancel requires the run token', async () => {
+    const start = StartRunResponseSchema.parse(await (await startRun('lab-15', { input: askInput })).json());
+    const forbidden = await fetch(`${base}/api/runs/${start.runId}/cancel`, { method: 'POST' });
+    expect(forbidden.status).toBe(403);
+    expect(api.runner.get(start.runId)?.status).toBe('running');
+    const ok = await fetch(`${base}/api/runs/${start.runId}/cancel`, {
+      method: 'POST',
+      headers: { 'x-run-token': start.runToken },
+    });
+    expect(ok.status).toBe(200);
+    expect((await api.runner.waitFor(start.runId)).status).toBe('cancelled');
   });
 
   it('404 for an unknown run', async () => {

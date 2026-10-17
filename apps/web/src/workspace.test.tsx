@@ -45,7 +45,8 @@ beforeEach(() => {
   localStorage.clear();
   calls.length = 0;
   sourceOk = true;
-  runResponder = () => jsonResponse({ runId: 'run-1', correlationId: 'corr-1', requestId: 'req-1' }, 202);
+  runResponder = () =>
+    jsonResponse({ runId: 'run-1', correlationId: 'corr-1', requestId: 'req-1', runToken: 'tok-0123456789abcdef' }, 202);
   eventsBody = () => sseBody(HAPPY);
   vi.stubGlobal(
     'fetch',
@@ -194,6 +195,9 @@ describe('Run tab', () => {
     await waitFor(() => expect(cancel).toBeEnabled());
     await user.click(cancel);
     await waitFor(() => expect(calls.some((c) => c.url === '/api/runs/run-1/cancel')).toBe(true));
+    // The token returned at start proves this tab owns the run.
+    const cancelCall = calls.find((c) => c.url === '/api/runs/run-1/cancel')!;
+    expect(new Headers(cancelCall.init?.headers).get('x-run-token')).toBe('tok-0123456789abcdef');
   });
 
   it('shows the cost notice when live mode is chosen', async () => {

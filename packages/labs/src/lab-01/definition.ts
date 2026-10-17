@@ -5,7 +5,8 @@ export const lab01Definition = {
   number: 1,
   title: 'Create a Mastra project',
   moduleId: 'module-01',
-  summary: 'Generate a minimal Mastra TypeScript project, build it against the real @mastra/core types and learn what every root file does.',
+  summary:
+    'Generate a minimal Mastra TypeScript project, build it against the real @mastra/core types and learn what every root file does.',
   concept:
     'A Mastra project is an ordinary Node.js TypeScript project with one special file: src/mastra/index.ts, which exports a Mastra instance. ' +
     'The official way to start is `npm create mastra@latest`, which asks a few questions and writes that structure for you. ' +
@@ -121,7 +122,8 @@ export const lab01Definition = {
       },
     ],
     challenge: {
-      prompt: 'Generate a project for Google with an agent called "Trip Planner". Before running, predict the agent file path, the agent id and the API key variable.',
+      prompt:
+        'Generate a project for Google with an agent called "Trip Planner". Before running, predict the agent file path, the agent id and the API key variable.',
       successCriteria: [
         'The build passes with 0 diagnostics',
         'Your prediction matches src/mastra/agents/trip-planner-agent.ts, id "trip-planner-agent" and GOOGLE_API_KEY',
@@ -193,18 +195,30 @@ export const lab01Definition = {
   instructorOutline: {
     durationMinutes: 6,
     segments: [
-      { title: 'What a Mastra project is', minutes: 1, talkingPoints: ['npm create mastra@latest', 'src/mastra/index.ts exports the Mastra instance'] },
+      {
+        title: 'What a Mastra project is',
+        minutes: 1,
+        talkingPoints: ['npm create mastra@latest', 'src/mastra/index.ts exports the Mastra instance'],
+      },
       {
         title: 'Run the scaffold',
         minutes: 2,
-        talkingPoints: ['Example input, watch the five steps', 'Read the generated file logs', 'Real TypeScript build, 0 diagnostics'],
+        talkingPoints: [
+          'Example input, watch the five steps',
+          'Read the generated file logs',
+          'Real TypeScript build, 0 diagnostics',
+        ],
       },
       {
         title: 'Tour the root files',
         minutes: 1.5,
         talkingPoints: ['package.json: type, engines, mastra scripts', 'tsconfig: ES2022 + bundler', '.env.example vs .env'],
       },
-      { title: 'Break it on purpose', minutes: 1, talkingPoints: ['Switch to CommonJS', 'Show the failing ESM check and its message'] },
+      {
+        title: 'Break it on purpose',
+        minutes: 1,
+        talkingPoints: ['Switch to CommonJS', 'Show the failing ESM check and its message'],
+      },
       { title: 'Wrap-up', minutes: 0.5, talkingPoints: ['Challenge: Trip Planner on Google', 'Next lab: explore architecture'] },
     ],
   },

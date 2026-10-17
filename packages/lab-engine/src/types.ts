@@ -36,8 +36,8 @@ export interface ApprovalOutcome {
   approvalId: string;
   decision: ApprovalDecision;
   reason?: string;
-  /** user = a person decided; timeout = nobody answered in time and the request was auto-declined. */
-  by: 'user' | 'timeout';
+  /** user = a person decided; timeout = nobody answered in time; limit = the server's waiting-run cap was reached. */
+  by: 'user' | 'timeout' | 'limit';
 }
 
 /** Everything a lab implementation receives for one run. */

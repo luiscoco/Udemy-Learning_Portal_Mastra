@@ -43,6 +43,7 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
       serverMaxTimeoutMs: config.RUN_MAX_TIMEOUT_MS,
       disconnectGraceMs: config.SSE_DISCONNECT_GRACE_MS,
       approvalTimeoutMs: config.APPROVAL_TIMEOUT_MS,
+      maxPendingApprovals: config.MAX_PENDING_APPROVALS,
       secrets,
       logger,
     });

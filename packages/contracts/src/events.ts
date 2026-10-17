@@ -15,6 +15,8 @@ export type ExecutionRequest = z.infer<typeof ExecutionRequestSchema>;
 
 export const StartRunResponseSchema = z.object({
   runId: z.string(),
+  /** Secret proving the caller started this run; required (X-Run-Token) to cancel it or decide approvals. */
+  runToken: z.string().min(16),
   correlationId: z.string(),
   requestId: z.string(),
 });
@@ -130,8 +132,8 @@ export const ExecutionEventSchema = z.discriminatedUnion('type', [
     approvalId: z.string(),
     decision: ApprovalDecisionSchema,
     reason: z.string().optional(),
-    /** user = decided via the API; timeout = nobody answered in time (auto-declined). */
-    by: z.enum(['user', 'timeout']),
+    /** user = decided via the API; timeout = nobody answered in time; limit = too many runs already waiting (both auto-declined). */
+    by: z.enum(['user', 'timeout', 'limit']),
   }),
   z.object({
     ...eventBase,
