@@ -37,6 +37,9 @@ function liveInput(labId: string, example: Record<string, unknown>): Record<stri
       return hasOpenAI ? { ...example, modelId: openai } : hasAnthropic ? { ...example, modelId: anthropic } : null;
     case 'lab-04':
       return hasOpenAI && hasAnthropic ? { ...example, modelId: openai, compareModelId: anthropic } : null;
+    case 'lab-14':
+      // Real model + the real Open-Meteo API (free, no key). Upstream 503s are handled, not failures.
+      return { ...example, dataSource: 'open-meteo', timeoutMs: 8000 };
     case 'lab-10':
       // Real providers need realistic per-attempt timeouts (reasoning models can take several seconds).
       return { ...example, scenario: 'none', perAttemptTimeoutMs: 10000, totalBudgetMs: 30000 };
