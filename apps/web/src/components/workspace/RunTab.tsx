@@ -9,6 +9,7 @@ import { useAsync } from '../../lib/use-async';
 import { Badge, Button, Card } from '../ui/primitives';
 import { ApprovalPanel } from './ApprovalPanel';
 import { CitedAnswer, citedAnswerOf } from './CitedAnswer';
+import { McpCapabilityMatrix, mcpCapabilitiesOf } from './McpCapabilityMatrix';
 import { McpToolCatalog, mcpCatalogOf } from './McpToolCatalog';
 import { DynamicForm } from './DynamicForm';
 import {
@@ -64,6 +65,7 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
   const waiting = pendingApprovals(state);
   const cited = state.phase === 'finished' ? citedAnswerOf(state.output) : null;
   const mcpCatalog = state.phase === 'finished' ? mcpCatalogOf(state.output) : null;
+  const mcpCapabilities = state.phase === 'finished' ? mcpCapabilitiesOf(state.output) : null;
   const { update } = useProgressActions(definition.id);
   const example = definition.exampleInput;
   const [raw, setRaw] = useState<RawValues>(() => reconcile(definition.inputs, initialRawValues(definition.inputs, example)));
@@ -253,6 +255,12 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
       {mcpCatalog ? (
         <Section title="MCP tools" id={`${id}-mcp`}>
           <McpToolCatalog data={mcpCatalog} />
+        </Section>
+      ) : null}
+
+      {mcpCapabilities ? (
+        <Section title="MCP capabilities" id={`${id}-mcp-capabilities`}>
+          <McpCapabilityMatrix data={mcpCapabilities} />
         </Section>
       ) : null}
 

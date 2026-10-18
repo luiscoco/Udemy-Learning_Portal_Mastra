@@ -3,7 +3,7 @@ import type { AddressInfo, Socket } from 'node:net';
 import { noopLogger } from '@mastra/core/logger';
 import { createTool } from '@mastra/core/tools';
 import { MCPServer } from '@mastra/mcp';
-import { LABS } from '@mlp/lab-catalog';
+import { LABS, MODULES } from '@mlp/lab-catalog';
 import { z } from 'zod';
 
 export const FIXTURE = { id: 'course-fixture', name: 'Course fixture server', version: '1.0.0', path: '/mcp' } as const;
@@ -16,6 +16,49 @@ export interface FixtureOptions {
   catalog?: FixtureCatalog;
   /** Called on every server-side tool execution. */
   onCall?: (toolName: string) => void;
+  /** Adds resources (course://syllabus, course://about) and the template course://labs/{number}. */
+  resources?: boolean;
+  /** Adds the prompts explain-lab and study-plan. */
+  prompts?: boolean;
+}
+
+export const FIXTURE_RESOURCES = [
+  { uri: 'course://syllabus', name: 'Syllabus', description: 'Modules and their labs', mimeType: 'text/markdown' },
+  { uri: 'course://about', name: 'About the course', description: 'What the course covers', mimeType: 'text/plain' },
+];
+export const FIXTURE_TEMPLATES = [
+  { uriTemplate: 'course://labs/{number}', name: 'Lab', description: 'One lab by number', mimeType: 'text/plain' },
+];
+export const FIXTURE_PROMPTS = [
+  {
+    name: 'explain-lab',
+    description: 'Ask for a beginner-friendly explanation of one lab',
+    arguments: [{ name: 'number', description: 'Lab number, 1 to 75', required: true }],
+  },
+  {
+    name: 'study-plan',
+    description: 'Ask for a weekly study plan for the course',
+    arguments: [{ name: 'hoursPerWeek', description: 'Hours available per week (default 4)', required: false }],
+  },
+];
+
+export function syllabusMarkdown(): string {
+  return [
+    '# Mastra Learning Platform: syllabus',
+    ...MODULES.filter((m) => m.number >= 1).map(
+      (m) => `- Module ${String(m.number).padStart(2, '0')}: ${m.title} (${m.labIds.length} labs)`,
+    ),
+  ].join('\n');
+}
+
+export function explainLabText(number: string): string {
+  const title = LABS.find((l) => String(l.number) === number.trim())?.title ?? 'an unknown lab';
+  return `Explain lab ${number.trim()} (${title}) to a beginner: its goal, the key Mastra API and one common mistake.`;
+}
+
+export function studyPlanText(hoursPerWeek: string | undefined): string {
+  const h = hoursPerWeek?.trim() || '4';
+  return `Propose a weekly plan to finish all ${courseLabs().length} labs with ${h} hours per week, one module at a time.`;
 }
 
 const READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
@@ -95,6 +138,37 @@ export function createFixtureMcpServer(options: FixtureOptions = {}): MCPServer 
     description: 'Local example MCP server for the Mastra Learning Platform labs',
     instructions: FIXTURE_INSTRUCTIONS,
     tools,
+    ...(options.resources
+      ? {
+          resources: {
+            listResources: async () => FIXTURE_RESOURCES,
+            resourceTemplates: async () => FIXTURE_TEMPLATES,
+            getResourceContent: async ({ uri }: { uri: string }) => {
+              if (uri === 'course://syllabus') return { text: syllabusMarkdown() };
+              if (uri === 'course://about')
+                return { text: 'A 75-lab course on building agents, tools, workflows, RAG and MCP integrations with Mastra.' };
+              throw new Error(`Resource not found: ${uri}`);
+            },
+          },
+        }
+      : {}),
+    ...(options.prompts
+      ? {
+          prompts: {
+            listPrompts: async () => FIXTURE_PROMPTS,
+            getPromptMessages: async ({ name, args }: { name: string; args?: Record<string, unknown> }) => {
+              const text =
+                name === 'explain-lab'
+                  ? explainLabText(String(args?.number ?? ''))
+                  : name === 'study-plan'
+                    ? studyPlanText(args?.hoursPerWeek === undefined ? undefined : String(args.hoursPerWeek))
+                    : null;
+              if (text === null) throw new Error(`Prompt "${name}" not found`);
+              return [{ role: 'user' as const, content: { type: 'text' as const, text } }];
+            },
+          },
+        }
+      : {}),
   });
   server.__setLogger(noopLogger);
   return server;
@@ -144,9 +218,11 @@ export interface LocalFixture {
   close(): Promise<void>;
 }
 
-export async function startLocalFixture(options: { catalog?: FixtureCatalog } = {}): Promise<LocalFixture> {
+export async function startLocalFixture(
+  options: Pick<FixtureOptions, 'catalog' | 'resources' | 'prompts'> = {},
+): Promise<LocalFixture> {
   const calls: Record<string, number> = {};
-  const mcp = createFixtureMcpServer({ catalog: options.catalog, onCall: (n) => (calls[n] = (calls[n] ?? 0) + 1) });
+  const mcp = createFixtureMcpServer({ ...options, onCall: (n) => (calls[n] = (calls[n] ?? 0) + 1) });
   const advertised =
     options.catalog === 'full' ? ['course_info', 'lab_title', 'search_labs', 'reset_progress'] : ['course_info', 'lab_title'];
   const main = new TrackedHttp(

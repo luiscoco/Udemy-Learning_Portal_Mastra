@@ -22,6 +22,7 @@
     "@mlp/lab-catalog": "0.1.0",
     "@mlp/lab-engine": "0.1.0",
     "@mlp/mastra-runtime": "0.1.0",
+    "@modelcontextprotocol/client": "2.2.0",
     "js-tiktoken": "1.0.21",
     "typescript": "6.0.3",
     "unpdf": "1.8.1",
