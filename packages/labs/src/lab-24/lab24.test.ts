@@ -70,3 +70,23 @@ describe('lab-24 fact matching', () => {
     expect(carriesFact(hit('Noted your dog Rex.', 'you'), "I'm allergic to peanuts.")).toBe(false);
   });
 });
+
+describe('lab-24 shared libSQL vector store under concurrency (regression)', () => {
+  // Unserialised, waves of 8 concurrent runs recalled their fact in only 0–5 of 8 cases (vector_top_k misses).
+  const busy = new LabRunner({
+    registry: new LabRegistry([lab24]),
+    services: createLabServices({ serverMode: 'offline', env: {}, memoryDir: testMemoryDir('lab24-concurrency') }),
+    liveEnabled: false,
+    maxConcurrentRuns: 10,
+  });
+  afterAll(() => busy.dispose());
+
+  it('waves of concurrent runs each recall their own fact (runs take turns on the vector file)', async () => {
+    for (let wave = 0; wave < 3; wave++) {
+      const ids = Array.from({ length: 8 }, () => busy.start('lab-24', { input: lab24.definition.exampleInput }).runId);
+      await Promise.all(ids.map((id) => busy.waitFor(id)));
+      const passed = ids.filter((id) => (busy.events(id).find((e) => e.type === 'result') as { validation: { passed: boolean } } | undefined)?.validation.passed);
+      expect(passed.length, `wave ${wave + 1}`).toBe(8);
+    }
+  }, 180_000);
+});

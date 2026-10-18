@@ -32,3 +32,10 @@ Disabling recall, or recalling with thread scope in a new thread, SHALL NOT reca
 #### Scenario: Recall disabled
 - **WHEN** semantic recall is disabled
 - **THEN** no vector query is made for the question and the `older-fact-recalled` check fails
+
+### Requirement: Reliable recall under concurrent runs
+Concurrent L24 runs SHALL each recall their own older fact when they share the libSQL vector file.
+
+#### Scenario: Waves of concurrent runs
+- **WHEN** three waves of 8 L24 runs start at the same time on one vector file
+- **THEN** every run passes its checks, and each run removes the vectors it wrote when it finishes

@@ -14,6 +14,7 @@ import {
 } from '@mlp/mastra-runtime';
 import type { LabServices } from '../services.js';
 import { withLabLogger } from '../shared/agent-kit.js';
+import { withVectorStore } from '../shared/vector-store-lock.js';
 import { lab24Definition } from './definition.js';
 import { keywordsOf, LIVE_EMBEDDER, offlineEmbedder, rememberedUserLines } from './recall.js';
 
@@ -97,113 +98,122 @@ export const lab24: LabImplementation<Lab24Input, Lab24Output, LabServices> = {
     const sink = { remembered: null as string[] | null };
     const resolved = ctx.services.models.resolve({ mode: ctx.mode, modelId: input.modelId, offline: offlineScript(sink) });
     const embedderLabel = offline ? 'offline-sim/concept-embedder (stand-in, not a real model)' : LIVE_EMBEDDER;
-    let inner: MastraVector | undefined;
-    let opened: OpenedMemory | undefined;
-    try {
-      inner =
-        input.vectorBackend === 'libsql'
-          ? openVectorStore(ctx.services.memory.file(`lab-24-vectors-${offline ? 'offline' : 'openai'}`))
-          : new InMemoryVector();
-      const recorder = new RecordingVector(inner);
-      opened = await ctx.services.memory.open(
-        'lab-24',
-        {
-          lastMessages: input.lastMessages,
-          semanticRecall: input.semanticRecall
-            ? { topK: input.topK, messageRange: input.messageRange, scope: input.scope }
-            : false,
-        },
-        input.semanticRecall ? { vector: recorder, embedder: offline ? offlineEmbedder() : LIVE_EMBEDDER } : {},
-      );
-      const agent = withLabLogger(
-        ctx,
-        new Agent({
-          id: 'memory-assistant',
-          name: 'Memory Assistant',
-          instructions:
-            'You are a personal assistant. Use what you remember about the user when it is relevant. Keep answers short.',
-          model: resolved.model,
-          memory: opened.memory,
-        }),
-      );
-      const say = (text: string, thread: string, resource: string) =>
-        agent.generate(text, { memory: { thread: `${scope}:${thread}`, resource }, abortSignal: ctx.signal });
+    const vectorFile = ctx.services.memory.file(`lab-24-vectors-${offline ? 'offline' : 'openai'}`);
+    const body = async () => {
+      let inner: MastraVector | undefined;
+      let opened: OpenedMemory | undefined;
+      let recorder: RecordingVector | undefined;
+      try {
+        inner = input.vectorBackend === 'libsql' ? openVectorStore(vectorFile) : new InMemoryVector();
+        recorder = new RecordingVector(inner);
+        opened = await ctx.services.memory.open(
+          'lab-24',
+          {
+            lastMessages: input.lastMessages,
+            semanticRecall: input.semanticRecall
+              ? { topK: input.topK, messageRange: input.messageRange, scope: input.scope }
+              : false,
+          },
+          input.semanticRecall ? { vector: recorder, embedder: offline ? offlineEmbedder() : LIVE_EMBEDDER } : {},
+        );
+        const agent = withLabLogger(
+          ctx,
+          new Agent({
+            id: 'memory-assistant',
+            name: 'Memory Assistant',
+            instructions:
+              'You are a personal assistant. Use what you remember about the user when it is relevant. Keep answers short.',
+            model: resolved.model,
+            memory: opened.memory,
+          }),
+        );
+        const say = (text: string, thread: string, resource: string) =>
+          agent.generate(text, { memory: { thread: `${scope}:${thread}`, resource }, abortSignal: ctx.signal });
 
-      ctx.emit({ type: 'workflow-step', stepId: 'store-history', status: 'running', input: { messages: input.history.length } });
-      recorder.label = 'history';
-      await say(OTHER_USER_FACT, 'other-chat', other); // a different user with a similar fact
-      for (const text of input.history) {
-        await say(text, 'earlier-chat', me);
+        ctx.emit({
+          type: 'workflow-step',
+          stepId: 'store-history',
+          status: 'running',
+          input: { messages: input.history.length },
+        });
+        recorder.label = 'history';
+        await say(OTHER_USER_FACT, 'other-chat', other); // a different user with a similar fact
+        for (const text of input.history) {
+          await say(text, 'earlier-chat', me);
+          ctx.throwIfAborted();
+        }
+        ctx.emit({
+          type: 'workflow-step',
+          stepId: 'store-history',
+          status: 'success',
+          output: { vectorsStored: recorder.upserts },
+        });
+
+        ctx.emit({ type: 'workflow-step', stepId: 'ask-in-new-thread', status: 'running' });
+        recorder.label = 'question';
+        const res = await say(input.question, 'new-chat', me);
         ctx.throwIfAborted();
-      }
-      ctx.emit({
-        type: 'workflow-step',
-        stepId: 'store-history',
-        status: 'success',
-        output: { vectorsStored: recorder.upserts },
-      });
+        const q = recorder.queries.filter((x) => x.label === 'question').at(-1);
+        const strip = (s: unknown) => String(s ?? '').replace(`${scope}:`, '');
+        const hits: RecallHit[] = (q?.hits ?? []).map((h) => ({
+          role: String(h.metadata?.role ?? '?'),
+          content: String(h.metadata?.content ?? ''),
+          score: h.score,
+          owner: h.metadata?.resource_id === me ? 'you' : 'other user',
+          thread: strip(h.metadata?.thread_id),
+        }));
+        for (const h of hits)
+          ctx.log('info', `recall hit (${h.score.toFixed(3)}) ${h.owner} / ${h.thread}: ${h.content.slice(0, 80)}`);
+        ctx.emit({
+          type: 'workflow-step',
+          stepId: 'ask-in-new-thread',
+          status: 'success',
+          output: { hits: hits.length },
+          annotations: { topK: input.topK, scope: input.scope },
+        });
 
-      ctx.emit({ type: 'workflow-step', stepId: 'ask-in-new-thread', status: 'running' });
-      recorder.label = 'question';
-      const res = await say(input.question, 'new-chat', me);
-      ctx.throwIfAborted();
-      const q = recorder.queries.filter((x) => x.label === 'question').at(-1);
-      const strip = (s: unknown) => String(s ?? '').replace(`${scope}:`, '');
-      const hits: RecallHit[] = (q?.hits ?? []).map((h) => ({
-        role: String(h.metadata?.role ?? '?'),
-        content: String(h.metadata?.content ?? ''),
-        score: h.score,
-        owner: h.metadata?.resource_id === me ? 'you' : 'other user',
-        thread: strip(h.metadata?.thread_id),
-      }));
-      for (const h of hits)
-        ctx.log('info', `recall hit (${h.score.toFixed(3)}) ${h.owner} / ${h.thread}: ${h.content.slice(0, 80)}`);
-      ctx.emit({
-        type: 'workflow-step',
-        stepId: 'ask-in-new-thread',
-        status: 'success',
-        output: { hits: hits.length },
-        annotations: { topK: input.topK, scope: input.scope },
-      });
-
-      const recalledFact = hits.some((h) => carriesFact(h, input.expectedFact));
-      ctx.setResultExtras({
-        effective: {
-          mode: ctx.mode,
-          modelId: input.modelId,
-          simulated: resolved.simulated,
+        const recalledFact = hits.some((h) => carriesFact(h, input.expectedFact));
+        ctx.setResultExtras({
+          effective: {
+            mode: ctx.mode,
+            modelId: input.modelId,
+            simulated: resolved.simulated,
+            embedder: embedderLabel,
+            vectorBackend: input.vectorBackend,
+            semanticRecall: input.semanticRecall
+              ? { topK: input.topK, messageRange: input.messageRange, scope: input.scope }
+              : false,
+            lastMessages: input.lastMessages,
+          },
+        });
+        return {
           embedder: embedderLabel,
           vectorBackend: input.vectorBackend,
-          semanticRecall: input.semanticRecall
-            ? { topK: input.topK, messageRange: input.messageRange, scope: input.scope }
-            : false,
-          lastMessages: input.lastMessages,
-        },
-      });
-      return {
-        embedder: embedderLabel,
-        vectorBackend: input.vectorBackend,
-        vectorsStored: recorder.upserts,
-        questionQuery: q
-          ? {
-              topK: q.topK,
-              filter: JSON.parse(
-                JSON.stringify(q.filter ?? {})
-                  .split(`${scope}:`)
-                  .join(''),
-              ) as unknown,
-              hits,
-            }
-          : null,
-        recalledFact,
-        promptRemembered: offline ? sink.remembered : null,
-        answer: res.text,
-      };
-    } finally {
-      await opened?.close();
-      if (inner && 'close' in inner && typeof (inner as { close?: unknown }).close === 'function')
-        await (inner as unknown as { close(): Promise<void> }).close();
-    }
+          vectorsStored: recorder.upserts,
+          questionQuery: q
+            ? {
+                topK: q.topK,
+                filter: JSON.parse(
+                  JSON.stringify(q.filter ?? {})
+                    .split(`${scope}:`)
+                    .join(''),
+                ) as unknown,
+                hits,
+              }
+            : null,
+          recalledFact,
+          promptRemembered: offline ? sink.remembered : null,
+          answer: res.text,
+        };
+      } finally {
+        // This run's vectors are scoped to it; removing them keeps the shared store from growing forever.
+        await recorder?.deleteWritten().catch(() => {});
+        await opened?.close();
+        if (inner && 'close' in inner && typeof (inner as { close?: unknown }).close === 'function')
+          await (inner as unknown as { close(): Promise<void> }).close();
+      }
+    };
+    return input.vectorBackend === 'libsql' ? withVectorStore(vectorFile, body, ctx.signal) : body();
   },
 
   validate(out, input) {

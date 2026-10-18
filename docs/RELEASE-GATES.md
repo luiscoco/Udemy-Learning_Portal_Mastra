@@ -29,6 +29,7 @@ What is still required:
   - ☐ **In-run approval prompts** (`ctx.requestApproval`, used by L15 tool approvals and L33 `ask`) still wait in memory, and a restart loses the prompt. In L33 the refund itself stays suspended in storage and can still be decided or expired. Move L15-style tool approvals onto the same pattern before relying on them in production.
   - ☐ **Workflow run ownership.** Workflow runs are tagged `resourceId: "learner"`, and resume or inspect needs only the unguessable run id. Bind runs to the authenticated learner and check ownership before resuming.
   - ☐ **Hosting.** A public host needs a remote libSQL/Turso or Postgres adapter, with backups, instead of local files.
+  - ☐ **Vector stores across processes.** Local libSQL vector files are serialised per process only (`withVectorStore`). Concurrent writers from several API processes would miss vectors. Use a server-side vector database, or a single writer, before scaling out.
 - ☐ **Learner progress on the server.** Progress is in browser storage today. Move it server-side if learners switch devices.
 
 ## 3. Hosting hardening

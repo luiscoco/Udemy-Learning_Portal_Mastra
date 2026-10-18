@@ -140,6 +140,8 @@ export class RecordingVector extends MastraVector {
   label = 'default';
   readonly queries: RecordedQuery[] = [];
   upserts = 0;
+  /** Ids this recorder wrote, per index (so a run can remove exactly its own vectors). */
+  readonly written = new Map<string, string[]>();
 
   constructor(readonly inner: MastraVector) {
     super({ id: `recording-${inner.id}` });
@@ -163,7 +165,20 @@ export class RecordingVector extends MastraVector {
 
   async upsert(params: UpsertVectorParams): Promise<string[]> {
     this.upserts += params.vectors.length;
-    return this.inner.upsert(params);
+    const ids = await this.inner.upsert(params);
+    this.written.set(params.indexName, [...(this.written.get(params.indexName) ?? []), ...ids]);
+    return ids;
+  }
+
+  /** Deletes every vector this recorder wrote (keeps a shared store from growing run after run). */
+  async deleteWritten(): Promise<number> {
+    let n = 0;
+    for (const [indexName, ids] of this.written) {
+      if (ids.length) await this.inner.deleteVectors({ indexName, ids });
+      n += ids.length;
+    }
+    this.written.clear();
+    return n;
   }
 
   createIndex(p: CreateIndexParams) {
