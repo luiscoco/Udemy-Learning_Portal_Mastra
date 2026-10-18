@@ -1,3 +1,4 @@
+import type { EmbeddingModelV2 } from '@ai-sdk/provider';
 import { ModelRouterEmbeddingModel } from '@mastra/core/llm';
 import { LabError } from '@mlp/lab-engine';
 import { createConceptEmbedder } from '@mlp/mastra-runtime';
@@ -38,6 +39,8 @@ export interface Embedder {
   maxPerCall: number;
   usdPerMillionTokens: number;
   embed(values: string[], signal?: AbortSignal): Promise<{ embeddings: number[][]; tokens: number }>;
+  /** The underlying Mastra embedding model (for tools such as createVectorQueryTool). */
+  model(): EmbeddingModelV2<string>;
 }
 
 export function mockEmbedder(): Embedder {
@@ -52,6 +55,7 @@ export function mockEmbedder(): Embedder {
       const r = await model.doEmbed({ values });
       return { embeddings: r.embeddings, tokens: 0 };
     },
+    model: () => model,
   };
 }
 
@@ -92,6 +96,7 @@ export function resolveEmbedder(
       });
       return { embeddings: r.embeddings, tokens: r.usage?.tokens ?? 0 };
     },
+    model: () => (model ??= new ModelRouterEmbeddingModel(id)),
   };
 }
 
