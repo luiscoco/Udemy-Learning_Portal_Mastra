@@ -1,0 +1,1 @@
+{"root":["./e2e/approvals.spec.ts","./e2e/labs.spec.ts","./e2e/options.spec.ts","./e2e/shell.spec.ts","./e2e/smoke.spec.ts","./e2e/workspace.spec.ts","./e2e/live/live.spec.ts","./vitest.config.ts","./playwright.config.ts"],"version":"6.0.3"}

@@ -18,6 +18,7 @@ Exact versions are locked in `package-lock.json` (`save-exact=true`). This table
 | eslint | 10.13.0 | flat config |
 | vitest | 5.0.5 | root `projects` config |
 | @playwright/test | 1.64.1 | Chromium |
+| unpdf | 1.8.1 | server-only (`packages/labs`, L36 PDF text extraction); MIT; no runtime dependencies; bundles **pdf.js 6.1.200**, which has no `isEvalSupported` option and no `eval(` / `new Function` in the bundle (checked); `PDFDocumentProxy.destroy()` is gone in pdf.js 6, release with `pdf.loadingTask.destroy()`. 1.9.0 was two days old on 2026-10-18, so the previous release is pinned |
 | @fission-ai/openspec | 1.14.3 | dev-only (1.14.3 drops the vulnerable fast-glob → micromatch → braces chain) |
 
 ## Known issues
@@ -75,6 +76,7 @@ Exact versions are locked in `package-lock.json` (`save-exact=true`). This table
 | `createStep({ retries: n })` retries a throwing step up to n times (n + 1 attempts); the step receives `retryCount` 0…n; the stream shows one start/result pair for the whole series; exhausted retries fail the step and workflow. `workflow.listWorkflowRuns({ status: "suspended" })` on a fresh instance returns `{ runs, total }` with `snapshot.context[stepId].suspendPayload` (enough for an expiry sweep) | spike + lab33 tests | L33 (idempotency key per approval request; deadline checked inside the gate step) |
 | Crash recovery: snapshots are written at step boundaries; after a process dies inside step k the run stays `running` (steps < k `success`, step k `running`) and the workflow **state** (`stateSchema` + `setState`) is persisted. `listActiveWorkflowRuns()` finds it (its `snapshot.value` holds the state; `getWorkflowRunById` does not expose state). `createRun({ runId }).restart()` from a new process skips completed steps and **re-runs the interrupted step from its start** (side effects before the crash repeat unless idempotent); restarting a completed run returns `success` and executes nothing; no `restartStream`. `createWorkflow({ retryConfig: { attempts, delay } })` retries failing steps with the delay (measured) | spikes (process.exit + in-process) + lab34 tests incl. real crash | L34 (idempotency keys; restart only the own run id) |
 | A step inside `.branch()` (after `.parallel()` and a join) can `suspend()`; `resume({ step })` / `resumeStream` continue it, it may suspend again on a resume (e.g. a refused reviewer attempt), and the resume streams only that step and the following ones | spike + lab35 tests | L35 (reviewer controls enforced inside the suspended step) |
+| (Platform, not Mastra) **`file` input field kind** (L36, additive contract change): `{ kind: "file", accept, maxBytes, maxFiles }`; value `UploadedFile[] { name, type, size, dataBase64 }` (all untrusted). The API keeps a 64 KB JSON limit except `POST /api/labs/:labId/runs` for labs with file fields, whose limit is `maxRequestBytes(definition)` (files may arrive up to 1.25 × `maxBytes` so the lab rejects them one by one; larger bodies get 413 stating the limit) | contracts, API and form tests + e2e upload | L36 |
 
 ## Environment notes
 

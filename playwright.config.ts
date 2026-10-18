@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
 
 /**
@@ -45,6 +46,8 @@ export default defineConfig({
       WEB_DIST_DIR: 'apps/web/dist',
       MAX_CONCURRENT_RUNS: '8',
       MASTRA_MODE: LIVE ? 'live' : 'offline',
+      // E2E runs write memory databases and the document library: keep them away from learner data.
+      MLP_DATA_DIR: resolve('.data', 'e2e'),
     },
   },
 });

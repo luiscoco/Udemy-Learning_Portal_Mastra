@@ -39,6 +39,11 @@ What is still required:
 
 ## 4. Code execution
 
+- ☐ **Untrusted documents (from L36).** Uploads are size-limited, sniffed and parsed in the API process with pdf.js: no code generation, page, character and time limits. Before public exposure, add:
+  - per-learner upload quotas and rate limits;
+  - malware scanning of accepted files;
+  - a separate worker process or sandbox for PDF parsing, so a pathological file cannot stall the API;
+  - per-learner document libraries, because the local library is shared today.
 - ☐ **Sandbox for learner code.** Learner-submitted code never runs in the API process (master rule). Any future remote execution needs an isolated sandbox with no network and with CPU, memory and time limits.
 
 ## 5. Dependencies

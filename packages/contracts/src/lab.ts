@@ -69,8 +69,52 @@ export const InputFieldSchema = z.discriminatedUnion('kind', [
     maxBytes: z.number().int().positive().max(64_000),
     default: z.unknown().optional(),
   }),
+  z.object({
+    ...fieldBase,
+    kind: z.literal('file'),
+    /** Allowed file extensions, lower-case with the dot (".pdf"). The server decides from the content too. */
+    accept: z.array(z.string().regex(/^\.[a-z0-9]{1,10}$/)).min(1),
+    /** Per-file size limit enforced by the server (the browser only warns). */
+    maxBytes: z.number().int().positive().max(5_000_000),
+    maxFiles: z.number().int().min(1).max(10),
+  }),
 ]);
 export type InputField = z.infer<typeof InputFieldSchema>;
+
+// ---------- File uploads ----------
+
+/** A file sent inside a run request (read by the browser, validated by the server). */
+export const UploadedFileSchema = z.object({
+  name: z.string().min(1).max(255),
+  /** MIME type the browser declared. Untrusted: servers must sniff the content. */
+  type: z.string().max(100),
+  /** Size the browser declared. Untrusted: servers measure the decoded bytes. */
+  size: z.number().int().nonnegative(),
+  dataBase64: z.string(),
+});
+export type UploadedFile = z.infer<typeof UploadedFileSchema>;
+
+/**
+ * Files up to this factor above a field's maxBytes still reach the server, so it can reject them one by
+ * one (FILE_TOO_LARGE) instead of refusing the whole request; anything larger is cut off with HTTP 413.
+ */
+export const FILE_TRANSPORT_FACTOR = 1.25;
+export const base64Length = (bytes: number) => Math.ceil(bytes / 3) * 4;
+const transportCeiling = (maxBytes: number) => base64Length(Math.ceil(maxBytes * FILE_TRANSPORT_FACTOR));
+
+/** Server-side schema for a file field's value: bounded count and bounded encoded size per file. */
+export function uploadedFilesSchema(field: { maxBytes: number; maxFiles: number }) {
+  return z.array(UploadedFileSchema.extend({ dataBase64: z.string().max(transportCeiling(field.maxBytes)) })).max(field.maxFiles);
+}
+
+export const DEFAULT_REQUEST_BYTES = 64 * 1024;
+
+/** Largest run-request body a lab may receive: the default, plus room for its declared file fields. */
+export function maxRequestBytes(def: { inputs: readonly InputField[] }): number {
+  let bytes = DEFAULT_REQUEST_BYTES;
+  for (const f of def.inputs) if (f.kind === 'file') bytes += f.maxFiles * (transportCeiling(f.maxBytes) + 1024);
+  return bytes;
+}
 
 export const InputValuesSchema = z.record(z.string(), z.unknown());
 export type InputValues = z.infer<typeof InputValuesSchema>;

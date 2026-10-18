@@ -1,7 +1,7 @@
-import type { InputField, InputValues, VisibleWhen } from '@mlp/contracts';
+import type { InputField, InputValues, UploadedFile, VisibleWhen } from '@mlp/contracts';
 
-/** Raw form state: strings for text-like/number/json fields, booleans for checkboxes. */
-export type RawValues = Record<string, string | boolean>;
+/** Raw form state: strings for text-like/number/json fields, booleans for checkboxes, file lists for uploads. */
+export type RawValues = Record<string, string | boolean | UploadedFile[]>;
 
 const holds = (cond: VisibleWhen | undefined, raw: RawValues) => !cond || cond.in.includes(String(raw[cond.field] ?? ''));
 
@@ -31,6 +31,10 @@ export function reconcile(fields: InputField[], raw: RawValues): RawValues {
 export function initialRawValues(fields: InputField[], example: InputValues): RawValues {
   const raw: RawValues = {};
   for (const f of fields) {
+    if (f.kind === 'file') {
+      raw[f.name] = []; // browsers cannot preselect files; uploads always start empty
+      continue;
+    }
     const v = f.name in example ? example[f.name] : f.default;
     if (f.kind === 'boolean') raw[f.name] = Boolean(v);
     else if (f.kind === 'json') raw[f.name] = v === undefined ? '' : JSON.stringify(v, null, 2);
@@ -50,6 +54,13 @@ export function buildInput(fields: InputField[], raw: RawValues): { values: Inpu
     const r = raw[f.name];
     if (f.kind === 'boolean') {
       values[f.name] = Boolean(r);
+      continue;
+    }
+    if (f.kind === 'file') {
+      const files = Array.isArray(r) ? r : [];
+      if (files.length > f.maxFiles) errors[f.name] = `Choose at most ${f.maxFiles} file(s).`;
+      else if (files.length > 0) values[f.name] = files; // sizes and types are judged by the server
+      else if (f.required) errors[f.name] = 'This field is required.';
       continue;
     }
     const s = typeof r === 'string' ? r : '';

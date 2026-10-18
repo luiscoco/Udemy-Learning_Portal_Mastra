@@ -1,4 +1,5 @@
-import type { InputField } from '@mlp/contracts';
+import { useState } from 'react';
+import { FILE_TRANSPORT_FACTOR, type InputField, type UploadedFile } from '@mlp/contracts';
 import { cn } from '../../lib/cn';
 import { isVisible, visibleOptions, type FieldErrors, type RawValues } from './form-model';
 
@@ -18,7 +19,7 @@ export function DynamicForm({
   errors: FieldErrors;
   disabled: boolean;
   idPrefix: string;
-  onChange: (name: string, value: string | boolean) => void;
+  onChange: (name: string, value: string | boolean | UploadedFile[]) => void;
 }) {
   return (
     <div className="flex flex-col gap-5">
@@ -121,6 +122,19 @@ export function DynamicForm({
                 ) : null}
               </div>
             );
+          case 'file':
+            control = (
+              <FileField
+                field={f}
+                id={id}
+                describedBy={describedBy}
+                invalid={Boolean(err)}
+                disabled={disabled}
+                files={Array.isArray(values[f.name]) ? (values[f.name] as UploadedFile[]) : []}
+                onChange={(files) => onChange(f.name, files)}
+              />
+            );
+            break;
           case 'json':
             control = (
               <textarea
@@ -151,6 +165,103 @@ export function DynamicForm({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+const formatBytes = (n: number) => (n >= 1_048_576 ? `${(n / 1_048_576).toFixed(1)} MB` : n >= 1024 ? `${Math.round(n / 1024)} KB` : `${n} B`);
+
+function readBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).replace(/^data:[^,]*,/, ''));
+    reader.onerror = () => reject(reader.error ?? new Error('Could not read the file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * File picker for a `file` field. The browser only pre-screens: files too large to send at all are
+ * refused here; everything else is sent and judged by the server (type sniffing, size, parsing).
+ */
+function FileField({
+  field,
+  id,
+  describedBy,
+  invalid,
+  disabled,
+  files,
+  onChange,
+}: {
+  field: Extract<InputField, { kind: 'file' }>;
+  id: string;
+  describedBy: string | undefined;
+  invalid: boolean;
+  disabled: boolean;
+  files: UploadedFile[];
+  onChange: (files: UploadedFile[]) => void;
+}) {
+  const [notes, setNotes] = useState<string[]>([]);
+  const ceiling = Math.ceil(field.maxBytes * FILE_TRANSPORT_FACTOR);
+  async function add(list: FileList | null) {
+    const next = [...files];
+    const skipped: string[] = [];
+    for (const file of Array.from(list ?? [])) {
+      if (next.length >= field.maxFiles) skipped.push(`${file.name}: at most ${field.maxFiles} file(s)`);
+      else if (file.size > ceiling) skipped.push(`${file.name}: ${formatBytes(file.size)} is too large to send (limit ${formatBytes(field.maxBytes)})`);
+      else next.push({ name: file.name, type: file.type, size: file.size, dataBase64: await readBase64(file) });
+    }
+    setNotes(skipped);
+    onChange(next);
+  }
+  return (
+    <div className="flex min-w-0 flex-col gap-2">
+      <input
+        id={id}
+        type="file"
+        multiple={field.maxFiles > 1}
+        accept={field.accept.join(',')}
+        disabled={disabled || files.length >= field.maxFiles}
+        aria-describedby={describedBy}
+        aria-invalid={invalid || undefined}
+        onChange={(e) => {
+          const input = e.currentTarget;
+          void add(input.files).finally(() => (input.value = ''));
+        }}
+        className="text-sm text-fg file:mr-3 file:rounded-lg file:border file:border-border-strong file:bg-surface file:px-3 file:py-1.5 file:text-sm"
+      />
+      <p className="text-xs text-fg-muted">
+        Allowed: {field.accept.join(', ')} · up to {formatBytes(field.maxBytes)} each · at most {field.maxFiles} file(s). The server checks each
+        file’s real content.
+      </p>
+      {files.length > 0 ? (
+        <ul className="flex flex-col gap-1" aria-label={`Selected files for ${field.label}`}>
+          {files.map((f, i) => (
+            <li key={`${f.name}-${i}`} className="flex min-w-0 items-center gap-2 text-sm">
+              <span className="min-w-0 [overflow-wrap:anywhere]">
+                {f.name} <span className="text-fg-subtle">({formatBytes(f.size)})</span>
+                {f.size > field.maxBytes ? <span className="text-danger"> over the limit: the server will reject it</span> : null}
+              </span>
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => onChange(files.filter((_, j) => j !== i))}
+                aria-label={`Remove ${f.name}`}
+                className="rounded border border-border-strong px-2 py-0.5 text-xs"
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {notes.length > 0 ? (
+        <ul role="status" className="text-xs text-danger">
+          {notes.map((n) => (
+            <li key={n}>{n}</li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }

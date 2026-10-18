@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import express, { type ErrorRequestHandler, type Express } from 'express';
-import { HealthResponseSchema, redactSecrets, type HealthResponse } from '@mlp/contracts';
+import { DEFAULT_REQUEST_BYTES, HealthResponseSchema, maxRequestBytes, redactSecrets, type HealthResponse } from '@mlp/contracts';
 import { catalog } from '@mlp/lab-catalog';
 import { LabError, LabRunner, toCanonicalError, type LabRegistry } from '@mlp/lab-engine';
 import { createLabRegistry, createLabServices, type LabServices } from '@mlp/labs';
@@ -53,7 +53,19 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
   const app = express();
   app.disable('x-powered-by');
   app.use(requestIds);
-  app.use(express.json({ limit: '64kb' }));
+  // Request bodies are capped at 64 KB, except a lab's run request, which may also carry the files its
+  // definition declares (file fields): the limit is derived from those declared limits, per lab.
+  const defaultJson = express.json({ limit: DEFAULT_REQUEST_BYTES });
+  const labJson = new Map<number, ReturnType<typeof express.json>>();
+  app.use((req, res, next) => {
+    const m = req.method === 'POST' ? /^\/api\/labs\/([a-z0-9-]{1,40})\/runs$/.exec(req.path) : null;
+    const lab = m ? registry.get(m[1]!) : undefined;
+    const limit = lab ? maxRequestBytes(lab.definition) : DEFAULT_REQUEST_BYTES;
+    if (limit === DEFAULT_REQUEST_BYTES) return defaultJson(req, res, next);
+    let parser = labJson.get(limit);
+    if (!parser) labJson.set(limit, (parser = express.json({ limit })));
+    return parser(req, res, next);
+  });
 
   app.get('/api/health', (_req, res) => {
     const body: HealthResponse = {
@@ -102,7 +114,8 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
         return;
       }
       if (type === 'entity.too.large') {
-        res.status(413).json(errorBody('BAD_REQUEST', 'Request body too large (max 64 KB)', { requestId }));
+        const limit = (err as { limit?: number }).limit ?? DEFAULT_REQUEST_BYTES;
+        res.status(413).json(errorBody('BAD_REQUEST', `Request body too large (max ${Math.round(limit / 1024)} KB)`, { requestId }));
         return;
       }
     }
