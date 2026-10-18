@@ -8,6 +8,7 @@ import { useProgressActions } from '../../lib/progress-actions';
 import { useAsync } from '../../lib/use-async';
 import { Badge, Button, Card } from '../ui/primitives';
 import { ApprovalPanel } from './ApprovalPanel';
+import { CitedAnswer, citedAnswerOf } from './CitedAnswer';
 import { DynamicForm } from './DynamicForm';
 import {
   buildInput,
@@ -60,6 +61,7 @@ const STATUS_TEXT = {
 export function RunTab({ definition }: { definition: LabDefinition }) {
   const { state, run, cancel, decide, reset } = useLabRun(definition.id);
   const waiting = pendingApprovals(state);
+  const cited = state.phase === 'finished' ? citedAnswerOf(state.output) : null;
   const { update } = useProgressActions(definition.id);
   const example = definition.exampleInput;
   const [raw, setRaw] = useState<RawValues>(() => reconcile(definition.inputs, initialRawValues(definition.inputs, example)));
@@ -238,6 +240,12 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
       <Section title="Agent, tool and workflow trace" id={`${id}-trace`}>
         <TraceView state={state} />
       </Section>
+
+      {cited ? (
+        <Section title="Answer with citations" id={`${id}-cited`}>
+          <CitedAnswer data={cited} idPrefix={id} />
+        </Section>
+      ) : null}
 
       <Section title="Result and automated checks" id={`${id}-result`}>
         {state.validation ? (

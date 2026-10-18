@@ -5,3 +5,4 @@ export * from './catalog.js';
 export * from './lab.js';
 export * from './events.js';
 export * from './progress.js';
+export * from './cited-answer.js';
