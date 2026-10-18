@@ -13,3 +13,6 @@ playwright-report/
 .vite/
 .mastra/
 .DS_Store
+
+# TypeScript incremental build caches
+*.tsbuildinfo
