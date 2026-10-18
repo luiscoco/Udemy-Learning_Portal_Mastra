@@ -9,6 +9,7 @@ import { useAsync } from '../../lib/use-async';
 import { Badge, Button, Card } from '../ui/primitives';
 import { ApprovalPanel } from './ApprovalPanel';
 import { CitedAnswer, citedAnswerOf } from './CitedAnswer';
+import { McpToolCatalog, mcpCatalogOf } from './McpToolCatalog';
 import { DynamicForm } from './DynamicForm';
 import {
   buildInput,
@@ -62,6 +63,7 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
   const { state, run, cancel, decide, reset } = useLabRun(definition.id);
   const waiting = pendingApprovals(state);
   const cited = state.phase === 'finished' ? citedAnswerOf(state.output) : null;
+  const mcpCatalog = state.phase === 'finished' ? mcpCatalogOf(state.output) : null;
   const { update } = useProgressActions(definition.id);
   const example = definition.exampleInput;
   const [raw, setRaw] = useState<RawValues>(() => reconcile(definition.inputs, initialRawValues(definition.inputs, example)));
@@ -218,8 +220,8 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
           ) : state.phase === 'finished' && completeAnswer(state.output) ? (
             <div className="flex flex-col gap-2" data-testid="complete-answer">
               <p className="text-xs text-fg-muted">
-                No tokens were streamed: this lab returns the whole answer in one piece (for example with generate()), so it appears when the
-                run finishes.
+                No tokens were streamed: this lab returns the whole answer in one piece (for example with generate()), so it
+                appears when the run finishes.
               </p>
               <p className="whitespace-pre-wrap text-fg">{completeAnswer(state.output)}</p>
             </div>
@@ -227,7 +229,8 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
             <p className="text-sm text-fg-muted">This run did not stream any tokens. See the result and checks below.</p>
           ) : (
             <p className="text-sm text-fg-muted">
-              Streamed tokens appear here while the lab runs. Labs that do not stream show their complete answer here when they finish.
+              Streamed tokens appear here while the lab runs. Labs that do not stream show their complete answer here when they
+              finish.
             </p>
           )}
         </Card>
@@ -244,6 +247,12 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
       {cited ? (
         <Section title="Answer with citations" id={`${id}-cited`}>
           <CitedAnswer data={cited} idPrefix={id} />
+        </Section>
+      ) : null}
+
+      {mcpCatalog ? (
+        <Section title="MCP tools" id={`${id}-mcp`}>
+          <McpToolCatalog data={mcpCatalog} />
         </Section>
       ) : null}
 
