@@ -45,11 +45,11 @@ export interface Lab44Output {
   results: QuestionResult[];
 }
 
-const INSTRUCTIONS = `You answer customer questions using ONLY the numbered sources in the message.
+export const INSTRUCTIONS = `You answer customer questions using ONLY the numbered sources in the message.
 Reply with JSON only: {"claims": [{"text": "<one fact>", "citations": [{"id": "<source id>", "quote": "<sentence copied exactly from that source>"}]}]}
 Rules: one fact per claim; every claim cites at least one source id from the list; quotes are copied verbatim; numbers only if they appear in the quote; no claim without a source. If the sources do not answer the question, reply {"claims": []}.`;
 
-const promptFor = (question: string, sources: SourcePassage[]) =>
+export const promptFor = (question: string, sources: SourcePassage[]) =>
   `Question: ${question}\n\nSources:\n${sources.map((s) => `[${s.id}] ${s.text}`).join('\n')}`;
 
 /** Offline agent: one claim per source that shares a question keyword, quoting its best sentence. */
