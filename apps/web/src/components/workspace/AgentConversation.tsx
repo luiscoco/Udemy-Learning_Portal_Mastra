@@ -20,6 +20,7 @@ const KIND_TONE: Record<ConversationMessage['kind'], 'neutral' | 'accent' | 'suc
 };
 const OUTCOME = {
   published: { tone: 'success', text: 'Published' },
+  resolved: { tone: 'success', text: 'Resolved' },
   'needs-human': { tone: 'warning', text: 'Needs a human' },
   failed: { tone: 'danger', text: 'Failed' },
 } as const;

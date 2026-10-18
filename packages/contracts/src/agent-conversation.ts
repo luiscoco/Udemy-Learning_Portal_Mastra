@@ -33,7 +33,7 @@ export const AgentConversationSchema = z.object({
   agents: z.array(ConversationAgentSchema).min(1).max(12),
   messages: z.array(ConversationMessageSchema).max(200),
   outcome: z.object({
-    status: z.enum(['published', 'needs-human', 'failed']),
+    status: z.enum(['published', 'resolved', 'needs-human', 'failed']),
     text: z.string().max(20_000),
     issues: z.array(z.string().max(600)).max(50),
   }),
