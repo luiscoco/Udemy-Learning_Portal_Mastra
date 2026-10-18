@@ -18,6 +18,9 @@ test('lab-51: the agent conversation shows messages, intermediate outputs and th
   await expect(conversation.getByTestId('conversation-outcome')).toContainText('Published');
   await expect(conversation.getByTestId('conversation-outcome')).not.toContainText('spacecraft');
 
-  const results = await new AxeBuilder({ page }).include('[data-testid="agent-conversation"]').withTags(['wcag2a', 'wcag2aa']).analyze();
+  const results = await new AxeBuilder({ page })
+    .include('[data-testid="agent-conversation"]')
+    .withTags(['wcag2a', 'wcag2aa'])
+    .analyze();
   expect(results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical').map((v) => v.id)).toEqual([]);
 });

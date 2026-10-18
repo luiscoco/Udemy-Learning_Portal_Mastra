@@ -24,8 +24,15 @@ export class Notebook {
   readonly notes: Note[] = [];
   readonly rejected: { claim: string; sourceId: string; reason: string }[] = [];
 
-  record(f: { claim: string; sourceId: string; quote: string }): { accepted: true; n: number } | { accepted: false; reason: string } {
-    const reject = (reason: string) => (this.rejected.push({ claim: f.claim, sourceId: f.sourceId, reason }), { accepted: false as const, reason });
+  record(f: {
+    claim: string;
+    sourceId: string;
+    quote: string;
+  }): { accepted: true; n: number } | { accepted: false; reason: string } {
+    const reject = (reason: string) => (
+      this.rejected.push({ claim: f.claim, sourceId: f.sourceId, reason }),
+      { accepted: false as const, reason }
+    );
     const source = sourceById(f.sourceId);
     if (!source) return reject(`Unknown source ${f.sourceId}.`);
     const quote = norm(f.quote);

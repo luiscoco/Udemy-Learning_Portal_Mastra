@@ -37,7 +37,12 @@ async function run(input: Record<string, unknown> = {}) {
 
 const notes: Note[] = [
   { n: 1, claim: 'Steps run in a fixed order', sourceId: 'S1', quote: 'runs in a fixed, explicit order' },
-  { n: 2, claim: 'Then passes output to the next step', sourceId: 'S2', quote: 'the output of one step becomes the input of the next step' },
+  {
+    n: 2,
+    claim: 'Then passes output to the next step',
+    sourceId: 'S2',
+    quote: 'the output of one step becomes the input of the next step',
+  },
 ];
 
 describe('lab-51 grounding helpers (unit)', () => {
@@ -61,7 +66,10 @@ describe('lab-51 grounding helpers (unit)', () => {
   });
   it('record_finding accepts only verbatim quotes, once each, up to the limit', () => {
     const nb = new Notebook();
-    expect(nb.record({ claim: 'c', sourceId: 'S1', quote: 'runs in a fixed,   explicit order' })).toEqual({ accepted: true, n: 1 });
+    expect(nb.record({ claim: 'c', sourceId: 'S1', quote: 'runs in a fixed,   explicit order' })).toEqual({
+      accepted: true,
+      n: 1,
+    });
     expect(nb.record({ claim: 'c', sourceId: 'S1', quote: 'runs in a fixed, explicit order' }).accepted).toBe(false);
     expect(nb.record({ claim: 'c', sourceId: 'S1', quote: 'runs in any order you like' })).toMatchObject({ accepted: false });
     expect(nb.record({ claim: 'c', sourceId: 'S9', quote: 'whatever text here' })).toMatchObject({ accepted: false });
@@ -92,7 +100,15 @@ describe('lab-51 Two collaborating agents (DoD)', () => {
   it('a planted slip is caught, revised and never published', async () => {
     const { output, validation } = await run({ editorSlip: 'uncited-claim' });
     expect(validation.passed, JSON.stringify(validation.checks)).toBe(true);
-    expect(output.agentConversation.messages.map((m) => m.kind)).toEqual(['task', 'notes', 'draft', 'review', 'revision', 'review', 'final']);
+    expect(output.agentConversation.messages.map((m) => m.kind)).toEqual([
+      'task',
+      'notes',
+      'draft',
+      'review',
+      'revision',
+      'review',
+      'final',
+    ]);
     expect(output.agentConversation.messages[2]!.injected).toBe(true);
     expect(output.reviews[0]!.structuralIssues.map((i) => i.kind)).toEqual(['uncited']);
     expect(output.final!.text).not.toContain('spacecraft');
@@ -108,7 +124,10 @@ describe('lab-51 Two collaborating agents (DoD)', () => {
   it('fails final-grounded when an unapproved draft is published', async () => {
     const { output } = await run({ editorSlip: 'uncited-claim' });
     const tampered = { ...output, final: { ...output.final!, text: output.drafts[0]!.text } };
-    const v = lab51.validate!(tampered, lab51.definition.exampleInput as never, { events: [], mode: 'offline' }) as Result['validation'];
+    const v = lab51.validate!(tampered, lab51.definition.exampleInput as never, {
+      events: [],
+      mode: 'offline',
+    }) as Result['validation'];
     expect(v.checks.find((c) => c.id === 'final-grounded')?.passed).toBe(false);
   });
 });

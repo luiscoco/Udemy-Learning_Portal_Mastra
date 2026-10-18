@@ -67,7 +67,10 @@ export const lab51Definition = {
     example: {
       stepPath: ['research', 'draft', 'review-and-revise', 'publish'],
       roles: {
-        researcher: { tools: ['search_sources', 'record_finding'], toolCalls: ['search_sources', 'record_finding', 'record_finding', 'record_finding'] },
+        researcher: {
+          tools: ['search_sources', 'record_finding'],
+          toolCalls: ['search_sources', 'record_finding', 'record_finding', 'record_finding'],
+        },
         editor: { tools: [], toolCalls: [] },
       },
       revisions: 0,
@@ -96,11 +99,26 @@ export const lab51Definition = {
       { level: 3, text: 'Twice: review (issue) → revise, then review (approved). Iterations are always revisions + 1.' },
     ],
     commonMistakes: [
-      { mistake: 'Letting the agents call each other freely.', fix: 'Route every handoff through a workflow step you can see and test.' },
-      { mistake: 'Passing the whole conversation to the editor.', fix: 'Pass the minimum payload: the request and the numbered notes.' },
-      { mistake: 'Trusting the reviewer model alone.', fix: 'Add a deterministic check for what code can verify, such as missing or unknown citations.' },
-      { mistake: 'A dountil loop without a bound.', fix: 'Stop on approval or when the revision limit is reached; Mastra will not stop it for you.' },
-      { mistake: 'Publishing the last draft when the loop gives up.', fix: 'Escalate to a human with the remaining issues instead.' },
+      {
+        mistake: 'Letting the agents call each other freely.',
+        fix: 'Route every handoff through a workflow step you can see and test.',
+      },
+      {
+        mistake: 'Passing the whole conversation to the editor.',
+        fix: 'Pass the minimum payload: the request and the numbered notes.',
+      },
+      {
+        mistake: 'Trusting the reviewer model alone.',
+        fix: 'Add a deterministic check for what code can verify, such as missing or unknown citations.',
+      },
+      {
+        mistake: 'A dountil loop without a bound.',
+        fix: 'Stop on approval or when the revision limit is reached; Mastra will not stop it for you.',
+      },
+      {
+        mistake: 'Publishing the last draft when the loop gives up.',
+        fix: 'Escalate to a human with the remaining issues instead.',
+      },
     ],
     challenge: {
       prompt:
@@ -119,7 +137,12 @@ export const lab51Definition = {
     {
       id: 'q2',
       prompt: 'Why does record_finding check that the quote is verbatim?',
-      choices: ['To save tokens', 'So every note is grounded in a real source', 'Because Mastra requires it', 'To speed up search'],
+      choices: [
+        'To save tokens',
+        'So every note is grounded in a real source',
+        'Because Mastra requires it',
+        'To speed up search',
+      ],
       correctIndex: 1,
       explanation: 'A finding with an invented quote is rejected before it reaches the editor.',
     },
@@ -138,14 +161,27 @@ export const lab51Definition = {
     {
       id: 'q4',
       prompt: 'The revision limit is reached with issues left. What happens?',
-      choices: ['The last draft is published', 'The loop continues', 'Nothing is published; the issues go to a human', 'The notes are deleted'],
+      choices: [
+        'The last draft is published',
+        'The loop continues',
+        'Nothing is published; the issues go to a human',
+        'The notes are deleted',
+      ],
       correctIndex: 2,
       explanation: 'The outcome is needs-human, with the remaining issues.',
     },
   ],
   sourceFiles: [
-    { path: 'workflow.ts', title: 'Orchestrating workflow', description: 'research → draft → dountil(review-and-revise) → publish.' },
-    { path: 'agents.ts', title: 'The two agents', description: 'Researcher tools with the verbatim-quote guard, instructions, handoff prompts.' },
+    {
+      path: 'workflow.ts',
+      title: 'Orchestrating workflow',
+      description: 'research → draft → dountil(review-and-revise) → publish.',
+    },
+    {
+      path: 'agents.ts',
+      title: 'The two agents',
+      description: 'Researcher tools with the verbatim-quote guard, instructions, handoff prompts.',
+    },
     { path: 'grounding.ts', title: 'Grounding checks', description: 'Sentences, citations, structural and support issues.' },
     { path: 'run.ts', title: 'Lab run', description: 'Agents, transcript, workflow run and checks.' },
   ],
@@ -155,7 +191,10 @@ export const lab51Definition = {
     solutionFile: 'solution.md',
   },
   checks: [
-    { id: 'roles-separated', label: 'Two separate agents: only the researcher has and uses tools; the editor writes without tools' },
+    {
+      id: 'roles-separated',
+      label: 'Two separate agents: only the researcher has and uses tools; the editor writes without tools',
+    },
     {
       id: 'explicit-handoffs',
       label: 'Every message travels through a workflow step, and the editor receives exactly the recorded notes',
@@ -171,10 +210,18 @@ export const lab51Definition = {
   instructorOutline: {
     durationMinutes: 7,
     segments: [
-      { title: 'Why an orchestrator', minutes: 1, talkingPoints: ['Agents decide, workflows fix the order', 'No direct agent-to-agent calls'] },
+      {
+        title: 'Why an orchestrator',
+        minutes: 1,
+        talkingPoints: ['Agents decide, workflows fix the order', 'No direct agent-to-agent calls'],
+      },
       { title: 'Two roles', minutes: 1.5, talkingPoints: ['Researcher tools', 'Verbatim-quote guard', 'Editor without tools'] },
       { title: 'Handoffs', minutes: 1.5, talkingPoints: ['Minimum payload', 'The transcript'] },
-      { title: 'Review loop', minutes: 2, talkingPoints: ['Structured review', 'Deterministic check', 'dountil bound', 'Escalation'] },
+      {
+        title: 'Review loop',
+        minutes: 2,
+        talkingPoints: ['Structured review', 'Deterministic check', 'dountil bound', 'Escalation'],
+      },
       { title: 'Wrap-up', minutes: 1, talkingPoints: ['Next: handoffs between a triage agent and specialists'] },
     ],
   },

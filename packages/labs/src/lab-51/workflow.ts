@@ -93,7 +93,15 @@ export function buildResearchEditorWorkflow(o: Orchestration) {
     outputSchema: ResearchedSchema,
     execute: async ({ inputData }) => {
       const task = prompts.research(inputData.request);
-      o.post({ from: 'orchestrator', to: 'researcher', kind: 'task', stepId: 'research', round: null, summary: 'Research request', content: task });
+      o.post({
+        from: 'orchestrator',
+        to: 'researcher',
+        kind: 'task',
+        stepId: 'research',
+        round: null,
+        summary: 'Research request',
+        content: task,
+      });
       const res = await streamAgent(ctx, o.researcher, task, { maxSteps: 6, emitTokens: false });
       record.researcherTools.push(...res.tools);
       const notes = o.notebook.notes.map((n) => ({ ...n }));
@@ -154,7 +162,14 @@ export function buildResearchEditorWorkflow(o: Orchestration) {
       const structural = structuralIssues(s.draft, s.notes);
       const issues = mergeIssues(model.issues, structural);
       const approved = issues.length === 0;
-      record.reviews.push({ round, modelApproved: model.approved, modelIssues: model.issues, structuralIssues: structural, issues, approved });
+      record.reviews.push({
+        round,
+        modelApproved: model.approved,
+        modelIssues: model.issues,
+        structuralIssues: structural,
+        issues,
+        approved,
+      });
       o.post({
         from: 'researcher',
         to: 'editor',
@@ -193,7 +208,15 @@ export function buildResearchEditorWorkflow(o: Orchestration) {
     outputSchema: FinalSchema,
     execute: async ({ inputData: s }) => {
       if (s.approved) {
-        o.post({ from: 'editor', to: 'orchestrator', kind: 'final', stepId: 'publish', round: s.revisions, summary: 'Approved text published', content: s.draft });
+        o.post({
+          from: 'editor',
+          to: 'orchestrator',
+          kind: 'final',
+          stepId: 'publish',
+          round: s.revisions,
+          summary: 'Approved text published',
+          content: s.draft,
+        });
         return { status: 'published' as const, text: s.draft, revisions: s.revisions, issues: [] };
       }
       o.post({

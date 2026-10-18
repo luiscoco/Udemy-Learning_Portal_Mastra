@@ -57,7 +57,12 @@ export interface Lab51Output {
 
 const AGENTS = (researcherToolNames: string[]): AgentConversation['agents'] => [
   { id: 'orchestrator', name: 'Workflow (orchestrator)', role: 'Owns the order of steps and every handoff', tools: [] },
-  { id: 'researcher', name: 'Research agent', role: 'Finds and records grounded facts; reviews drafts', tools: researcherToolNames },
+  {
+    id: 'researcher',
+    name: 'Research agent',
+    role: 'Finds and records grounded facts; reviews drafts',
+    tools: researcherToolNames,
+  },
   { id: 'editor', name: 'Editor agent', role: 'Writes and revises the text from the notes only', tools: [] },
 ];
 export const STEP_PATH = /^research,draft(,review-and-revise)+,publish$/;
@@ -73,7 +78,13 @@ export const lab51: LabImplementation<Lab51Input, Lab51Output, LabServices> = {
     const editorModel = ctx.services.models.resolve({ mode: ctx.mode, modelId: input.modelId, offline: editorScript() });
     const researcher = withLabLogger(
       ctx,
-      new Agent({ id: 'researcher', name: 'Research agent', instructions: RESEARCHER_INSTRUCTIONS, model: researcherModel.model, tools }),
+      new Agent({
+        id: 'researcher',
+        name: 'Research agent',
+        instructions: RESEARCHER_INSTRUCTIONS,
+        model: researcherModel.model,
+        tools,
+      }),
     );
     const editor = withLabLogger(
       ctx,
@@ -150,8 +161,7 @@ export const lab51: LabImplementation<Lab51Input, Lab51Output, LabServices> = {
       out.editorSawNotes.every(Boolean);
 
     const notesOk =
-      out.notes.length > 0 &&
-      out.notes.every((n) => (sourceById(n.sourceId)?.text.replace(/\s+/g, ' ') ?? '').includes(n.quote));
+      out.notes.length > 0 && out.notes.every((n) => (sourceById(n.sourceId)?.text.replace(/\s+/g, ' ') ?? '').includes(n.quote));
 
     const loopOk =
       out.revisions <= input.maxRevisions &&

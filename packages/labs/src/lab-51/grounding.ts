@@ -45,7 +45,11 @@ export function sentencesOf(text: string): string[] {
 export function citationsOf(sentence: string): number[] {
   return [...sentence.matchAll(CITE)].flatMap((m) => m[1]!.split(',').map((x) => Number(x.trim())));
 }
-export const stripCitations = (s: string) => s.replace(CITE, '').replace(/\s+([.!?,])/g, '$1').trim();
+export const stripCitations = (s: string) =>
+  s
+    .replace(CITE, '')
+    .replace(/\s+([.!?,])/g, '$1')
+    .trim();
 
 /** Uncited sentences and citations to notes that do not exist. Always checked by the orchestrator. */
 export function structuralIssues(draft: string, notes: readonly Note[]): Issue[] {

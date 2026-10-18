@@ -50,8 +50,7 @@ export function AgentConversation({ data }: { data: Conversation }) {
                 <span className="text-fg-muted">{m.seq}.</span> <span className="font-medium">{name(m.from)}</span>
                 <span aria-hidden="true"> → </span>
                 <span className="sr-only"> to </span>
-                <span className="font-medium">{name(m.to)}</span>{' '}
-                <Badge tone={KIND_TONE[m.kind]}>{m.kind}</Badge>{' '}
+                <span className="font-medium">{name(m.to)}</span> <Badge tone={KIND_TONE[m.kind]}>{m.kind}</Badge>{' '}
                 {m.injected ? <Badge tone="danger">planted by the lab</Badge> : null}{' '}
                 <span className="text-fg-muted">
                   {m.summary} (step {m.stepId}
