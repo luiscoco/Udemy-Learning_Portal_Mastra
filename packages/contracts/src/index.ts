@@ -8,3 +8,4 @@ export * from './progress.js';
 export * from './cited-answer.js';
 export * from './mcp-catalog.js';
 export * from './mcp-capabilities.js';
+export * from './agent-conversation.js';

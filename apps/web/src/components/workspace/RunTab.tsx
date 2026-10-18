@@ -8,6 +8,7 @@ import { useProgressActions } from '../../lib/progress-actions';
 import { useAsync } from '../../lib/use-async';
 import { Badge, Button, Card } from '../ui/primitives';
 import { ApprovalPanel } from './ApprovalPanel';
+import { AgentConversation, agentConversationOf } from './AgentConversation';
 import { CitedAnswer, citedAnswerOf } from './CitedAnswer';
 import { McpCapabilityMatrix, mcpCapabilitiesOf } from './McpCapabilityMatrix';
 import { McpToolCatalog, mcpCatalogOf } from './McpToolCatalog';
@@ -66,6 +67,7 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
   const cited = state.phase === 'finished' ? citedAnswerOf(state.output) : null;
   const mcpCatalog = state.phase === 'finished' ? mcpCatalogOf(state.output) : null;
   const mcpCapabilities = state.phase === 'finished' ? mcpCapabilitiesOf(state.output) : null;
+  const conversation = state.phase === 'finished' ? agentConversationOf(state.output) : null;
   const { update } = useProgressActions(definition.id);
   const example = definition.exampleInput;
   const [raw, setRaw] = useState<RawValues>(() => reconcile(definition.inputs, initialRawValues(definition.inputs, example)));
@@ -255,6 +257,12 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
       {mcpCatalog ? (
         <Section title="MCP tools" id={`${id}-mcp`}>
           <McpToolCatalog data={mcpCatalog} />
+        </Section>
+      ) : null}
+
+      {conversation ? (
+        <Section title="Agent conversation" id={`${id}-conversation`}>
+          <AgentConversation data={conversation} />
         </Section>
       ) : null}
 
