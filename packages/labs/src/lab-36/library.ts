@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import type { DocType } from './ingest.js';
 
 export const LIBRARY_CAPACITY = 100;
@@ -52,4 +52,19 @@ export class DocumentLibrary {
   get(sha256: string): LibraryDocument | null {
     return this.has(sha256) ? (JSON.parse(readFileSync(this.file(sha256), 'utf8')) as LibraryDocument) : null;
   }
+}
+
+/** All stored documents, newest first (used by the later RAG labs). */
+export function listLibrary(library: DocumentLibrary, limit = LIBRARY_CAPACITY): LibraryDocument[] {
+  if (!existsSync(library.dir)) return [];
+  return readdirSync(library.dir)
+    .filter((f) => /^[a-f0-9]{64}\.json$/.test(f))
+    .map((f) => JSON.parse(readFileSync(join(library.dir, f), 'utf8')) as LibraryDocument)
+    .sort((a, b) => b.ingestedAt.localeCompare(a.ingestedAt) || a.name.localeCompare(b.name))
+    .slice(0, limit);
+}
+
+/** The shared course library (the same directory L36 writes to), for any lab's services. */
+export function courseLibrary(services: { memory: { file(name: string): string } }): DocumentLibrary {
+  return new DocumentLibrary(join(dirname(services.memory.file('lab-36-library')), 'library'));
 }

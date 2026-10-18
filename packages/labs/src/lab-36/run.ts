@@ -1,4 +1,3 @@
-import { dirname, join } from 'node:path';
 import { z } from 'zod';
 import { summarizeChecks, uploadedFilesSchema, type CheckResult, type LabDefinition, type UploadedFile } from '@mlp/contracts';
 import type { LabImplementation, RunContext } from '@mlp/lab-engine';
@@ -6,7 +5,7 @@ import type { LabServices } from '../services.js';
 import { runTypedWorkflow } from '../shared/workflow-stream.js';
 import { lab36Definition } from './definition.js';
 import { LIMITS } from './ingest.js';
-import { DocumentLibrary, LIBRARY_CAPACITY } from './library.js';
+import { courseLibrary, LIBRARY_CAPACITY } from './library.js';
 import { buildIngestionWorkflow, type CatalogueEntry, type FileRef } from './pipeline.js';
 import { buildSamples, type Sample } from './samples.js';
 
@@ -45,7 +44,7 @@ export const lab36: LabImplementation<Lab36Input, Lab36Output, LabServices> = {
     ];
     const files = new Map(all.map((a, i) => [i, a.file]));
     const texts = new Map<number, string>();
-    const library = input.store ? new DocumentLibrary(join(dirname(ctx.services.memory.file('lab-36-library')), 'library')) : null;
+    const library = input.store ? courseLibrary(ctx.services) : null;
     const refs: FileRef[] = all.map((a, i) => ({ index: i, name: a.file.name.slice(0, 120), declaredType: a.file.type, declaredSize: a.file.size, origin: a.origin }));
     ctx.log('info', `Ingesting ${samples.length} built-in fixture(s) and ${input.files.length} upload(s); raw bytes stay out of the workflow trace.`);
 
