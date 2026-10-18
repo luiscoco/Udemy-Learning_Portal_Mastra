@@ -4,7 +4,7 @@ import { MDocument } from '@mastra/rag';
 import type { MastraVector } from '@mastra/core/vector';
 import { summarizeChecks, type CheckResult, type LabDefinition } from '@mlp/contracts';
 import { LabError, type LabImplementation } from '@mlp/lab-engine';
-import { InMemoryVector, openVectorStore } from '@mlp/mastra-runtime';
+import { InMemoryVector, openExactVectorStore } from '@mlp/mastra-runtime';
 import type { LabServices } from '../services.js';
 import { courseLibrary, listLibrary } from '../lab-36/library.js';
 import { analyseChunks } from '../lab-37/chunks.js';
@@ -207,7 +207,7 @@ export const lab38: LabImplementation<Lab38Input, Lab38Output, LabServices> = {
         ? await withVectorStore(
             ctx.services.memory.file(STORE_FILE),
             async () => {
-              const store = openVectorStore(ctx.services.memory.file(STORE_FILE));
+              const store = await openExactVectorStore(ctx.services.memory.file(STORE_FILE), [{ indexName, dimension: embedder.dimensions }]);
               try {
                 return await work(store);
               } finally {

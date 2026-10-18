@@ -1,6 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { EmbeddingModelV2 } from '@ai-sdk/provider';
+import { createClient } from '@libsql/client';
 import { LibSQLVector } from '@mastra/libsql';
 import {
   MastraVector,
@@ -21,6 +22,37 @@ import { fileUrl } from './memory-store.js';
 export function openVectorStore(file: string): LibSQLVector {
   mkdirSync(dirname(file), { recursive: true });
   return new LibSQLVector({ id: 'mlp-vectors', url: fileUrl(file) });
+}
+
+/**
+ * A durable libSQL vector store that searches EXACTLY (brute-force cosine, filters applied in SQL before
+ * ranking) instead of through libSQL's approximate index (vector_top_k).
+ *
+ * Why (verified on @mastra/libsql 1.26.2): the approximate index filters AFTER its nearest-neighbour
+ * search, misses vectors under concurrent writers, and degraded after repeated in-place upserts (a
+ * record stopped being its own top hit). LibSQLVector falls back to exact search when a table has no
+ * `<index>_vector_idx`, so this creates the requested tables, drops those approximate indexes with plain
+ * SQL, and returns a fresh store. Exact search is the right choice for course-sized stores (hundreds of
+ * vectors); large production stores need a server-side vector database instead.
+ */
+export async function openExactVectorStore(file: string, indexes: { indexName: string; dimension: number }[] = []): Promise<LibSQLVector> {
+  mkdirSync(dirname(file), { recursive: true });
+  const url = fileUrl(file);
+  const setup = new LibSQLVector({ id: 'mlp-vectors-setup', url });
+  try {
+    const existing = await setup.listIndexes();
+    for (const i of indexes) if (!existing.includes(i.indexName)) await setup.createIndex({ indexName: i.indexName, dimension: i.dimension, metric: 'cosine' });
+  } finally {
+    await setup.close();
+  }
+  const sql = createClient({ url });
+  try {
+    const ann = await sql.execute("SELECT name FROM sqlite_master WHERE type = 'index' AND name LIKE '%_vector_idx'");
+    for (const row of ann.rows) await sql.execute(`DROP INDEX IF EXISTS "${String(row.name).replace(/"/g, '')}"`);
+  } finally {
+    sql.close();
+  }
+  return new LibSQLVector({ id: 'mlp-vectors', url });
 }
 
 const cosine = (a: number[], b: number[]) => {

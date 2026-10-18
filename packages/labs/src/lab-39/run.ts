@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { MastraVector } from '@mastra/core/vector';
 import { summarizeChecks, type CheckResult, type LabDefinition } from '@mlp/contracts';
 import type { LabImplementation } from '@mlp/lab-engine';
-import { InMemoryVector, openVectorStore } from '@mlp/mastra-runtime';
+import { InMemoryVector, openExactVectorStore } from '@mlp/mastra-runtime';
 import type { LabServices } from '../services.js';
 import { EMBEDDERS, indexNameFor, resolveEmbedder } from '../lab-38/embedders.js';
 import { STORE_FILE } from '../lab-38/run.js';
@@ -167,7 +167,7 @@ export const lab39: LabImplementation<Lab39Input, Lab39Output, LabServices> = {
       out = await withVectorStore(
         file,
         async () => {
-          const store = openVectorStore(file);
+          const store = await openExactVectorStore(file);
           try {
             return await search(store, indexName, () => undefined);
           } finally {
