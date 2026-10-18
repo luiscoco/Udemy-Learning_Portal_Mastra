@@ -153,3 +153,16 @@ export function runReducer(state: RunState, action: RunAction): RunState {
     }
   }
 }
+
+/**
+ * The complete answer of a run that did not stream tokens (labs that call generate() return it in one
+ * piece): a non-empty top-level `text` or `answer` string in the result output, if there is one.
+ */
+export function completeAnswer(output: unknown): string | null {
+  if (!output || typeof output !== 'object') return null;
+  for (const key of ['text', 'answer'] as const) {
+    const v = (output as Record<string, unknown>)[key];
+    if (typeof v === 'string' && v.trim()) return v;
+  }
+  return null;
+}

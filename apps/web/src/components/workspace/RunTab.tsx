@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { LabDefinition, RuntimeMode } from '@mlp/contracts';
 import { fetchPreflight } from '../../api/runs';
-import { pendingApprovals } from '../../features/run/run-state';
+import { completeAnswer, pendingApprovals } from '../../features/run/run-state';
 import { useLabRun } from '../../features/run/useLabRun';
 import { cn } from '../../lib/cn';
 import { useProgressActions } from '../../lib/progress-actions';
@@ -213,8 +213,20 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
               {state.tokenText}
               {state.phase === 'streaming' ? <span className="ml-0.5 animate-pulse">▍</span> : null}
             </p>
+          ) : state.phase === 'finished' && completeAnswer(state.output) ? (
+            <div className="flex flex-col gap-2" data-testid="complete-answer">
+              <p className="text-xs text-fg-muted">
+                No tokens were streamed: this lab returns the whole answer in one piece (for example with generate()), so it appears when the
+                run finishes.
+              </p>
+              <p className="whitespace-pre-wrap text-fg">{completeAnswer(state.output)}</p>
+            </div>
+          ) : state.phase === 'finished' ? (
+            <p className="text-sm text-fg-muted">This run did not stream any tokens. See the result and checks below.</p>
           ) : (
-            <p className="text-sm text-fg-muted">Streamed tokens appear here while the lab runs.</p>
+            <p className="text-sm text-fg-muted">
+              Streamed tokens appear here while the lab runs. Labs that do not stream show their complete answer here when they finish.
+            </p>
           )}
         </Card>
       </Section>

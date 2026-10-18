@@ -83,3 +83,19 @@ test('API errors surface in the Run tab (live mode refused on offline server)', 
   await page.goto('/labs/lab-00?tab=run');
   await expect(page.getByRole('radio', { name: /Live/ })).toBeDisabled();
 });
+
+test('Live output: a non-streaming lab shows its complete answer; a streaming lab shows tokens', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto('/labs/lab-06?tab=run');
+  await page.getByRole('button', { name: 'Run', exact: true }).click();
+  await expect(page.getByTestId('run-status')).toHaveText('Run succeeded — all checks passed', { timeout: 100_000 });
+  const answer = page.getByTestId('complete-answer');
+  await expect(answer).toContainText('No tokens were streamed');
+  await expect(page.getByTestId('token-output')).toHaveCount(0);
+
+  await page.goto('/labs/lab-08?tab=run');
+  await page.getByRole('button', { name: 'Run', exact: true }).click();
+  await expect(page.getByTestId('run-status')).toHaveText('Run succeeded — all checks passed', { timeout: 100_000 });
+  await expect(page.getByTestId('token-output')).not.toBeEmpty();
+  await expect(page.getByTestId('complete-answer')).toHaveCount(0);
+});
