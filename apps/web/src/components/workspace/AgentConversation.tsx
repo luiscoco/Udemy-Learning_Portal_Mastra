@@ -15,6 +15,8 @@ const KIND_TONE: Record<ConversationMessage['kind'], 'neutral' | 'accent' | 'suc
   draft: 'neutral',
   review: 'warning',
   revision: 'neutral',
+  result: 'accent',
+  refusal: 'danger',
   final: 'success',
   escalation: 'danger',
 };

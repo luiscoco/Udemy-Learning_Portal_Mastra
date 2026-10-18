@@ -12,7 +12,18 @@ export const ConversationAgentSchema = z.object({
 });
 export type ConversationAgent = z.infer<typeof ConversationAgentSchema>;
 
-export const MESSAGE_KINDS = ['task', 'handoff', 'notes', 'draft', 'review', 'revision', 'final', 'escalation'] as const;
+export const MESSAGE_KINDS = [
+  'task',
+  'handoff',
+  'notes',
+  'draft',
+  'review',
+  'revision',
+  'result',
+  'refusal',
+  'final',
+  'escalation',
+] as const;
 export const ConversationMessageSchema = z.object({
   seq: z.number().int().min(1),
   /** Agent ids, or "orchestrator" / "human". */
