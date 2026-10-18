@@ -264,3 +264,50 @@ export async function startLocalFixture(
     },
   };
 }
+
+export interface LoopbackServer {
+  url: string;
+  host: string;
+  openSockets(): number;
+  listening(): boolean;
+  close(): Promise<void>;
+}
+
+/** Serves any MCPServer on 127.0.0.1 (ephemeral port, DNS-rebinding protection) with socket tracking. */
+export async function serveOnLoopback(mcp: MCPServer, path: string = FIXTURE.path): Promise<LoopbackServer> {
+  let host = '';
+  const tracked = new TrackedHttp(
+    http.createServer((req, res) => {
+      void mcp
+        .startHTTP({
+          url: new URL(req.url ?? '/', `http://${host}`),
+          httpPath: path,
+          req,
+          res,
+          options: { enableDnsRebindingProtection: true, allowedHosts: ['127.0.0.1'] },
+        })
+        .catch(() => {
+          if (!res.headersSent) res.writeHead(500).end();
+        });
+    }),
+  );
+  host = `127.0.0.1:${await tracked.listen()}`;
+  return {
+    url: `http://${host}${path}`,
+    host,
+    openSockets: () => tracked.sockets.size,
+    listening: () => tracked.server.listening,
+    async close() {
+      await tracked.close();
+      await mcp.close().catch(() => undefined);
+    },
+  };
+}
+
+/** A loopback URL on a port that was bound and released again, so nothing listens there. */
+export async function closedLoopbackUrl(path: string = FIXTURE.path): Promise<string> {
+  const t = new TrackedHttp(http.createServer());
+  const port = await t.listen();
+  await t.close();
+  return `http://127.0.0.1:${port}${path}`;
+}
