@@ -15,6 +15,9 @@ import {
 } from '@mlp/mastra-runtime';
 import { dataDir } from './paths.js';
 
+/** Provider name of the offline mock models (the scripted models labs use in offline mode). */
+export const OFFLINE_PROVIDER = 'offline-sim';
+
 export interface ResolvedModel {
   /** Value to pass as `Agent.model`: a scripted LanguageModelV2 offline, a "provider/model" router id live. */
   model: ScriptedLanguageModel | string;
@@ -86,7 +89,7 @@ export function createModelService(env: Record<string, string | undefined>): Mod
       if (!check.ok)
         throw new LabError('VALIDATION_FAILED', check.reason, { details: [{ path: 'input.modelId', message: check.reason }] });
       if (mode === 'offline') {
-        const scripted = new ScriptedLanguageModel({ provider: 'offline-sim', modelId, script: offline, tokenDelayMs });
+        const scripted = new ScriptedLanguageModel({ provider: OFFLINE_PROVIDER, modelId, script: offline, tokenDelayMs });
         return { model: scripted, modelId, simulated: true, scripted };
       }
       const info = liveModels.find((m) => m.id === modelId);

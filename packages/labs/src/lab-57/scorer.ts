@@ -29,7 +29,7 @@ export interface Breakdown {
   score: number;
 }
 
-type Run = { run: { output: { answer: string }; groundTruth?: Rubric } };
+type Run = { run: { output: unknown; groundTruth?: unknown } };
 type WithPre = { results: { preprocessStepResult: Prepared } } & Run;
 type WithAnalysis = { results: { preprocessStepResult: Prepared; analyzeStepResult: Analysis } } & Run;
 
@@ -52,22 +52,36 @@ export const formulaOf = (rubric: Rubric, b: Breakdown) =>
 /**
  * A deterministic rubric scorer built with Mastra's createScorer. The rubric (expected output) travels as
  * groundTruth, so one scorer instance serves every rubric.
+ *
+ * Options (L58): `answerOf` extracts the answer text from the run output (agent targets in Mastra
+ * experiments hand scorers a list of messages) and `rubricOf` maps the ground truth to a rubric. The
+ * defaults keep L57's shape: output `{ answer }` and the rubric itself as ground truth.
  */
-export function createRubricScorer() {
+export interface RubricScorerOptions {
+  id?: string;
+  answerOf?: (output: unknown) => string;
+  rubricOf?: (groundTruth: unknown) => Rubric | undefined;
+}
+const defaultAnswerOf = (o: unknown) => String((o as { answer?: unknown } | undefined)?.answer ?? '');
+const defaultRubricOf = (g: unknown) => g as Rubric | undefined;
+
+export function createRubricScorer(options: RubricScorerOptions = {}) {
+  const answerOf = options.answerOf ?? defaultAnswerOf;
+  const rubricOf = options.rubricOf ?? defaultRubricOf;
   return createScorer({
-    id: SCORER_ID,
+    id: options.id ?? SCORER_ID,
     description:
       'Scores an answer for completeness (expected key points) and relevance (on-topic sentences), with penalties for known-wrong claims and length.',
   })
     .preprocess(({ run }: Run) => {
-      const answer = run.output.answer ?? '';
+      const answer = answerOf(run.output);
       const words = wordCount(answer);
-      if (!run.groundTruth) return notScorable('no rubric was given');
+      if (!rubricOf(run.groundTruth)) return notScorable('no rubric was given');
       if (words < 3) return notScorable('the answer has fewer than 3 words');
       return { sentences: sentences(answer).map((text) => ({ text, tokens: tokens(text) })), words } satisfies Prepared;
     })
     .analyze(({ run, results }: WithPre): Analysis => {
-      const rubric = run.groundTruth!;
+      const rubric = rubricOf(run.groundTruth)!;
       const ss = results.preprocessStepResult.sentences;
       const topic = new Set(rubric.topicTerms.flatMap((t) => tokens(t)));
       const covered = rubric.keyPoints.map((k) => ({
@@ -89,9 +103,9 @@ export function createRubricScorer() {
         words: results.preprocessStepResult.words,
       };
     })
-    .generateScore(({ run, results }: WithAnalysis) => breakdownOf(run.groundTruth!, results.analyzeStepResult).score)
+    .generateScore(({ run, results }: WithAnalysis) => breakdownOf(rubricOf(run.groundTruth)!, results.analyzeStepResult).score)
     .generateReason(({ run, results }: WithAnalysis) => {
-      const rubric = run.groundTruth!;
+      const rubric = rubricOf(run.groundTruth)!;
       const a = results.analyzeStepResult;
       const b = breakdownOf(rubric, a);
       const missing = a.covered.filter((c) => !c.evidence).map((c) => c.label);

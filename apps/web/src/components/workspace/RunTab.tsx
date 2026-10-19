@@ -12,6 +12,7 @@ import { AgentConversation, agentConversationOf } from './AgentConversation';
 import { CitedAnswer, citedAnswerOf } from './CitedAnswer';
 import { McpCapabilityMatrix, mcpCapabilitiesOf } from './McpCapabilityMatrix';
 import { McpToolCatalog, mcpCatalogOf } from './McpToolCatalog';
+import { EvalReport, evalReportOf } from './EvalReport';
 import { ScoreCard, scoreCardOf } from './ScoreCard';
 import { SpanTree, traceTreeOf } from './SpanTree';
 import { DynamicForm } from './DynamicForm';
@@ -72,6 +73,7 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
   const conversation = state.phase === 'finished' ? agentConversationOf(state.output) : null;
   const traceTree = state.phase === 'finished' ? traceTreeOf(state.output) : null;
   const scoreCard = state.phase === 'finished' ? scoreCardOf(state.output) : null;
+  const evalReport = state.phase === 'finished' ? evalReportOf(state.output) : null;
   const { update } = useProgressActions(definition.id);
   const example = definition.exampleInput;
   const [raw, setRaw] = useState<RawValues>(() => reconcile(definition.inputs, initialRawValues(definition.inputs, example)));
@@ -261,6 +263,12 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
       {mcpCatalog ? (
         <Section title="MCP tools" id={`${id}-mcp`}>
           <McpToolCatalog data={mcpCatalog} />
+        </Section>
+      ) : null}
+
+      {evalReport ? (
+        <Section title="Evaluation report" id={`${id}-eval-report`}>
+          <EvalReport data={evalReport} />
         </Section>
       ) : null}
 
