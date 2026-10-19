@@ -68,7 +68,10 @@ export const lab57: LabImplementation<Lab57Input, Lab57Output, LabServices> = {
       ctx.setResultExtras({
         effective: { mode: ctx.mode, modelId: input.modelId, simulated: m.simulated, answerSource: 'agent' },
       });
-    } else ctx.setResultExtras({ effective: { mode: ctx.mode, answerSource: 'text', scorer: 'deterministic (no model call)' } });
+    } else
+      ctx.setResultExtras({
+        effective: { mode: ctx.mode, answerSource: 'text', simulated: false, scorer: 'deterministic (no model call)' },
+      });
 
     const scorer = createRubricScorer();
     ctx.emit({ type: 'workflow-step', stepId: 'score', status: 'running' });

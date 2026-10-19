@@ -44,6 +44,9 @@ function liveInput(labId: string, example: Record<string, unknown>): Record<stri
     case 'lab-10':
       // Real providers need realistic per-attempt timeouts (reasoning models can take several seconds).
       return { ...example, scenario: 'none', perAttemptTimeoutMs: 10000, totalBudgetMs: 30000 };
+    case 'lab-57':
+      // The scorer never calls a model; exercise the live path through the agent-written answer.
+      return { ...example, answerSource: 'agent' };
     default:
       return { ...example };
   }
