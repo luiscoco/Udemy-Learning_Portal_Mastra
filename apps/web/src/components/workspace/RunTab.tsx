@@ -14,6 +14,7 @@ import { McpCapabilityMatrix, mcpCapabilitiesOf } from './McpCapabilityMatrix';
 import { McpToolCatalog, mcpCatalogOf } from './McpToolCatalog';
 import { EvalReport, evalReportOf } from './EvalReport';
 import { ExperimentComparison, comparisonOf } from './ExperimentComparison';
+import { QualityDashboard, dashboardOf } from './QualityDashboard';
 import { ScoreCard, scoreCardOf } from './ScoreCard';
 import { SpanTree, traceTreeOf } from './SpanTree';
 import { DynamicForm } from './DynamicForm';
@@ -76,6 +77,7 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
   const scoreCard = state.phase === 'finished' ? scoreCardOf(state.output) : null;
   const evalReport = state.phase === 'finished' ? evalReportOf(state.output) : null;
   const comparison = state.phase === 'finished' ? comparisonOf(state.output) : null;
+  const dashboard = state.phase === 'finished' ? dashboardOf(state.output) : null;
   const { update } = useProgressActions(definition.id);
   const example = definition.exampleInput;
   const [raw, setRaw] = useState<RawValues>(() => reconcile(definition.inputs, initialRawValues(definition.inputs, example)));
@@ -265,6 +267,12 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
       {mcpCatalog ? (
         <Section title="MCP tools" id={`${id}-mcp`}>
           <McpToolCatalog data={mcpCatalog} />
+        </Section>
+      ) : null}
+
+      {dashboard ? (
+        <Section title="Quality dashboard" id={`${id}-dashboard`}>
+          <QualityDashboard data={dashboard} />
         </Section>
       ) : null}
 
