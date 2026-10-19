@@ -12,6 +12,7 @@ import { AgentConversation, agentConversationOf } from './AgentConversation';
 import { CitedAnswer, citedAnswerOf } from './CitedAnswer';
 import { McpCapabilityMatrix, mcpCapabilitiesOf } from './McpCapabilityMatrix';
 import { McpToolCatalog, mcpCatalogOf } from './McpToolCatalog';
+import { SpanTree, traceTreeOf } from './SpanTree';
 import { DynamicForm } from './DynamicForm';
 import {
   buildInput,
@@ -68,6 +69,7 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
   const mcpCatalog = state.phase === 'finished' ? mcpCatalogOf(state.output) : null;
   const mcpCapabilities = state.phase === 'finished' ? mcpCapabilitiesOf(state.output) : null;
   const conversation = state.phase === 'finished' ? agentConversationOf(state.output) : null;
+  const traceTree = state.phase === 'finished' ? traceTreeOf(state.output) : null;
   const { update } = useProgressActions(definition.id);
   const example = definition.exampleInput;
   const [raw, setRaw] = useState<RawValues>(() => reconcile(definition.inputs, initialRawValues(definition.inputs, example)));
@@ -257,6 +259,12 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
       {mcpCatalog ? (
         <Section title="MCP tools" id={`${id}-mcp`}>
           <McpToolCatalog data={mcpCatalog} />
+        </Section>
+      ) : null}
+
+      {traceTree ? (
+        <Section title="Trace spans" id={`${id}-trace-spans`}>
+          <SpanTree data={traceTree} />
         </Section>
       ) : null}
 
