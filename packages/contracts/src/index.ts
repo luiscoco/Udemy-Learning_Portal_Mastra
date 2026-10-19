@@ -12,3 +12,4 @@ export * from './agent-conversation.js';
 export * from './trace-tree.js';
 export * from './score-card.js';
 export * from './eval-report.js';
+export * from './experiment-comparison.js';
