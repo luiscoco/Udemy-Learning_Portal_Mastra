@@ -48,6 +48,7 @@ What is still required:
   - malware scanning of accepted files;
   - a separate worker process or sandbox for PDF parsing, so a pathological file cannot stall the API;
   - ☑ per-learner document libraries (L62): each learner's library lives in their own partition.
+- ☑ **Prompt injection and side effects (L63).** Write-capable tools must check every call against what the user asked for and who they are, inside `execute()`, and ask a human when untrusted text was read. Detection alone is not a control. Apply the L63 gateway pattern to every new write tool.
 - ☐ **Sandbox for learner code.** Learner-submitted code never runs in the API process (master rule). Any future remote execution needs an isolated sandbox with no network and with CPU, memory and time limits.
 
 ## 5. Dependencies
