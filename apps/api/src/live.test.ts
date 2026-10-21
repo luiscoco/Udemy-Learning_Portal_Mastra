@@ -9,6 +9,7 @@ import { ExecutionEventSchema, PreflightResultSchema, StartRunResponseSchema, ty
 import { createApp, type ApiApp } from './app.js';
 import { parseConfig, secretValues } from './config.js';
 import { createLogger } from './logger.js';
+import { signIn } from './test-auth.js';
 
 const LIVE = process.env.RUN_LIVE_TESTS === '1';
 const envFile = resolve(import.meta.dirname, '../../../.env');
@@ -18,9 +19,12 @@ let api: ApiApp;
 let server: Server;
 let base = '';
 let secrets: string[] = [];
+let cookie: string;
+const authenticatedFetch: typeof fetch = (url, init) =>
+  fetch(url, { ...init, headers: { ...Object.fromEntries(new Headers(init?.headers)), cookie } });
 
 async function readSse(url: string): Promise<ExecutionEvent[]> {
-  const res = await fetch(url, { headers: { accept: 'text/event-stream' } });
+  const res = await authenticatedFetch(url, { headers: { accept: 'text/event-stream' } });
   const text = await res.text(); // the server closes the stream after `complete`
   return text
     .split('\n')
@@ -36,6 +40,7 @@ describe.skipIf(!LIVE)('live runs through the API', () => {
     server = api.app.listen(0, '127.0.0.1');
     await new Promise<void>((r) => server.once('listening', () => r()));
     base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+    cookie = await signIn(base, config.AUTH_DEV_USERS.split(',')[0]!.trim(), config.AUTH_DEV_PASSWORD);
   });
   afterAll(async () => {
     await api?.runner.dispose();
@@ -44,7 +49,7 @@ describe.skipIf(!LIVE)('live runs through the API', () => {
   });
 
   it('preflight reports live mode ready without exposing keys', async () => {
-    const res = await fetch(`${base}/api/labs/lab-03/preflight`);
+    const res = await authenticatedFetch(`${base}/api/labs/lab-03/preflight`);
     const text = await res.text();
     const body = PreflightResultSchema.parse(JSON.parse(text));
     expect(body.checks.find((c) => c.id === 'live-ready')?.passed).toBe(true);
@@ -58,8 +63,10 @@ describe.skipIf(!LIVE)('live runs through the API', () => {
     'lab-03 runs live on %s and streams a real answer',
     async (modelId, keyVar) => {
       if (!process.env[keyVar]) return;
-      const def = (await (await fetch(`${base}/api/labs/lab-03`)).json()) as { exampleInput: Record<string, unknown> };
-      const start = await fetch(`${base}/api/labs/lab-03/runs`, {
+      const def = (await (await authenticatedFetch(`${base}/api/labs/lab-03`)).json()) as {
+        exampleInput: Record<string, unknown>;
+      };
+      const start = await authenticatedFetch(`${base}/api/labs/lab-03/runs`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ input: { ...def.exampleInput, modelId }, mode: 'live' }),

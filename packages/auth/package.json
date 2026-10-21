@@ -1,0 +1,13 @@
+{
+  "name": "@mlp/auth",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Server-only authentication boundary: identity providers, signed server-side sessions, cookies, origin checks. Never import from the web app.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

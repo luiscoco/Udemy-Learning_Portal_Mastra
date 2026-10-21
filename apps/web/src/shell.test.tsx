@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { emptyProgress } from '@mlp/contracts';
 import { catalog } from '@mlp/lab-catalog';
 import { searchLabs } from './components/layout/SearchBox';
-import { jsonResponse, renderApp } from './test-utils';
+import { jsonResponse, renderApp, signedInSession } from './test-utils';
 
 const AVAILABLE = catalog.labs.filter((l) => l.status === 'available').length;
 const summary = (done: number) => `${done} of ${AVAILABLE} available ${AVAILABLE === 1 ? 'lab' : 'labs'} completed`;
@@ -32,6 +32,7 @@ beforeEach(async () => {
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string) => {
+      if (url === '/api/auth/session') return jsonResponse(signedInSession);
       if (url === '/api/health') return jsonResponse(HEALTH);
       if (url === '/api/labs/lab-00') return jsonResponse(labDefinition);
       return jsonResponse({ error: { code: 'NOT_FOUND', message: 'nope' } }, 404);

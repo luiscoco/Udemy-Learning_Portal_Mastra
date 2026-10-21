@@ -31,7 +31,7 @@ Copy-Item .env.example .env
 npm run dev
 ```
 
-Open http://127.0.0.1:5173. The **Platform status** card shows `ok` when the API is reachable. Check the API directly:
+Open http://127.0.0.1:5173 and choose **Sign in**, using `learner` (no passcode by default). The **Platform status** card shows `ok` when the API is reachable. See [authentication setup](docs/AUTH.md). Check the API directly:
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8787/api/health
@@ -80,6 +80,8 @@ All bodies are JSON validated with the Zod schemas in `packages/contracts`. Erro
 | Method & path | Purpose |
 | --- | --- |
 | `GET /api/health` | Liveness, mode, installed Mastra version |
+| `GET /api/auth/session` | Current session view (never the cookie value) |
+| `POST /api/auth/login` · `POST /api/auth/logout` | Local development sign-in · server-side revocation |
 | `GET /api/catalog` | Modules and lab index |
 | `GET /api/labs` · `GET /api/labs/:labId` | Lab summaries · full `LabDefinition` |
 | `GET /api/labs/:labId/source` | Readonly reference source + pinned versions |
@@ -93,10 +95,15 @@ All bodies are JSON validated with the Zod schemas in `packages/contracts`. Erro
 Try it from PowerShell:
 
 ```powershell
+$null = Invoke-RestMethod -Method Post -ContentType 'application/json' `
+  -Uri http://127.0.0.1:8787/api/auth/login -SessionVariable learnerSession `
+  -Body '{"username":"learner"}'
 $run = Invoke-RestMethod -Method Post -ContentType 'application/json' `
   -Uri http://127.0.0.1:8787/api/labs/lab-00/runs `
+  -WebSession $learnerSession `
   -Body '{"input":{"message":"Hello Mastra","delayMs":100}}'
-curl.exe -N "http://127.0.0.1:8787/api/runs/$($run.runId)/events"
+(Invoke-WebRequest -WebSession $learnerSession `
+  -Uri "http://127.0.0.1:8787/api/runs/$($run.runId)/events").Content
 ```
 
 Limits (env): `MAX_CONCURRENT_RUNS` (4), `RUN_MAX_TIMEOUT_MS` (120000), `SSE_DISCONNECT_GRACE_MS` (5000) — a run whose last viewer disconnects is cancelled after the grace period; `APPROVAL_TIMEOUT_MS` (300000) — a run waiting for a human approval auto-declines after this (the run deadline is paused while waiting); `MAX_PENDING_APPROVALS` (20) — runs waiting for a human do not use a `MAX_CONCURRENT_RUNS` slot, but at most this many may wait at once (further approval requests are auto-declined).
@@ -105,7 +112,7 @@ Durable memory (from L21): conversation history is stored with `@mastra/libsql` 
 
 File uploads (from L36): labs can declare `file` input fields. The browser reads the files and sends them with the run request. The server measures size, sniffs the content and rejects files with a specific code, and raw bytes never appear in events. Only labs with file fields accept bodies above 64 KB, up to the limit computed from their declared fields.
 
-Run token: `POST /api/labs/:labId/runs` returns a secret `runToken`. Cancelling a run or deciding its approvals requires it in the `X-Run-Token` header, so only the client that started a run can change it. Reading a run (snapshot, events) needs only the run id. The platform has no user accounts; the token protects each run, not each person.
+Authentication: starting a run requires a valid session. Snapshots, event streams, cancellation and approvals require the authenticated owner; mutations also need the secret `runToken` returned at start in `X-Run-Token`. Anonymous requests return 401; another learner's run returns 404. The local development provider refuses production and public-interface startup. See [docs/AUTH.md](docs/AUTH.md) for the HTTP migration and remaining production requirements.
 
 ## Learner experience
 

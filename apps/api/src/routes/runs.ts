@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { ApprovalDecisionRequestSchema, type ApprovalDecisionResponse, type ExecutionEvent } from '@mlp/contracts';
 import { LabError, type LabRunner } from '@mlp/lab-engine';
 import type { LabServices } from '@mlp/labs';
+import { requireAuth } from '../auth.js';
 
 function parseAfter(raw: unknown): number {
   const n = typeof raw === 'string' ? Number.parseInt(raw, 10) : NaN;
@@ -11,6 +12,18 @@ function parseAfter(raw: unknown): number {
 export function runsRouter(deps: { runner: LabRunner<LabServices>; heartbeatMs: number }): Router {
   const { runner, heartbeatMs } = deps;
   const router = Router();
+  // Every run route needs the owning learner. Someone else's run is reported as unknown (404), so run
+  // ids cannot be probed; mutations additionally need the run token.
+  router.use(requireAuth);
+  router.use((_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.vary('Cookie');
+    next();
+  });
+  router.param('runId', (req, _res, next, runId: string) => {
+    if (runner.ownerOf(runId) !== req.principal!.sub) throw new LabError('NOT_FOUND', `Unknown run "${runId}"`);
+    next();
+  });
 
   router.get('/:runId', (req, res) => {
     const snap = runner.get(req.params.runId);
@@ -18,7 +31,7 @@ export function runsRouter(deps: { runner: LabRunner<LabServices>; heartbeatMs: 
     res.json(snap);
   });
 
-  // Mutations require the run token returned at start (X-Run-Token); reads are keyed by run id only.
+  // Mutations also require the run token returned at start (X-Run-Token).
   router.post('/:runId/cancel', (req, res) => {
     runner.authorize(req.params.runId, req.header('x-run-token'));
     res.json(runner.cancel(req.params.runId));
@@ -42,7 +55,7 @@ export function runsRouter(deps: { runner: LabRunner<LabServices>; heartbeatMs: 
 
     res.status(200);
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Cache-Control', 'no-store, no-transform');
     // No manual `Connection` header: Node manages it. Forcing keep-alive on a response that may
     // end in the same tick (finished runs replay instantly) made proxies hang the stream.
     res.setHeader('X-Accel-Buffering', 'no');

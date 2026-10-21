@@ -28,6 +28,16 @@ function collect(runner: LabRunner, runId: string): ExecutionEvent[] {
 const last = <T>(a: readonly T[]) => a[a.length - 1];
 
 describe('LabRunner.start validation', () => {
+  it('keeps owner metadata server-side while allowing existing direct runner callers', async () => {
+    const r = setup();
+    const owned = r.start('lab-99', { input: { text: 'hello' } }, { ownerId: 'dev:alice' });
+    await r.waitFor(owned.runId);
+    expect(r.ownerOf(owned.runId)).toBe('dev:alice');
+    expect(JSON.stringify({ snapshot: r.get(owned.runId), events: r.events(owned.runId) })).not.toContain('dev:alice');
+    const legacy = r.start('lab-99', { input: { text: 'hello' } });
+    expect(r.ownerOf(legacy.runId)).toBeNull();
+    expect(r.ownerOf('missing')).toBeUndefined();
+  });
   it('rejects unknown labs with NOT_FOUND', () => {
     const r = setup();
     expect(() => r.start('lab-42', { input: {} })).toThrowError(expect.objectContaining({ code: 'NOT_FOUND' }));

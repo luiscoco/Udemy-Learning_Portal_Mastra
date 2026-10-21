@@ -13,11 +13,15 @@ import {
 import { createApp, type ApiApp } from './app.js';
 import { parseConfig } from './config.js';
 import { createLogger } from './logger.js';
+import { signIn } from './test-auth.js';
 
 const SECRET = 'sk-test-NEVER-SHOWN-0123456789';
 let api: ApiApp;
 let server: Server;
 let base: string;
+let cookie: string;
+const authenticatedFetch: typeof fetch = (url, init) =>
+  fetch(url, { ...init, headers: { ...Object.fromEntries(new Headers(init?.headers)), cookie } });
 
 beforeAll(async () => {
   api = createApp({
@@ -27,6 +31,7 @@ beforeAll(async () => {
   server = api.app.listen(0, '127.0.0.1');
   await new Promise<void>((r) => server.once('listening', () => r()));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  cookie = await signIn(base);
 });
 
 afterAll(async () => {
@@ -36,7 +41,7 @@ afterAll(async () => {
 });
 
 async function startRun(labId: string, body: unknown, headers: Record<string, string> = {}) {
-  return fetch(`${base}/api/labs/${labId}/runs`, {
+  return authenticatedFetch(`${base}/api/labs/${labId}/runs`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', ...headers },
     body: JSON.stringify(body),
@@ -46,7 +51,7 @@ async function startRun(labId: string, body: unknown, headers: Record<string, st
 /** Reads an SSE stream until it closes (or `stopAfter` events), parsing `data:` payloads. */
 async function readSse(url: string, opts: { stopAfter?: number; headers?: Record<string, string> } = {}) {
   const ctrl = new AbortController();
-  const res = await fetch(url, { headers: { accept: 'text/event-stream', ...opts.headers }, signal: ctrl.signal });
+  const res = await authenticatedFetch(url, { headers: { accept: 'text/event-stream', ...opts.headers }, signal: ctrl.signal });
   const events: ExecutionEvent[] = [];
   const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader();
   let buffer = '';
@@ -79,27 +84,27 @@ async function readSse(url: string, opts: { stopAfter?: number; headers?: Record
 
 describe('lab discovery', () => {
   it('lists labs and returns a schema-valid definition', async () => {
-    const list = (await (await fetch(`${base}/api/labs`)).json()) as { id: string }[];
+    const list = (await (await authenticatedFetch(`${base}/api/labs`)).json()) as { id: string }[];
     expect(list.map((l) => l.id)).toContain('lab-00');
-    const def = await (await fetch(`${base}/api/labs/lab-00`)).json();
+    const def = await (await authenticatedFetch(`${base}/api/labs/lab-00`)).json();
     expect(LabDefinitionSchema.parse(def).title).toBe('Dummy Lab 00');
   });
 
   it('returns 404 for unknown labs', async () => {
-    const res = await fetch(`${base}/api/labs/lab-98`);
+    const res = await authenticatedFetch(`${base}/api/labs/lab-98`);
     expect(res.status).toBe(404);
     expect(ApiErrorSchema.parse(await res.json()).error.code).toBe('NOT_FOUND');
   });
 
   it('serves readonly source with pinned versions', async () => {
-    const body = LabSourceResponseSchema.parse(await (await fetch(`${base}/api/labs/lab-00/source`)).json());
+    const body = LabSourceResponseSchema.parse(await (await authenticatedFetch(`${base}/api/labs/lab-00/source`)).json());
     expect(body.files.map((f) => f.path)).toEqual(['run.ts', 'definition.ts', 'solution.md']);
     expect(body.files[0]?.code).toContain('export const lab00');
     expect(body.pinned['@mastra/core']).toMatch(/^\d+\.\d+\.\d+/);
   });
 
   it('reports preflight checks', async () => {
-    const body = PreflightResultSchema.parse(await (await fetch(`${base}/api/labs/lab-00/preflight`)).json());
+    const body = PreflightResultSchema.parse(await (await authenticatedFetch(`${base}/api/labs/lab-00/preflight`)).json());
     expect(body.ready).toBe(true);
     expect(body.checks.map((c) => c.id)).toContain('mastra-installed');
   });
@@ -126,7 +131,7 @@ describe('run lifecycle over HTTP + SSE', () => {
     expect(events.at(-1)).toMatchObject({ type: 'complete', status: 'succeeded' });
     expect(events.every((e) => e.correlationId === 'course-demo-1')).toBe(true);
 
-    const snap = (await (await fetch(`${base}/api/runs/${start.runId}`)).json()) as { status: string };
+    const snap = (await (await authenticatedFetch(`${base}/api/runs/${start.runId}`)).json()) as { status: string };
     expect(snap.status).toBe('succeeded');
   });
 
@@ -159,7 +164,7 @@ describe('run lifecycle over HTTP + SSE', () => {
     );
     const streaming = readSse(`${base}/api/runs/${start.runId}/events`);
     await new Promise((r) => setTimeout(r, 100));
-    const cancel = await fetch(`${base}/api/runs/${start.runId}/cancel`, {
+    const cancel = await authenticatedFetch(`${base}/api/runs/${start.runId}/cancel`, {
       method: 'POST',
       headers: { 'x-run-token': start.runToken },
     });
@@ -199,13 +204,13 @@ describe('run lifecycle over HTTP + SSE', () => {
     expect(res.status).toBe(429);
     expect(ApiErrorSchema.parse(await res.json()).error).toMatchObject({ code: 'TOO_MANY_REQUESTS', retryable: true });
     for (const r of runs)
-      await fetch(`${base}/api/runs/${r.runId}/cancel`, { method: 'POST', headers: { 'x-run-token': r.runToken } });
+      await authenticatedFetch(`${base}/api/runs/${r.runId}/cancel`, { method: 'POST', headers: { 'x-run-token': r.runToken } });
     await Promise.all(runs.map((r) => api.runner.waitFor(r.runId)));
   });
 
   it('returns 404 for unknown runs', async () => {
-    expect((await fetch(`${base}/api/runs/nope/events`)).status).toBe(404);
-    expect((await fetch(`${base}/api/runs/nope/cancel`, { method: 'POST' })).status).toBe(404);
+    expect((await authenticatedFetch(`${base}/api/runs/nope/events`)).status).toBe(404);
+    expect((await authenticatedFetch(`${base}/api/runs/nope/cancel`, { method: 'POST' })).status).toBe(404);
   });
 });
 
@@ -223,7 +228,7 @@ describe('secret isolation', () => {
         '/api/labs/lab-00',
         '/api/labs/lab-00/source',
         '/api/labs/lab-00/preflight',
-      ].map(async (p) => (await fetch(base + p)).text()),
+      ].map(async (p) => (await authenticatedFetch(base + p)).text()),
     );
     for (const text of [...bodies, JSON.stringify(events)]) expect(text).not.toContain(SECRET);
   });
@@ -231,7 +236,7 @@ describe('secret isolation', () => {
 
 describe('approvals API', () => {
   const decide = (runId: string, approvalId: string, body: unknown, token = '') =>
-    fetch(`${base}/api/runs/${runId}/approvals/${approvalId}`, {
+    authenticatedFetch(`${base}/api/runs/${runId}/approvals/${approvalId}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', ...(token ? { 'x-run-token': token } : {}) },
       body: JSON.stringify(body),
@@ -277,7 +282,7 @@ describe('approvals API', () => {
     const { events } = await streaming;
     // The token never leaks into reads.
     expect(JSON.stringify(events)).not.toContain(start.runToken);
-    const snapshot = await (await fetch(`${base}/api/runs/${start.runId}`)).json();
+    const snapshot = await (await authenticatedFetch(`${base}/api/runs/${start.runId}`)).json();
     expect(JSON.stringify(snapshot)).not.toContain(start.runToken);
     expect(events.find((e) => e.type === 'approval-resolved')).toMatchObject({ decision: 'approve', by: 'user' });
     expect(events.at(-1)).toMatchObject({ type: 'complete', status: 'succeeded' });
@@ -286,10 +291,10 @@ describe('approvals API', () => {
 
   it('cancel requires the run token', async () => {
     const start = StartRunResponseSchema.parse(await (await startRun('lab-15', { input: askInput })).json());
-    const forbidden = await fetch(`${base}/api/runs/${start.runId}/cancel`, { method: 'POST' });
+    const forbidden = await authenticatedFetch(`${base}/api/runs/${start.runId}/cancel`, { method: 'POST' });
     expect(forbidden.status).toBe(403);
     expect(api.runner.get(start.runId)?.status).toBe('running');
-    const ok = await fetch(`${base}/api/runs/${start.runId}/cancel`, {
+    const ok = await authenticatedFetch(`${base}/api/runs/${start.runId}/cancel`, {
       method: 'POST',
       headers: { 'x-run-token': start.runToken },
     });

@@ -18,6 +18,7 @@
     "tsx": "4.23.15"
   },
   "dependencies": {
+    "@mlp/auth": "0.1.0",
     "@mlp/contracts": "0.1.0",
     "@mlp/lab-catalog": "0.1.0",
     "@mlp/lab-engine": "0.1.0",

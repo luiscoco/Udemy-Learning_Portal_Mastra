@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ExecutionEventPayload } from '@mlp/contracts';
 import { lab00Definition } from '../../../packages/labs/src/lab-00/definition';
-import { jsonResponse, renderApp } from './test-utils';
+import { jsonResponse, renderApp, signedInSession } from './test-utils';
 
 const DEF = lab00Definition;
 
@@ -52,6 +52,7 @@ beforeEach(() => {
     'fetch',
     vi.fn(async (url: string, init?: RequestInit) => {
       calls.push({ url, init });
+      if (url === '/api/auth/session') return jsonResponse(signedInSession);
       if (url === '/api/labs/lab-00') return jsonResponse(DEF);
       if (url === '/api/health') return jsonResponse({ status: 'ok' });
       if (url === '/api/labs/lab-00/preflight')

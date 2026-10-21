@@ -5,6 +5,7 @@ import { LogoMark, MenuIcon, MoonIcon, SunIcon } from '../ui/icons';
 import { MobileDrawer } from './MobileDrawer';
 import { SearchBox } from './SearchBox';
 import { Sidebar } from './Sidebar';
+import { SessionStatus } from './SessionStatus';
 
 function ThemeToggle() {
   const [theme, toggle] = useTheme();
@@ -73,6 +74,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
             <SearchBox />
           </div>
           <ThemeToggle />
+          <SessionStatus />
         </div>
       </header>
 

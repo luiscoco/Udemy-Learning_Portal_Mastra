@@ -11,11 +11,12 @@ What exists today:
 - `POST /api/labs/:labId/runs` returns a secret `runToken`.
 - Cancel and approval decisions require it (`X-Run-Token`, constant-time check, 403 otherwise).
 - Waiting runs are capped (`MAX_PENDING_APPROVALS`).
+- ☑ **Development identity and run ownership (L61).** Local allowlisted sign-in issues a signed HttpOnly session cookie. Every HTTP run is bound to its authenticated learner; reads and mutations enforce that owner. Development login refuses production and non-loopback startup. See [AUTH.md](AUTH.md).
+- ☑ **Protected run reads (L61).** Snapshot and SSE requests require the owning learner; anonymous requests return 401, another learner's run returns 404.
 
 What is still required:
 
-- ☐ **Real learner identity.** Add sign-in, a session cookie or OIDC, and bind every run to the learner who started it. Today the token protects each run, not each person.
-- ☐ **Protected reads.** Require the token, or the owning session, for `GET /api/runs/:runId` and `GET /api/runs/:runId/events`. Events contain tool arguments and model output.
+- ☐ **Production learner identity and sessions.** Implement a real identity provider (OIDC/SSO) and shared durable sessions. L61's development identity adapter and in-memory store are not public-host authentication. Sessions end on process restart.
 - ☐ **Token survives a reload.** Keep the run token in the learner's session server-side, or in `sessionStorage` per tab after a threat review. Today a reload loses it.
 - ☐ **Rate limits.** Add per-learner and per-IP limits on run starts and decisions, in addition to the global `MAX_CONCURRENT_RUNS`.
 - ☐ **Live-mode cost caps.** Set per-learner budgets for live provider calls, and decide whether learners bring their own keys or share the server's.
@@ -35,6 +36,7 @@ What is still required:
 ## 3. Hosting hardening
 
 - ☐ **HTTPS only.** Add security headers (CSP, HSTS, `X-Content-Type-Options`) and restrict CORS to the web origin.
+- ☐ **Reverse proxy and the origin check.** The CSRF origin check compares `Origin` with `req.protocol` and `Host`. Behind a TLS-terminating proxy, set Express `trust proxy` to the proxy's address, or same-origin HTTPS requests are refused as cross-origin.
 - ☐ **Secrets.** Keep provider keys in the host's secret store, not a `.env` file. Rotate any key that was ever committed. The 2026-10-17 incident was caught before it was pushed, but rotate anyway.
 - ☐ **Monitoring.** Add structured logs shipped off-host, with alerting on 5xx rates and provider errors.
 

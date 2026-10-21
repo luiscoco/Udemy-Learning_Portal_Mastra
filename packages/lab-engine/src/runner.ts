@@ -47,6 +47,8 @@ export interface RunnerOptions<S> {
 export interface StartMeta {
   requestId?: string;
   correlationId?: string;
+  /** The authenticated learner who started the run (the API binds every run to its owner). */
+  ownerId?: string;
 }
 
 type Listener = (event: ExecutionEvent) => void;
@@ -55,6 +57,8 @@ interface RunRecord {
   id: string;
   /** Secret returned only to the starter; never in snapshots, events or logs. */
   token: string;
+  /** Owner (authenticated principal) of the run; never in snapshots or events. */
+  ownerId: string | null;
   labId: string;
   correlationId: string;
   requestId: string;
@@ -188,6 +192,7 @@ export class LabRunner<S = unknown> {
     const record: RunRecord = {
       id: randomUUID(),
       token: randomBytes(32).toString('base64url'),
+      ownerId: meta.ownerId ?? null,
       labId: def.id,
       correlationId: meta.correlationId ?? requestId,
       requestId,
@@ -478,6 +483,11 @@ export class LabRunner<S = unknown> {
     if (!record) throw new LabError('NOT_FOUND', `Unknown run "${runId}"`);
     if (record.status === 'running') record.controller.abort(new RunAbortedError('cancelled'));
     return this.snapshot(record);
+  }
+
+  /** The owner a run was started for, null when it was started without one, undefined for an unknown run. */
+  ownerOf(runId: string): string | null | undefined {
+    return this.runs.get(runId)?.ownerId;
   }
 
   get(runId: string): RunSnapshot | undefined {

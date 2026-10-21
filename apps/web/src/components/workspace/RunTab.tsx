@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link, useLocation } from 'react-router';
 import type { LabDefinition, RuntimeMode } from '@mlp/contracts';
 import { fetchPreflight } from '../../api/runs';
 import { completeAnswer, pendingApprovals } from '../../features/run/run-state';
@@ -6,6 +7,7 @@ import { useLabRun } from '../../features/run/useLabRun';
 import { cn } from '../../lib/cn';
 import { useProgressActions } from '../../lib/progress-actions';
 import { useAsync } from '../../lib/use-async';
+import { useSession } from '../../lib/auth-context';
 import { Badge, Button, Card } from '../ui/primitives';
 import { ApprovalPanel } from './ApprovalPanel';
 import { AgentConversation, agentConversationOf } from './AgentConversation';
@@ -67,6 +69,8 @@ const STATUS_TEXT = {
 } as const;
 
 export function RunTab({ definition }: { definition: LabDefinition }) {
+  const auth = useSession();
+  const location = useLocation();
   const { state, run, cancel, decide, reset } = useLabRun(definition.id);
   const waiting = pendingApprovals(state);
   const cited = state.phase === 'finished' ? citedAnswerOf(state.output) : null;
@@ -97,6 +101,7 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
     setClientErrors(errors);
     if (Object.keys(errors).length > 0) return;
     const final = await run({ input: values, mode });
+    if (final?.error?.code === 'UNAUTHORIZED') auth.invalidate();
     if (final?.terminal === 'succeeded') {
       const passed = final.validation?.passed === true;
       update((cur) => ({ runSucceeded: true, checksPassed: cur.checksPassed || passed }));
@@ -112,6 +117,27 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
         ? 'Waiting for your approval…'
         : STATUS_TEXT[state.phase];
 
+  if (auth.status === 'loading') return <p role="status">Checking your session…</p>;
+  if (auth.status === 'error')
+    return (
+      <Card>
+        <p role="alert">{auth.error}</p>
+        <Button onClick={() => void auth.refresh()}>Retry session check</Button>
+      </Card>
+    );
+  if (!auth.session?.authenticated || state.error?.code === 'UNAUTHORIZED')
+    return (
+      <Card>
+        <h2 className="text-lg font-semibold">Sign in to run labs</h2>
+        <p className="mt-2 text-sm text-fg-muted">Your session protects your runs and their output. Sign in to continue.</p>
+        <Link
+          className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg"
+          to={`/login?next=${encodeURIComponent(location.pathname + location.search)}`}
+        >
+          Sign in to continue
+        </Link>
+      </Card>
+    );
   return (
     <div className="flex flex-col gap-8">
       <Section title="Preflight" id={`${id}-preflight`}>

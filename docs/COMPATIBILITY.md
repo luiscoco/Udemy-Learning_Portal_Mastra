@@ -24,6 +24,7 @@ Exact versions are locked in `package-lock.json` (`save-exact=true`). This table
 | @modelcontextprotocol/client | 2.2.0 | server-only (`packages/labs`, from L48): the official MCP TypeScript SDK client, the exact version `@mastra/mcp` 2.4.1 pins (deduplicated, MIT). Used only as the protocol-level capability probe (`getServerCapabilities`, `complete`) |
 | unpdf | 1.8.1 | server-only (`packages/labs`, L36 PDF text extraction); MIT; no runtime dependencies; bundles **pdf.js 6.1.200**, which has no `isEvalSupported` option and no `eval(` / `new Function` in the bundle (checked); `PDFDocumentProxy.destroy()` is gone in pdf.js 6, release with `pdf.loadingTask.destroy()`. 1.9.0 was two days old on 2026-10-18, so the previous release is pinned |
 | @fission-ai/openspec | 1.14.3 | dev-only (1.14.3 drops the vulnerable fast-glob → micromatch → braces chain) |
+| @mlp/auth | 0.1.0 (workspace, L61) | Server-only application adapter using Node 24 `crypto` and HTTP; no new third-party dependencies or Mastra upgrades. Express session/ownership guards are separate from Mastra server auth; checked against the official authentication/identity guide bundled in core 1.78.0. |
 
 ## Known issues
 

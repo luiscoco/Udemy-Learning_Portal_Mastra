@@ -19,6 +19,7 @@
     "@mastra/memory": "1.38.0",
     "@mastra/observability": "1.20.1",
     "@mastra/rag": "2.6.6",
+    "@mlp/auth": "0.1.0",
     "@mlp/contracts": "0.1.0",
     "@mlp/lab-catalog": "0.1.0",
     "@mlp/lab-engine": "0.1.0",

@@ -6,6 +6,7 @@ import { catalog } from '@mlp/lab-catalog';
 import { LabError, LabRunner, toCanonicalError, type LabRegistry } from '@mlp/lab-engine';
 import { createLabRegistry, createLabServices, type LabServices } from '@mlp/labs';
 import { getMastraVersion } from '@mlp/mastra-runtime';
+import { createAuth, type Auth } from './auth.js';
 import { secretValues, type AppConfig } from './config.js';
 import { errorBody, statusFor } from './errors.js';
 import type { Logger } from './logger.js';
@@ -26,11 +27,14 @@ export interface AppDeps {
 
 export interface ApiApp {
   app: Express;
+  auth: Auth;
   runner: LabRunner<LabServices>;
   registry: LabRegistry<LabServices>;
 }
 
 export function createApp({ config, logger, startedAt = Date.now(), ...deps }: AppDeps): ApiApp {
+  // Validate the auth boundary before allocating runtime services.
+  const auth = createAuth(config, logger);
   const secrets = secretValues(config);
   const registry = deps.registry ?? createLabRegistry();
   const runner =
@@ -66,6 +70,9 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
     if (!parser) labJson.set(limit, (parser = express.json({ limit })));
     return parser(req, res, next);
   });
+
+  app.use(auth.middleware);
+  app.use('/api/auth', auth.router);
 
   app.get('/api/health', (_req, res) => {
     const body: HealthResponse = {
@@ -115,7 +122,9 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
       }
       if (type === 'entity.too.large') {
         const limit = (err as { limit?: number }).limit ?? DEFAULT_REQUEST_BYTES;
-        res.status(413).json(errorBody('BAD_REQUEST', `Request body too large (max ${Math.round(limit / 1024)} KB)`, { requestId }));
+        res
+          .status(413)
+          .json(errorBody('BAD_REQUEST', `Request body too large (max ${Math.round(limit / 1024)} KB)`, { requestId }));
         return;
       }
     }
@@ -136,5 +145,5 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
   };
   app.use(onError);
 
-  return { app, runner, registry };
+  return { app, auth, runner, registry };
 }

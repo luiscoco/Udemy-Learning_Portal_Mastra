@@ -11,6 +11,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 const PORT = Number(process.env.E2E_PORT ?? 8797);
 const LIVE = process.env.E2E_LIVE === '1';
+const authFile = resolve('e2e/.auth/learner.json');
 
 export default defineConfig({
   testDir: './e2e',
@@ -26,10 +27,14 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   projects: LIVE
-    ? [{ name: 'desktop', use: { ...devices['Desktop Chrome'] } }]
+    ? [
+        { name: 'setup', testMatch: /auth\.setup\.ts/ },
+        { name: 'desktop', dependencies: ['setup'], use: { ...devices['Desktop Chrome'], storageState: authFile } },
+      ]
     : [
-        { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
-        { name: 'mobile', use: { ...devices['Pixel 7'] } },
+        { name: 'setup', testMatch: /auth\.setup\.ts/ },
+        { name: 'desktop', dependencies: ['setup'], use: { ...devices['Desktop Chrome'], storageState: authFile } },
+        { name: 'mobile', dependencies: ['setup'], use: { ...devices['Pixel 7'], storageState: authFile } },
       ],
   webServer: {
     command: 'npm run build && node apps/api/dist/server.js',
@@ -46,6 +51,11 @@ export default defineConfig({
       WEB_DIST_DIR: 'apps/web/dist',
       MAX_CONCURRENT_RUNS: '8',
       MASTRA_MODE: LIVE ? 'live' : 'offline',
+      AUTH_PROVIDER: 'dev',
+      AUTH_DEV_USERS: 'learner,alice,bob',
+      AUTH_DEV_PASSWORD: '',
+      AUTH_SESSION_SECRET: '',
+      AUTH_LOGIN_RATE_MAX: '1000',
       // E2E runs write memory databases and the document library: keep them away from learner data.
       MLP_DATA_DIR: resolve('.data', 'e2e'),
     },

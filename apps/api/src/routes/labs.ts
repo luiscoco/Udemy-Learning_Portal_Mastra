@@ -5,6 +5,7 @@ import { LabError, type LabRegistry, type LabRunner } from '@mlp/lab-engine';
 import { resolveLabSourcePath, type LabServices } from '@mlp/labs';
 import { getMastraVersion } from '@mlp/mastra-runtime';
 import type { AppConfig } from '../config.js';
+import { requireAuth } from '../auth.js';
 
 const LANG: Record<string, SourceFile['language']> = { ts: 'typescript', tsx: 'tsx', json: 'json', md: 'markdown' };
 
@@ -104,10 +105,12 @@ export function labsRouter(deps: {
     res.json(body);
   });
 
-  router.post('/:labId/runs', (req, res) => {
-    const snapshot = runner.start(req.params.labId, req.body ?? {}, {
+  // Running a lab requires a signed-in learner; the run is bound to them (anonymous → 401).
+  router.post('/:labId/runs', requireAuth, (req, res) => {
+    const snapshot = runner.start(String(req.params.labId), req.body ?? {}, {
       requestId: req.requestId,
       correlationId: req.correlationId,
+      ownerId: req.principal!.sub,
     });
     res.status(202).location(`/api/runs/${snapshot.runId}`).json({
       runId: snapshot.runId,

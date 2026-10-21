@@ -39,7 +39,10 @@ export default tseslint.config(
         'error',
         {
           patterns: [
-            { group: ['@mastra/*', '@mlp/mastra-runtime', '@mlp/labs', '@mlp/api'], message: 'Server-only package: call the API instead.' },
+            {
+              group: ['@mastra/*', '@mlp/auth', '@mlp/mastra-runtime', '@mlp/labs', '@mlp/api'],
+              message: 'Server-only package: call the API instead.',
+            },
           ],
         },
       ],
