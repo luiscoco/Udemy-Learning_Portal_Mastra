@@ -1,6 +1,6 @@
 # L44 — Citation-aware generation
 
-**Module:** 09 Advanced RAG · **Step 56 of 88** · **OpenSpec change:** `lab-44-citation-aware-generation`
+**Module:** 09 Advanced RAG · **Step 56 of 89** · **OpenSpec change:** `lab-44-citation-aware-generation`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

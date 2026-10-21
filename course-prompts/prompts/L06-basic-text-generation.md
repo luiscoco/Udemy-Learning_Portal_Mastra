@@ -1,6 +1,6 @@
 # L06 — Basic text generation
 
-**Module:** 02 Agent Generation and Streaming · **Step 11 of 88** · **OpenSpec change:** `lab-06-basic-text-generation`
+**Module:** 02 Agent Generation and Streaming · **Step 11 of 89** · **OpenSpec change:** `lab-06-basic-text-generation`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

@@ -1,6 +1,6 @@
 # L74 — Production regression suite
 
-**Module:** 15 Production and Capstone · **Step 87 of 88** · **OpenSpec change:** `lab-74-production-regression-suite`
+**Module:** 15 Production and Capstone · **Step 88 of 89** · **OpenSpec change:** `lab-74-production-regression-suite`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

@@ -1,6 +1,6 @@
 # L32 — Suspend and resume
 
-**Module:** 07 Advanced Workflows · **Step 43 of 88** · **OpenSpec change:** `lab-32-suspend-and-resume`
+**Module:** 07 Advanced Workflows · **Step 43 of 89** · **OpenSpec change:** `lab-32-suspend-and-resume`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

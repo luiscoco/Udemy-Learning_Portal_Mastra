@@ -1,6 +1,6 @@
 # L24a — Vector recall under concurrent runs
 
-**Module:** 05 Conversational Memory · **Step 35 of 88** · **OpenSpec change:** `fix-lab-24-vector-concurrency`
+**Module:** 05 Conversational Memory · **Step 35 of 89** · **OpenSpec change:** `fix-lab-24-vector-concurrency`
 
 Follow-up prompt added from the reference build: a change the platform needed that the original prompts did not ask for. Run it in this position. Paste the copy-ready prompt below as one request to your coding assistant.
 

@@ -1,6 +1,6 @@
 # L25 — Observational memory
 
-**Module:** 05 Conversational Memory · **Step 36 of 88** · **OpenSpec change:** `lab-25-observational-memory`
+**Module:** 05 Conversational Memory · **Step 36 of 89** · **OpenSpec change:** `lab-25-observational-memory`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

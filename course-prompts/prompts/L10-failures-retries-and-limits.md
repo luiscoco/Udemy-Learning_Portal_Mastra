@@ -1,6 +1,6 @@
 # L10 — Failures, retries and limits
 
-**Module:** 02 Agent Generation and Streaming · **Step 17 of 88** · **OpenSpec change:** `lab-10-failures-retries-and-limits`
+**Module:** 02 Agent Generation and Streaming · **Step 17 of 89** · **OpenSpec change:** `lab-10-failures-retries-and-limits`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

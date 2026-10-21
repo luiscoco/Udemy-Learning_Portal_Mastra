@@ -1,10 +1,10 @@
 # L64 — Tool approval policies
 
-**Module:** 13 Security and Reliability · **Step 77 of 88** · **OpenSpec change:** `lab-64-tool-approval-policies`
+**Module:** 13 Security and Reliability · **Step 78 of 89** · **OpenSpec change:** `lab-64-tool-approval-policies`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 
-Previous: [L63](L63-untrusted-input-and-prompt-injection.md) · Next: [L65](L65-timeouts-and-failure-testing.md)
+Previous: [L63a](L63a-prompt-injection-gateway-write-budget-and-negated-requests.md) · Next: [L65](L65-timeouts-and-failure-testing.md)
 
 ## Copy-ready prompt
 

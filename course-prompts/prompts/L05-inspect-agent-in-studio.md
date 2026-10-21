@@ -1,6 +1,6 @@
 # L05 — Inspect agent in Studio
 
-**Module:** 01 Mastra Foundations · **Step 10 of 88** · **OpenSpec change:** `lab-05-inspect-agent-in-studio`
+**Module:** 01 Mastra Foundations · **Step 10 of 89** · **OpenSpec change:** `lab-05-inspect-agent-in-studio`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

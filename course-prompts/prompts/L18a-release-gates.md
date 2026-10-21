@@ -1,6 +1,6 @@
 # L18a — Release gates
 
-**Module:** 04 Agent Configuration and Context · **Step 28 of 88** · **OpenSpec change:** `docs-release-gates`
+**Module:** 04 Agent Configuration and Context · **Step 28 of 89** · **OpenSpec change:** `docs-release-gates`
 
 Follow-up prompt added from the reference build: a change the platform needed that the original prompts did not ask for. Run it in this position. Paste the copy-ready prompt below as one request to your coding assistant.
 

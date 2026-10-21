@@ -1,6 +1,6 @@
 # L28 — Parallel branches
 
-**Module:** 06 Workflow Foundations · **Step 39 of 88** · **OpenSpec change:** `lab-28-parallel-branches`
+**Module:** 06 Workflow Foundations · **Step 39 of 89** · **OpenSpec change:** `lab-28-parallel-branches`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

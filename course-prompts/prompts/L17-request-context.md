@@ -1,6 +1,6 @@
 # L17 — Request context
 
-**Module:** 04 Agent Configuration and Context · **Step 26 of 88** · **OpenSpec change:** `lab-17-request-context`
+**Module:** 04 Agent Configuration and Context · **Step 26 of 89** · **OpenSpec change:** `lab-17-request-context`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

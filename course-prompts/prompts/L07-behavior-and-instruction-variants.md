@@ -1,6 +1,6 @@
 # L07 — Behavior and instruction variants
 
-**Module:** 02 Agent Generation and Streaming · **Step 13 of 88** · **OpenSpec change:** `lab-07-behavior-and-instruction-variants`
+**Module:** 02 Agent Generation and Streaming · **Step 13 of 89** · **OpenSpec change:** `lab-07-behavior-and-instruction-variants`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

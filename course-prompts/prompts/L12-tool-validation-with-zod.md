@@ -1,6 +1,6 @@
 # L12 — Tool validation with Zod
 
-**Module:** 03 Tools and Function Calling · **Step 19 of 88** · **OpenSpec change:** `lab-12-tool-validation-with-zod`
+**Module:** 03 Tools and Function Calling · **Step 19 of 89** · **OpenSpec change:** `lab-12-tool-validation-with-zod`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

@@ -1,6 +1,6 @@
 # L19 — Execution options
 
-**Module:** 04 Agent Configuration and Context · **Step 29 of 88** · **OpenSpec change:** `lab-19-execution-options`
+**Module:** 04 Agent Configuration and Context · **Step 29 of 89** · **OpenSpec change:** `lab-19-execution-options`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

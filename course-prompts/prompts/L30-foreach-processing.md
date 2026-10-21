@@ -1,6 +1,6 @@
 # L30 — Foreach processing
 
-**Module:** 06 Workflow Foundations · **Step 41 of 88** · **OpenSpec change:** `lab-30-foreach-processing`
+**Module:** 06 Workflow Foundations · **Step 41 of 89** · **OpenSpec change:** `lab-30-foreach-processing`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

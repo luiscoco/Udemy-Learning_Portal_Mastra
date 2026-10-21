@@ -21,10 +21,18 @@ export interface Grant {
  * retrieved text is read. Nothing a document says can widen them.
  */
 export function grantsFor(request: string, requester: string): Grant {
-  const emailToRequester = /\b(e-?mail|send|mail)\b[^.]{0,60}\b(me|my|myself)\b|\b(me|my)\b[^.]{0,30}\b(e-?mail|inbox)\b/i.test(
-    request,
+  // Judged per sentence; a negated sentence ("please don't email me") grants nothing. Errs towards less.
+  const sentences = request.split(/(?<=[.!?])\s+|\n+/);
+  const negated = (s: string, verbs: RegExp) =>
+    new RegExp(String.raw`\b(don['’]?t|do not|never|no need to)\b[^.]{0,25}\b(` + verbs.source + ')', 'i').test(s);
+  const emailVerbs = /e-?mail|send|mail/;
+  const emailToRequester = sentences.some(
+    (s) =>
+      /\b(e-?mail|send|mail)\b[^.]{0,60}\b(me|my|myself)\b|\b(me|my)\b[^.]{0,30}\b(e-?mail|inbox)\b/i.test(s) &&
+      !negated(s, emailVerbs),
   );
-  const refundOrder = /\brefund\b/i.test(request) ? (request.toUpperCase().match(/\bORD-\d{4}\b/)?.[0] ?? null) : null;
+  const refundSentence = sentences.find((s) => /\brefund\b/i.test(s) && !negated(s, /refund/));
+  const refundOrder = refundSentence?.toUpperCase().match(/\bORD-\d{4}\b/)?.[0] ?? null;
   return { requester: requester.toLowerCase(), emailToRequester, refundOrder };
 }
 
@@ -144,25 +152,26 @@ const WriteResultSchema = z.union([
  */
 export function createSandboxTools(opts: { docs: readonly KbDoc[]; sinks: Sinks; gateway?: GatewayOptions }) {
   const { docs, sinks, gateway } = opts;
-  let writeCalls = 0;
+  let authorizedWrites = 0;
 
   async function guarded(toolName: string, args: unknown, perform: () => string): Promise<WriteResult> {
     if (!gateway) return { ok: true, detail: perform() };
     const { grant, taint, approve, audit, maxWriteCalls } = gateway;
-    writeCalls += 1;
-    if (writeCalls > maxWriteCalls) {
+    const c = classifyCall(toolName, args, grant);
+    if (!c.authorized) {
+      // Denied calls cost no budget, so injected calls cannot use it up and block the customer's own action.
+      audit.append({ toolName, args, decision: 'denied', reason: `${c.code}: ${c.reason}` });
+      return { ok: false, code: c.code!, message: `Denied by policy: ${c.reason}. Only the customer can ask for actions.` };
+    }
+    authorizedWrites += 1;
+    if (authorizedWrites > maxWriteCalls) {
       audit.append({
         toolName,
         args,
         decision: 'denied',
-        reason: `WRITE_LIMIT: more than ${maxWriteCalls} write calls in one run`,
+        reason: `WRITE_LIMIT: more than ${maxWriteCalls} authorized write calls in one run`,
       });
       return { ok: false, code: 'WRITE_LIMIT', message: 'Too many write calls in this run.' };
-    }
-    const c = classifyCall(toolName, args, grant);
-    if (!c.authorized) {
-      audit.append({ toolName, args, decision: 'denied', reason: `${c.code}: ${c.reason}` });
-      return { ok: false, code: c.code!, message: `Denied by policy: ${c.reason}. Only the customer can ask for actions.` };
     }
     if (taint.tainted) {
       audit.append({

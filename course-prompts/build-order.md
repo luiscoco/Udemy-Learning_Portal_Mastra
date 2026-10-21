@@ -80,15 +80,16 @@ Run the prompts strictly in this order, one per request. Follow-ups are marked.
 | 74 | [L62](prompts/L62-tenant-isolation.md) | Tenant isolation | 13 Security and Reliability | original |
 | 75 | [L62a](prompts/L62a-tenant-isolation-for-migrated-stores-and-browser-storage.md) | Tenant isolation for migrated stores and browser storage | 13 Security and Reliability | **follow-up** |
 | 76 | [L63](prompts/L63-untrusted-input-and-prompt-injection.md) | Untrusted input and prompt injection | 13 Security and Reliability | original |
-| 77 | [L64](prompts/L64-tool-approval-policies.md) | Tool approval policies | 13 Security and Reliability | original |
-| 78 | [L65](prompts/L65-timeouts-and-failure-testing.md) | Timeouts and failure testing | 13 Security and Reliability | original |
-| 79 | [L66](prompts/L66-react-client-integration.md) | React client integration | 14 Full-Stack AI Applications | original |
-| 80 | [L67](prompts/L67-streaming-chat-ui.md) | Streaming chat UI | 14 Full-Stack AI Applications | original |
-| 81 | [L68](prompts/L68-workflow-visualizer.md) | Workflow visualizer | 14 Full-Stack AI Applications | original |
-| 82 | [L69](prompts/L69-voice-assistant.md) | Voice assistant | 14 Full-Stack AI Applications | original |
-| 83 | [L70](prompts/L70-interactive-agent-workspace.md) | Interactive agent workspace | 14 Full-Stack AI Applications | original |
-| 84 | [L71](prompts/L71-durable-production-persistence.md) | Durable production persistence | 15 Production and Capstone | original |
-| 85 | [L72](prompts/L72-configuration-and-packaging.md) | Configuration and packaging | 15 Production and Capstone | original |
-| 86 | [L73](prompts/L73-deploy-application.md) | Deploy application | 15 Production and Capstone | original |
-| 87 | [L74](prompts/L74-production-regression-suite.md) | Production regression suite | 15 Production and Capstone | original |
-| 88 | [L75](prompts/L75-enterprise-ai-assistant-capstone.md) | Enterprise AI Assistant capstone | 15 Production and Capstone | original |
+| 77 | [L63a](prompts/L63a-prompt-injection-gateway-write-budget-and-negated-requests.md) | Prompt-injection gateway: write budget and negated requests | 13 Security and Reliability | **follow-up** |
+| 78 | [L64](prompts/L64-tool-approval-policies.md) | Tool approval policies | 13 Security and Reliability | original |
+| 79 | [L65](prompts/L65-timeouts-and-failure-testing.md) | Timeouts and failure testing | 13 Security and Reliability | original |
+| 80 | [L66](prompts/L66-react-client-integration.md) | React client integration | 14 Full-Stack AI Applications | original |
+| 81 | [L67](prompts/L67-streaming-chat-ui.md) | Streaming chat UI | 14 Full-Stack AI Applications | original |
+| 82 | [L68](prompts/L68-workflow-visualizer.md) | Workflow visualizer | 14 Full-Stack AI Applications | original |
+| 83 | [L69](prompts/L69-voice-assistant.md) | Voice assistant | 14 Full-Stack AI Applications | original |
+| 84 | [L70](prompts/L70-interactive-agent-workspace.md) | Interactive agent workspace | 14 Full-Stack AI Applications | original |
+| 85 | [L71](prompts/L71-durable-production-persistence.md) | Durable production persistence | 15 Production and Capstone | original |
+| 86 | [L72](prompts/L72-configuration-and-packaging.md) | Configuration and packaging | 15 Production and Capstone | original |
+| 87 | [L73](prompts/L73-deploy-application.md) | Deploy application | 15 Production and Capstone | original |
+| 88 | [L74](prompts/L74-production-regression-suite.md) | Production regression suite | 15 Production and Capstone | original |
+| 89 | [L75](prompts/L75-enterprise-ai-assistant-capstone.md) | Enterprise AI Assistant capstone | 15 Production and Capstone | original |

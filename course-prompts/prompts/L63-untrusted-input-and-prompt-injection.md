@@ -1,10 +1,10 @@
 # L63 — Untrusted input and prompt injection
 
-**Module:** 13 Security and Reliability · **Step 76 of 88** · **OpenSpec change:** `lab-63-untrusted-input-and-prompt-injection`
+**Module:** 13 Security and Reliability · **Step 76 of 89** · **OpenSpec change:** `lab-63-untrusted-input-and-prompt-injection`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 
-Previous: [L62a](L62a-tenant-isolation-for-migrated-stores-and-browser-storage.md) · Next: [L64](L64-tool-approval-policies.md)
+Previous: [L62a](L62a-tenant-isolation-for-migrated-stores-and-browser-storage.md) · Next: [L63a](L63a-prompt-injection-gateway-write-budget-and-negated-requests.md)
 
 ## Copy-ready prompt
 

@@ -1,6 +1,6 @@
 # F01 — Monorepo, OpenSpec, and developer foundation
 
-**Module:** Foundation · **Step 1 of 88**
+**Module:** Foundation · **Step 1 of 89**
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

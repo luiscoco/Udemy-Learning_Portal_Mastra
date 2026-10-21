@@ -1,6 +1,6 @@
 # L16 — Dynamic instructions
 
-**Module:** 04 Agent Configuration and Context · **Step 25 of 88** · **OpenSpec change:** `lab-16-dynamic-instructions`
+**Module:** 04 Agent Configuration and Context · **Step 25 of 89** · **OpenSpec change:** `lab-16-dynamic-instructions`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

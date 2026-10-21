@@ -1,6 +1,6 @@
 # L34 — Long-running reliability
 
-**Module:** 07 Advanced Workflows · **Step 45 of 88** · **OpenSpec change:** `lab-34-long-running-reliability`
+**Module:** 07 Advanced Workflows · **Step 45 of 89** · **OpenSpec change:** `lab-34-long-running-reliability`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

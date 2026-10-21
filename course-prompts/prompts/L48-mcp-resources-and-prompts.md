@@ -1,6 +1,6 @@
 # L48 — MCP resources and prompts
 
-**Module:** 10 Model Context Protocol · **Step 60 of 88** · **OpenSpec change:** `lab-48-mcp-resources-and-prompts`
+**Module:** 10 Model Context Protocol · **Step 60 of 89** · **OpenSpec change:** `lab-48-mcp-resources-and-prompts`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

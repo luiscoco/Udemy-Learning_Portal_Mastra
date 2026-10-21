@@ -1,6 +1,6 @@
 # L35 — Business process capstone
 
-**Module:** 07 Advanced Workflows · **Step 46 of 88** · **OpenSpec change:** `lab-35-business-process-capstone`
+**Module:** 07 Advanced Workflows · **Step 46 of 89** · **OpenSpec change:** `lab-35-business-process-capstone`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

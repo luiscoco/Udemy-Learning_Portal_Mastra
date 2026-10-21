@@ -1,6 +1,6 @@
 # L69 — Voice assistant
 
-**Module:** 14 Full-Stack AI Applications · **Step 82 of 88** · **OpenSpec change:** `lab-69-voice-assistant`
+**Module:** 14 Full-Stack AI Applications · **Step 83 of 89** · **OpenSpec change:** `lab-69-voice-assistant`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

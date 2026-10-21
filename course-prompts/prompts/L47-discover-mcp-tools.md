@@ -1,6 +1,6 @@
 # L47 — Discover MCP tools
 
-**Module:** 10 Model Context Protocol · **Step 59 of 88** · **OpenSpec change:** `lab-47-discover-mcp-tools`
+**Module:** 10 Model Context Protocol · **Step 59 of 89** · **OpenSpec change:** `lab-47-discover-mcp-tools`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

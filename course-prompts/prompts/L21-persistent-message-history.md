@@ -1,6 +1,6 @@
 # L21 — Persistent message history
 
-**Module:** 05 Conversational Memory · **Step 31 of 88** · **OpenSpec change:** `lab-21-persistent-message-history`
+**Module:** 05 Conversational Memory · **Step 31 of 89** · **OpenSpec change:** `lab-21-persistent-message-history`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

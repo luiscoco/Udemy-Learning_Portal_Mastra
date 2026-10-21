@@ -1,6 +1,6 @@
 # L59 — Compare experiments
 
-**Module:** 12 Evaluation and Observability · **Step 71 of 88** · **OpenSpec change:** `lab-59-compare-experiments`
+**Module:** 12 Evaluation and Observability · **Step 71 of 89** · **OpenSpec change:** `lab-59-compare-experiments`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

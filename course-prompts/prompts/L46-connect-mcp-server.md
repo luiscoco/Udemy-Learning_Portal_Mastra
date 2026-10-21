@@ -1,6 +1,6 @@
 # L46 — Connect MCP server
 
-**Module:** 10 Model Context Protocol · **Step 58 of 88** · **OpenSpec change:** `lab-46-connect-mcp-server`
+**Module:** 10 Model Context Protocol · **Step 58 of 89** · **OpenSpec change:** `lab-46-connect-mcp-server`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

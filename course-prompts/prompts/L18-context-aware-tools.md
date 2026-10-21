@@ -1,6 +1,6 @@
 # L18 — Context-aware tools
 
-**Module:** 04 Agent Configuration and Context · **Step 27 of 88** · **OpenSpec change:** `lab-18-context-aware-tools`
+**Module:** 04 Agent Configuration and Context · **Step 27 of 89** · **OpenSpec change:** `lab-18-context-aware-tools`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

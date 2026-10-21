@@ -1,6 +1,6 @@
 # L06a — Live output for non-streaming labs
 
-**Module:** 02 Agent Generation and Streaming · **Step 12 of 88** · **OpenSpec change:** `fix-live-output-non-streaming`
+**Module:** 02 Agent Generation and Streaming · **Step 12 of 89** · **OpenSpec change:** `fix-live-output-non-streaming`
 
 Follow-up prompt added from the reference build: a change the platform needed that the original prompts did not ask for. Run it in this position. Paste the copy-ready prompt below as one request to your coding assistant.
 
