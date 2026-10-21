@@ -4,7 +4,8 @@ import { z } from 'zod';
 import { summarizeChecks, type LabDefinition } from '@mlp/contracts';
 import { LabError, type LabImplementation } from '@mlp/lab-engine';
 import { checkModelId, DEFAULT_MODEL_BY_PROVIDER } from '@mlp/mastra-runtime';
-import { dataDir, labSourceDir, labsPackageDir } from '../paths.js';
+import { labSourceDir, labsPackageDir } from '../paths.js';
+import type { LabServices } from '../services.js';
 import { lab01Definition } from './definition.js';
 import { agentIdentifiers, renderScaffold, type ScaffoldFile } from './scaffold.js';
 import { typecheckProject, type TypecheckResult } from './typecheck.js';
@@ -48,7 +49,7 @@ export function nodeSatisfies(version: string, min: readonly [number, number] = 
   return maj > min[0] || (maj === min[0] && minor >= min[1]);
 }
 
-export const lab01: LabImplementation<Lab01Input, Lab01Output> = {
+export const lab01: LabImplementation<Lab01Input, Lab01Output, LabServices> = {
   definition: lab01Definition as LabDefinition,
   inputSchema: Lab01InputSchema,
 
@@ -76,8 +77,8 @@ export const lab01: LabImplementation<Lab01Input, Lab01Output> = {
       output: { modelId, apiKeyEnvVar: model.apiKeyEnvVar, agentId: ids.kebab, moduleType: input.moduleType },
     });
 
-    // 3. Render into a per-run folder inside the server data directory.
-    const root = join(dataDir(), 'scaffolds', ctx.runId);
+    // 3. Render into a per-run folder inside this learner's storage partition (L62).
+    const root = join(ctx.services.files('scaffolds'), ctx.runId);
     const projectDir = join(root, input.projectName);
     try {
       ctx.emit({ type: 'workflow-step', stepId: 'render-files', status: 'running' });

@@ -1,11 +1,9 @@
 import { createHash } from 'node:crypto';
-import { join } from 'node:path';
 import { z } from 'zod';
 import { Agent } from '@mastra/core/agent';
 import { summarizeChecks, type LabDefinition } from '@mlp/contracts';
 import type { LabImplementation } from '@mlp/lab-engine';
 import { DEFAULT_LIVE_MODELS } from '@mlp/mastra-runtime';
-import { dataDir } from '../paths.js';
 import type { LabServices } from '../services.js';
 import { usageOf, withLabLogger } from '../shared/agent-kit.js';
 import { simulatedAnswer } from '../shared/simulated.js';
@@ -58,8 +56,9 @@ export function configHash(labelText: string, modelId: string, instr: string, se
   return sha12(JSON.stringify({ label: labelText, modelId, instructions: instr, settings }));
 }
 
-export function comparisonsDir(): string {
-  return join(dataDir(), 'comparisons');
+/** Saved comparisons of one learner: inside their storage partition (L62), never shared. */
+export function comparisonsDir(services: { files(name: string): string }): string {
+  return services.files('comparisons');
 }
 
 export const lab07: LabImplementation<Lab07Input, Lab07Output, LabServices> = {
@@ -134,7 +133,7 @@ export const lab07: LabImplementation<Lab07Input, Lab07Output, LabServices> = {
       prompt: input.prompt,
       variants: [a, b],
     };
-    const dir = comparisonsDir();
+    const dir = comparisonsDir(ctx.services);
     await saveComparison(dir, ctx.runId, record);
     const recentComparisons = await listComparisons(dir);
     ctx.emit({ type: 'workflow-step', stepId: 'save-comparison', status: 'success', output: { id: ctx.runId } });

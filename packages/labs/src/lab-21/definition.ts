@@ -95,7 +95,7 @@ export const lab21Definition = {
       'Two messages are stored and the store is closed. New instances find both messages, and the follow-up is answered from them (Ana, trains). The history alternates user and assistant in time order.',
     example: {
       threadId: 'trip-planning',
-      dbFile: '.data/memory/lab-21.db',
+      dbFile: '.data/memory/tenants/local/lab-21.db',
       reset: true,
       restart: { closedFirstStore: true, reopened: true },
       followUp: {

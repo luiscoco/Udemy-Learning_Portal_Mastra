@@ -46,7 +46,8 @@ describe('lab-21 restart (in-process)', () => {
   it('new instances answer from the persisted history', async () => {
     const { result, events } = await run();
     expect(result.validation.passed).toBe(true);
-    expect(existsSync(join(dir, 'lab-21.db'))).toBe(true);
+    // Runs without an owner use the 'local' partition (L62).
+    expect(existsSync(join(dir, 'tenants', 'local', 'lab-21.db'))).toBe(true);
     expect(result.output.recalledAfterRestart.map((m) => m.role)).toEqual(['user', 'assistant', 'user', 'assistant']);
     expect(result.output.history).toHaveLength(6);
     const restart = events.find((e) => e.type === 'workflow-step' && e.stepId === 'restart' && e.status === 'success');

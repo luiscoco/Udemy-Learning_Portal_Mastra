@@ -43,7 +43,23 @@ To add production authentication, implement and review an identity adapter (for 
 
 This auth layer protects the Express API and is an **application adapter**, not a new Mastra method or a configuration of Mastra's own server. The official authentication guide bundled with the installed `@mastra/core` 1.78.0 distinguishes authentication from authorization; the platform enforces those checks in Express. No Mastra API or package upgrade was needed.
 
-Before public exposure, complete [RELEASE-GATES.md](RELEASE-GATES.md): real identity, durable sessions, tenant isolation of threads/documents/workflows/storage (L62), HTTPS, per-learner execution limits and cost caps, and the other hosting gates. Run ownership alone does not isolate the labs' shared storage. L61 is offline-only and costs zero; other labs' optional live mode still uses the server's configured provider keys and retains its cost notices.
+Before public exposure, complete [RELEASE-GATES.md](RELEASE-GATES.md): real identity, durable sessions, tenant isolation beyond the local single-process deployment (L62 covers local files), HTTPS, per-learner execution limits and cost caps, and the other hosting gates. Run ownership alone does not isolate the labs' shared storage. L61 is offline-only and costs zero; other labs' optional live mode still uses the server's configured provider keys and retains its cost notices.
+
+## Tenant isolation (L62)
+
+Authentication alone leaves stored data shared: inside one store, `resourceId` and `threadId` are just values. The API therefore gives each run services built for its authenticated owner (`LabRunner` option `servicesFor`, wired to `baseServices.forTenant(ownerId)` in `apps/api/src/app.ts`). Every memory store, document library and saved file resolves inside `<dataDir>/memory/tenants/<partition>/`, where the partition is the first 24 hex characters of `sha256("tenant:" + ownerId)`; runs without an owner (CLI, tests) use `tenants/local/`. Learner names never appear in paths, and hostile ids cannot traverse out. Labs keep their constant ids (`'learner'`), because the same store name opens a different file per owner.
+
+`apps/api/src/route-classes.ts` classifies every route as `public` (no learner data) or `tenant`. `routes.audit.test.ts` lists the routes Express actually registered (all routers go through `mount()`), fails on any unclassified or stale entry, and checks every tenant route: 401 anonymous, 404 for another learner, success for the owner. `tenancy.test.ts` runs two learners through threads (L21), documents (L36), saved files (L07) and datasets/experiments (L58) and asserts neither sees the other's data.
+
+Data written before L62 sits in the old shared locations and is **not** visible to anyone. Migrate it explicitly to one owner (copies by default, never overwrites):
+
+```sh
+node scripts/migrate-tenant-data.mjs --owner dev:learner --dry-run
+node scripts/migrate-tenant-data.mjs --owner dev:learner        # copy
+node scripts/migrate-tenant-data.mjs --owner dev:learner --move # copy, then delete the legacy source
+```
+
+This is an application-level design over Mastra's storage adapters, not a native Mastra multi-tenancy API. It covers the local single-process deployment; a shared remote database needs per-tenant databases or enforced row scoping.
 
 ## Verification and instructor demo
 

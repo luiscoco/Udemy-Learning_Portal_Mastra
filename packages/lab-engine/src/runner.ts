@@ -26,6 +26,11 @@ import { redactValue } from './util.js';
 export interface RunnerOptions<S> {
   registry: LabRegistry<S>;
   services: S;
+  /**
+   * Per-run services for the run's owner (tenant isolation). Without it every run gets `services`.
+   * Called once per run with the owner from StartMeta (null when the run has none).
+   */
+  servicesFor?: (ownerId: string | null) => S;
   /** true when the server allows live provider calls (MASTRA_MODE=live). */
   liveEnabled: boolean;
   maxConcurrentRuns?: number;
@@ -86,7 +91,8 @@ const TERMINAL: Record<RunTerminalStatus, true> = { succeeded: true, failed: tru
 
 export class LabRunner<S = unknown> {
   private readonly runs = new Map<string, RunRecord>();
-  private readonly opts: Required<Omit<RunnerOptions<S>, 'secrets' | 'logger' | 'now'>> & {
+  private readonly opts: Required<Omit<RunnerOptions<S>, 'secrets' | 'logger' | 'now' | 'servicesFor'>> & {
+    servicesFor?: (ownerId: string | null) => S;
     secrets: readonly string[];
     logger: EngineLogger;
     now: () => number;
@@ -244,7 +250,7 @@ export class LabRunner<S = unknown> {
       get deadline() {
         return record.approvals.size > 0 ? Number.POSITIVE_INFINITY : record.deadlineAt;
       },
-      services: this.opts.services,
+      services: this.opts.servicesFor ? this.opts.servicesFor(record.ownerId) : this.opts.services,
       emit: (e) => {
         if (e.type === 'complete' || e.type === 'result' || e.type === 'error') {
           throw new Error('Labs must not emit result/error/complete; return a value or throw instead');

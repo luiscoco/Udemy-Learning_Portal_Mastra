@@ -38,6 +38,14 @@ describe('LabRunner.start validation', () => {
     expect(r.ownerOf(legacy.runId)).toBeNull();
     expect(r.ownerOf('missing')).toBeUndefined();
   });
+  it('gives each run the services of its owner when servicesFor is set (tenant isolation)', async () => {
+    const seen: (string | null)[] = [];
+    const r = setup({ servicesFor: (ownerId) => (seen.push(ownerId), { partition: ownerId ?? 'local' }) });
+    const a = r.start('lab-99', { input: { text: 'a' } }, { ownerId: 'dev:alice' });
+    const b = r.start('lab-99', { input: { text: 'b' } });
+    await Promise.all([r.waitFor(a.runId), r.waitFor(b.runId)]);
+    expect(seen).toEqual(['dev:alice', null]);
+  });
   it('rejects unknown labs with NOT_FOUND', () => {
     const r = setup();
     expect(() => r.start('lab-42', { input: {} })).toThrowError(expect.objectContaining({ code: 'NOT_FOUND' }));

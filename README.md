@@ -112,7 +112,7 @@ Durable memory (from L21): conversation history is stored with `@mastra/libsql` 
 
 File uploads (from L36): labs can declare `file` input fields. The browser reads the files and sends them with the run request. The server measures size, sniffs the content and rejects files with a specific code, and raw bytes never appear in events. Only labs with file fields accept bodies above 64 KB, up to the limit computed from their declared fields.
 
-Authentication: starting a run requires a valid session. Snapshots, event streams, cancellation and approvals require the authenticated owner; mutations also need the secret `runToken` returned at start in `X-Run-Token`. Anonymous requests return 401; another learner's run returns 404. The local development provider refuses production and public-interface startup. See [docs/AUTH.md](docs/AUTH.md) for the HTTP migration and remaining production requirements.
+Authentication: starting a run requires a valid session. Snapshots, event streams, cancellation and approvals require the authenticated owner; mutations also need the secret `runToken` returned at start in `X-Run-Token`. Anonymous requests return 401; another learner's run returns 404. The local development provider refuses production and public-interface startup. Each learner's stored data (threads, documents, saved files, datasets) lives in their own partition under `.data/memory/tenants/`; data from before L62 is migrated only explicitly with `node scripts/migrate-tenant-data.mjs --owner dev:learner [--move] [--dry-run]`. See [docs/AUTH.md](docs/AUTH.md) for the HTTP migration, tenant isolation and remaining production requirements.
 
 ## Learner experience
 

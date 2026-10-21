@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import express, { type ErrorRequestHandler, type Express } from 'express';
+import express, { type ErrorRequestHandler, type Express, type Router } from 'express';
 import { DEFAULT_REQUEST_BYTES, HealthResponseSchema, maxRequestBytes, redactSecrets, type HealthResponse } from '@mlp/contracts';
 import { catalog } from '@mlp/lab-catalog';
 import { LabError, LabRunner, toCanonicalError, type LabRegistry } from '@mlp/lab-engine';
@@ -19,6 +19,8 @@ export const SERVICE_VERSION = '0.1.0';
 
 export interface AppDeps {
   config: AppConfig;
+  /** Root for lab stores (tests pass a temporary one). Defaults to <dataDir>/memory. */
+  memoryDir?: string;
   logger: Logger;
   startedAt?: number;
   registry?: LabRegistry<LabServices>;
@@ -27,6 +29,8 @@ export interface AppDeps {
 
 export interface ApiApp {
   app: Express;
+  /** Every mounted router with its base path (the route audit lists their routes). */
+  mounts: { base: string; router: Router }[];
   auth: Auth;
   runner: LabRunner<LabServices>;
   registry: LabRegistry<LabServices>;
@@ -37,11 +41,14 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
   const auth = createAuth(config, logger);
   const secrets = secretValues(config);
   const registry = deps.registry ?? createLabRegistry();
+  const baseServices = createLabServices({ serverMode: config.MASTRA_MODE, env: process.env, memoryDir: deps.memoryDir });
   const runner =
     deps.runner ??
     new LabRunner<LabServices>({
       registry,
-      services: createLabServices({ serverMode: config.MASTRA_MODE, env: process.env }),
+      services: baseServices,
+      // Tenant isolation (L62): every run works in its owner's storage partition.
+      servicesFor: (ownerId) => baseServices.forTenant(ownerId),
       liveEnabled: config.MASTRA_MODE === 'live',
       maxConcurrentRuns: config.MAX_CONCURRENT_RUNS,
       serverMaxTimeoutMs: config.RUN_MAX_TIMEOUT_MS,
@@ -72,7 +79,12 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
   });
 
   app.use(auth.middleware);
-  app.use('/api/auth', auth.router);
+  const mounts: ApiApp['mounts'] = [];
+  const mount = (base: string, router: Router) => {
+    mounts.push({ base, router });
+    app.use(base, router);
+  };
+  mount('/api/auth', auth.router);
 
   app.get('/api/health', (_req, res) => {
     const body: HealthResponse = {
@@ -91,8 +103,8 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
     res.json(catalog);
   });
 
-  app.use('/api/labs', labsRouter({ config, registry, runner, pinned }));
-  app.use('/api/runs', runsRouter({ runner, heartbeatMs: config.SSE_HEARTBEAT_MS }));
+  mount('/api/labs', labsRouter({ config, registry, runner, pinned }));
+  mount('/api/runs', runsRouter({ runner, heartbeatMs: config.SSE_HEARTBEAT_MS }));
 
   app.use('/api', (req, _res, next) => {
     next(new LabError('NOT_FOUND', `No API route for ${req.method} ${req.originalUrl}`));
@@ -145,5 +157,5 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
   };
   app.use(onError);
 
-  return { app, auth, runner, registry };
+  return { app, auth, mounts, runner, registry };
 }

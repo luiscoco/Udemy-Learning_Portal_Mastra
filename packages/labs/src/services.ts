@@ -1,5 +1,7 @@
 import type { RuntimeMode } from '@mlp/contracts';
 import { LabError } from '@mlp/lab-engine';
+import { createHash } from 'node:crypto';
+import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   checkModelId,
@@ -44,7 +46,7 @@ export interface ModelService {
 
 /** Durable Mastra memory for labs: one SQLite file per name under <dataDir>/memory. */
 export interface MemoryService {
-  /** Absolute path of the database file for a name (no file is created). */
+  /** Absolute path of the database file for a name (its folder is created; the file is not). */
   file(name: string): string;
   /** Opens durable memory (optionally with a vector store and embedder); the caller must close() it. */
   open(name: string, options?: MemoryOptions, extras?: MemoryExtras): Promise<OpenedMemory>;
@@ -55,7 +57,10 @@ const STORE_NAME = /^[a-z0-9][a-z0-9-]{0,63}$/;
 export function createMemoryService(baseDir: () => string = () => join(dataDir(), 'memory')): MemoryService {
   const file = (name: string) => {
     if (!STORE_NAME.test(name)) throw new LabError('VALIDATION_FAILED', `Invalid memory store name "${name}"`);
-    return join(baseDir(), `${name}.db`);
+    // Partition folders (L62) are created on first use, so labs can open a store file directly.
+    const dir = baseDir();
+    mkdirSync(dir, { recursive: true });
+    return join(dir, `${name}.db`);
   };
   return { file, open: (name, options, extras) => openMemory(file(name), options, extras) };
 }
@@ -69,6 +74,15 @@ export interface LabServices {
   readonly mastraVersion: string;
   readonly models: ModelService;
   readonly memory: MemoryService;
+  /** The storage partition every store of this services view lives in (L62). */
+  readonly tenant: { readonly partition: string };
+  /** A directory for plain files (not SQLite) inside this partition, e.g. files('comparisons'). */
+  files(name: string): string;
+  /**
+   * The same services for another owner: every durable store (memory, library, datasets, workflow
+   * snapshots, files) moves to that owner's partition. The runner calls it per run with the run owner.
+   */
+  forTenant(ownerId: string | null): LabServices;
 }
 
 export interface LabServicesConfig {
@@ -107,11 +121,38 @@ export function createModelService(env: Record<string, string | undefined>): Mod
   };
 }
 
+/** The partition of an owner: a fixed-length hash, so no raw identity (or ../) ever reaches a path. */
+export function partitionOf(ownerId: string | null): string {
+  if (ownerId === null) return 'local';
+  return createHash('sha256').update(`tenant:${ownerId}`, 'utf8').digest('hex').slice(0, 24);
+}
+
+export const TENANTS_DIR = 'tenants';
+
+/**
+ * Server-side services. Every durable store lives under <memoryRoot>/tenants/<partition>/, so two
+ * learners never share a store file, folder or record, whatever ids a lab uses inside its stores.
+ * createLabServices() is the 'local' partition (runs without an owner: CLI, unit tests).
+ */
 export function createLabServices(config: LabServicesConfig): LabServices {
-  return {
-    serverMode: config.serverMode,
-    mastraVersion: getMastraVersion(),
-    models: createModelService(config.env ?? {}),
-    memory: createMemoryService(config.memoryDir ? () => config.memoryDir! : undefined),
+  const memoryRoot = () => config.memoryDir ?? join(dataDir(), 'memory');
+  const models = createModelService(config.env ?? {});
+  const mastraVersion = getMastraVersion();
+  const view = (ownerId: string | null): LabServices => {
+    const partition = partitionOf(ownerId);
+    const root = () => join(memoryRoot(), TENANTS_DIR, partition);
+    return {
+      serverMode: config.serverMode,
+      mastraVersion,
+      models,
+      memory: createMemoryService(root),
+      tenant: { partition },
+      files(name: string) {
+        if (!STORE_NAME.test(name)) throw new LabError('VALIDATION_FAILED', `Invalid file store name "${name}"`);
+        return join(root(), 'files', name);
+      },
+      forTenant: view,
+    };
   };
+  return view(null);
 }

@@ -168,7 +168,8 @@ async function runSession(ctx: RunContext<LabServices>, input: Lab21Input): Prom
       });
       return {
         threadId: input.threadId,
-        dbFile: `.data/memory/${STORE}.db`,
+        // The learner's own partition (L62): a hash, never the raw identity.
+        dbFile: `.data/memory/tenants/${ctx.services.tenant.partition}/${STORE}.db`,
         dbBytes,
         reset: input.resetThread,
         session1: { sent: input.messages, replies },

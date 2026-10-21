@@ -9,9 +9,10 @@ import { comparisonsDir, configHash, lab07 } from './run.js';
 import { KEEP_COMPARISONS, listComparisons, saveComparison } from './store.js';
 
 const example = lab07.definition.exampleInput;
+const services = createLabServices({ serverMode: 'offline', env: {} });
 const runner = new LabRunner({
   registry: new LabRegistry([lab07]),
-  services: createLabServices({ serverMode: 'offline', env: {} }),
+  services,
   liveEnabled: false,
 });
 afterAll(() => runner.dispose());
@@ -28,7 +29,7 @@ describe('lab-07 instruction variants', () => {
     const [a, b] = result.output.variants;
     expect(a!.output).not.toBe(b!.output);
     expect(a!.configHash).not.toBe(b!.configHash);
-    expect(existsSync(join(comparisonsDir(), `${result.output.saved.id}.json`))).toBe(true);
+    expect(existsSync(join(comparisonsDir(services), `${result.output.saved.id}.json`))).toBe(true);
   });
 
   it('configHash is stable and changes with any config field', () => {

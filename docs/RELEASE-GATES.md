@@ -11,6 +11,7 @@ What exists today:
 - `POST /api/labs/:labId/runs` returns a secret `runToken`.
 - Cancel and approval decisions require it (`X-Run-Token`, constant-time check, 403 otherwise).
 - Waiting runs are capped (`MAX_PENDING_APPROVALS`).
+- ☑ **Tenant isolation (L62).** Threads, document libraries, saved files, datasets, experiments and workflow snapshots are partitioned per authenticated learner under `memory/tenants/<sha256 prefix>/`. A route audit test classifies every API route as public or tenant-scoped and checks 401/404 for anonymous callers and other learners. Legacy shared data is migrated only explicitly. See [AUTH.md](AUTH.md#tenant-isolation-l62).
 - ☑ **Development identity and run ownership (L61).** Local allowlisted sign-in issues a signed HttpOnly session cookie. Every HTTP run is bound to its authenticated learner; reads and mutations enforce that owner. Development login refuses production and non-loopback startup. See [AUTH.md](AUTH.md).
 - ☑ **Protected run reads (L61).** Snapshot and SSE requests require the owning learner; anonymous requests return 401, another learner's run returns 404.
 
@@ -28,7 +29,7 @@ What is still required:
   - ☑ **Suspended workflow runs** are durable since L32: Mastra snapshots in libSQL (`lab-32-workflows.db`). Resuming in a new process is covered by an integration test.
   - ☑ **Durable approvals** are available since L33. A workflow gate suspends with a deadline, and decisions, expiry sweeps and late or duplicate approvals all work across restarts. This is the pattern to use for any approval that matters.
   - ☐ **In-run approval prompts** (`ctx.requestApproval`, used by L15 tool approvals and L33 `ask`) still wait in memory, and a restart loses the prompt. In L33 the refund itself stays suspended in storage and can still be decided or expired. Move L15-style tool approvals onto the same pattern before relying on them in production.
-  - ☐ **Workflow run ownership.** Workflow runs are tagged `resourceId: "learner"`, and resume or inspect needs only the unguessable run id. Bind runs to the authenticated learner and check ownership before resuming.
+  - ☑ **Workflow run ownership (L62).** Each learner's workflow snapshots live in their own storage partition (`memory/tenants/<partition>/`), so a run id from another learner resolves to nothing. Every HTTP run is owner-bound (L61). This covers the local single-process deployment; a shared remote database needs the same scoping per tenant.
   - ☐ **Hosting.** A public host needs a remote libSQL/Turso or Postgres adapter, with backups, instead of local files.
   - ☐ **Vector stores across processes.** Local libSQL vector files are serialised per process only (`withVectorStore`). Concurrent writers from several API processes would miss vectors. Use a server-side vector database, or a single writer, before scaling out.
 - ☐ **Learner progress on the server.** Progress is in browser storage today. Move it server-side if learners switch devices.
@@ -46,7 +47,7 @@ What is still required:
   - per-learner upload quotas and rate limits;
   - malware scanning of accepted files;
   - a separate worker process or sandbox for PDF parsing, so a pathological file cannot stall the API;
-  - per-learner document libraries, because the local library is shared today.
+  - ☑ per-learner document libraries (L62): each learner's library lives in their own partition.
 - ☐ **Sandbox for learner code.** Learner-submitted code never runs in the API process (master rule). Any future remote execution needs an isolated sandbox with no network and with CPU, memory and time limits.
 
 ## 5. Dependencies

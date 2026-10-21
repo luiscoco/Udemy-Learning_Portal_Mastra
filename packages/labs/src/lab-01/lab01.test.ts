@@ -4,12 +4,14 @@ import { join } from 'node:path';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 import { LabRegistry, LabRunner } from '@mlp/lab-engine';
 import { checkModelId } from '@mlp/mastra-runtime';
-import { dataDir, labSourceDir, labsPackageDir } from '../paths.js';
+import { labSourceDir, labsPackageDir } from '../paths.js';
+import { createLabServices } from '../services.js';
 import { agentIdentifiers, renderScaffold } from './scaffold.js';
 import { typecheckProject } from './typecheck.js';
 import { lab01, Lab01InputSchema, nodeSatisfies } from './run.js';
 
-const runner = new LabRunner({ registry: new LabRegistry([lab01]), services: {}, liveEnabled: false });
+const services = createLabServices({ serverMode: 'offline', env: {} });
+const runner = new LabRunner({ registry: new LabRegistry([lab01]), services, liveEnabled: false });
 afterAll(() => runner.dispose());
 
 describe('lab-01 scaffold renderer', () => {
@@ -49,7 +51,7 @@ describe('lab-01 scaffold renderer', () => {
 
 describe('lab-01 build step', () => {
   it('reports compiler diagnostics for a broken project instead of crashing', async () => {
-    const dir = join(dataDir(), 'scaffolds', 'test-broken');
+    const dir = join(services.files('scaffolds'), 'test-broken');
     await mkdir(join(dir, 'src'), { recursive: true });
     await writeFile(
       join(dir, 'tsconfig.json'),
@@ -91,7 +93,7 @@ describe('lab-01 safety', () => {
     const snap = await runner.waitFor(run.runId);
     expect(snap.status).toBe('cancelled');
     // The engine reports 'cancelled' immediately; the lab's finally-block removes the folder right after.
-    await vi.waitFor(() => expect(existsSync(join(dataDir(), 'scaffolds', run.runId))).toBe(false), { timeout: 10_000 });
+    await vi.waitFor(() => expect(existsSync(join(services.files('scaffolds'), run.runId))).toBe(false), { timeout: 10_000 });
   }, 60_000);
 
   it('checks the Node version requirement', () => {
