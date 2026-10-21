@@ -1,5 +1,6 @@
 import { ProgressRecordSchema, type ProgressRecord } from '@mlp/contracts';
 import { z } from 'zod';
+import { claimGuest, GUEST_SCOPE, progressKey } from './storage-scope';
 
 /** Storage adapter for learner progress. Swap implementations (local, remote) without touching UI. */
 export interface ProgressStore {
@@ -8,6 +9,8 @@ export interface ProgressStore {
   save(record: ProgressRecord): void;
   clear(labId?: string): void;
   subscribe(listener: () => void): () => void;
+  /** Switches to another learner's records (browser stores only; see storage-scope.ts). */
+  setScope?(scope: string): void;
 }
 
 abstract class BaseStore implements ProgressStore {
@@ -62,21 +65,42 @@ export class MemoryProgressStore extends BaseStore {
 
 const StoredSchema = z.object({ version: z.literal(1), records: z.record(z.string(), z.unknown()) });
 
-/** Persists progress in localStorage. Invalid or corrupt entries are ignored, never trusted. */
+/**
+ * Persists progress in localStorage under the active learner scope (guest until a session is known).
+ * Invalid or corrupt entries are ignored, never trusted.
+ */
 export class LocalStorageProgressStore extends BaseStore {
   private cache: Record<string, ProgressRecord> | null = null;
+  private key: string;
+  private scope: string;
 
   constructor(
     private readonly storage: Storage = window.localStorage,
-    private readonly key = 'mlp.progress.v1',
+    scope = GUEST_SCOPE,
   ) {
     super();
+    this.scope = scope;
+    this.key = this.keyFor(scope);
     window.addEventListener('storage', (e) => {
       if (e.key === this.key) {
         this.cache = null;
         this.emit();
       }
     });
+  }
+
+  setScope(scope: string) {
+    if (scope === this.scope) return;
+    this.scope = scope;
+    this.key = this.keyFor(scope);
+    this.cache = null;
+    this.emit();
+  }
+
+  private keyFor(scope: string) {
+    const key = progressKey(scope);
+    claimGuest(this.storage, progressKey(GUEST_SCOPE), key);
+    return key;
   }
 
   protected read() {

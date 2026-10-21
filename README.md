@@ -125,6 +125,10 @@ Authentication: starting a run requires a valid session. Snapshots, event stream
 
 Each lab lives in `packages/labs/src/lab-XX/` (`definition.ts`, `run.ts`, `fixtures.ts`, optional `solution.md`), is appended to `allLabs` in `packages/labs/src/index.ts` and marked `available` in `packages/lab-catalog`. The conformance suite (`packages/labs/src/conformance.test.ts`) then enforces the pedagogical contract and runs every fixture offline.
 
+## Build it from zero
+
+[course-prompts/](course-prompts/README.md) contains every prompt used to build this platform: the master rules, F01–F04, L01–L75 and the follow-up prompts the reference build needed, in build order. Students can rebuild the whole platform from an empty folder with a coding assistant, one prompt per change.
+
 ## OpenSpec workflow
 
 Every foundation milestone and lab is an OpenSpec change under `openspec/changes/`, archived into `openspec/specs/` when done. See [AGENTS.md](AGENTS.md) for assistant-specific command spelling (`/opsx:propose` in Claude Code, `$openspec-propose` in Codex, `/opsx-propose` in Copilot).

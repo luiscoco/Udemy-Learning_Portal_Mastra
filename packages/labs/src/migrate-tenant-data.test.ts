@@ -55,4 +55,17 @@ describe('migrate-tenant-data (L62)', () => {
     expect(moved.report.every((r) => r.action === 'moved')).toBe(true);
     expect(existsSync(join(dir, 'comparisons'))).toBe(false);
   });
+
+  it('moves a workflow store together with its sidecar ledger', async () => {
+    const { migrate } = (await import(script)) as { migrate: Migrate };
+    const dir = mkdtempSync(join(tmpdir(), 'mlp-migrate-'));
+    mkdirSync(join(dir, 'memory'));
+    writeFileSync(join(dir, 'memory', 'lab-32-workflows.db'), 'snapshots');
+    writeFileSync(join(dir, 'memory', 'lab-32-ledger.jsonl'), '{"key":"order-1"}\n');
+    writeFileSync(join(dir, 'memory', 'notes.txt'), 'not a store');
+    const { target } = migrate(dir, 'dev:learner');
+    expect(readFileSync(join(target, 'lab-32-ledger.jsonl'), 'utf8')).toBe('{"key":"order-1"}\n');
+    expect(existsSync(join(target, 'lab-32-workflows.db'))).toBe(true);
+    expect(existsSync(join(target, 'notes.txt'))).toBe(false);
+  });
 });

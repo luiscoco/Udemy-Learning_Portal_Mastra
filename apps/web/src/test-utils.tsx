@@ -6,6 +6,7 @@ import { ProgressProvider } from './lib/progress-context';
 import { MemoryProgressStore } from './lib/progress-store';
 import { routes } from './routes';
 import { AuthProvider } from './lib/auth-context';
+import { ProgressScopeSync } from './lib/progress-scope';
 
 export function renderApp(path: string, progress: Record<string, ProgressRecord> = {}) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
@@ -13,6 +14,7 @@ export function renderApp(path: string, progress: Record<string, ProgressRecord>
   const utils = render(
     <ProgressProvider store={store}>
       <AuthProvider>
+        <ProgressScopeSync />
         <RouterProvider router={router} />
       </AuthProvider>
     </ProgressProvider>,

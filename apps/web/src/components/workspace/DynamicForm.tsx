@@ -169,7 +169,8 @@ export function DynamicForm({
   );
 }
 
-const formatBytes = (n: number) => (n >= 1_048_576 ? `${(n / 1_048_576).toFixed(1)} MB` : n >= 1024 ? `${Math.round(n / 1024)} KB` : `${n} B`);
+const formatBytes = (n: number) =>
+  n >= 1_048_576 ? `${(n / 1_048_576).toFixed(1)} MB` : n >= 1024 ? `${Math.round(n / 1024)} KB` : `${n} B`;
 
 function readBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -208,7 +209,8 @@ function FileField({
     const skipped: string[] = [];
     for (const file of Array.from(list ?? [])) {
       if (next.length >= field.maxFiles) skipped.push(`${file.name}: at most ${field.maxFiles} file(s)`);
-      else if (file.size > ceiling) skipped.push(`${file.name}: ${formatBytes(file.size)} is too large to send (limit ${formatBytes(field.maxBytes)})`);
+      else if (file.size > ceiling)
+        skipped.push(`${file.name}: ${formatBytes(file.size)} is too large to send (limit ${formatBytes(field.maxBytes)})`);
       else next.push({ name: file.name, type: file.type, size: file.size, dataBase64: await readBase64(file) });
     }
     setNotes(skipped);
@@ -231,8 +233,8 @@ function FileField({
         className="text-sm text-fg file:mr-3 file:rounded-lg file:border file:border-border-strong file:bg-surface file:px-3 file:py-1.5 file:text-sm"
       />
       <p className="text-xs text-fg-muted">
-        Allowed: {field.accept.join(', ')} · up to {formatBytes(field.maxBytes)} each · at most {field.maxFiles} file(s). The server checks each
-        file’s real content.
+        Allowed: {field.accept.join(', ')} · up to {formatBytes(field.maxBytes)} each · at most {field.maxFiles} file(s). The
+        server checks each file’s real content.
       </p>
       {files.length > 0 ? (
         <ul className="flex flex-col gap-1" aria-label={`Selected files for ${field.label}`}>

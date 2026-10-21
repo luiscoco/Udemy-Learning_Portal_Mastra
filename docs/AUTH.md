@@ -51,13 +51,15 @@ Authentication alone leaves stored data shared: inside one store, `resourceId` a
 
 `apps/api/src/route-classes.ts` classifies every route as `public` (no learner data) or `tenant`. `routes.audit.test.ts` lists the routes Express actually registered (all routers go through `mount()`), fails on any unclassified or stale entry, and checks every tenant route: 401 anonymous, 404 for another learner, success for the owner. `tenancy.test.ts` runs two learners through threads (L21), documents (L36), saved files (L07) and datasets/experiments (L58) and asserts neither sees the other's data.
 
-Data written before L62 sits in the old shared locations and is **not** visible to anyone. Migrate it explicitly to one owner (copies by default, never overwrites):
+Data written before L62 sits in the old shared locations and is **not** visible to anyone. Migrate it explicitly to one owner. The script copies stores (`*.db*`), their sidecar records (`*.jsonl`, such as the L32–L34 ledgers, so a resumed workflow never repeats a recorded side effect), the document library and saved comparisons. It copies by default and never overwrites:
 
 ```sh
 node scripts/migrate-tenant-data.mjs --owner dev:learner --dry-run
 node scripts/migrate-tenant-data.mjs --owner dev:learner        # copy
 node scripts/migrate-tenant-data.mjs --owner dev:learner --move # copy, then delete the legacy source
 ```
+
+**Browser storage.** Lab progress and Source-tab scratch notes are kept in localStorage under a per-learner scope (`apps/web/src/lib/storage-scope.ts`): `guest` when signed out, otherwise `u` plus an FNV-1a hash of the principal id. Signing out switches to guest, so the next learner on a shared browser sees none of the previous learner's data. A learner without data of their own takes over guest data once (including data saved before scoping). This prevents accidental display; it is not a security boundary, because any same-origin script can read localStorage. Server-side progress remains a release gate.
 
 This is an application-level design over Mastra's storage adapters, not a native Mastra multi-tenancy API. It covers the local single-process deployment; a shared remote database needs per-tenant databases or enforced row scoping.
 

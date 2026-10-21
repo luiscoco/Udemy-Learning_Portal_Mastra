@@ -28,7 +28,8 @@ export function plan(dataDir, ownerId) {
   if (existsSync(memory))
     for (const name of readdirSync(memory)) {
       const src = join(memory, name);
-      if (/\.db(-[a-z]+)?$/.test(name) && statSync(src).isFile()) steps.push({ src, dest: join(target, name) });
+      // Stores (*.db, *.db-wal, ...) and their sidecar records (L32–L34 ledgers, *.jsonl) move together.
+      if (/\.(db(-[a-z]+)?|jsonl)$/.test(name) && statSync(src).isFile()) steps.push({ src, dest: join(target, name) });
       if (name === 'library' && statSync(src).isDirectory()) steps.push({ src, dest: join(target, 'library') });
     }
   const comparisons = join(dataDir, 'comparisons');

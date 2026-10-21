@@ -4,11 +4,11 @@ import { fetchSource } from '../../api/runs';
 import { cn } from '../../lib/cn';
 import { copyText, downloadText } from '../../lib/download';
 import { useAsync } from '../../lib/use-async';
+import { useStorageScope } from '../../lib/progress-scope';
+import { claimGuest, GUEST_SCOPE, scratchKey } from '../../lib/storage-scope';
 import { Badge, Button, Skeleton } from '../ui/primitives';
 import { CodeBlock } from './CodeBlock';
 import { Section } from './Section';
-
-const SCRATCH_KEY = (labId: string) => `mlp.scratch.${labId}`;
 
 function FileActions({ file }: { file: SourceFile }) {
   const [copied, setCopied] = useState<'idle' | 'ok' | 'fail'>('idle');
@@ -34,10 +34,18 @@ function FileActions({ file }: { file: SourceFile }) {
   );
 }
 
+/** Remounts per learner scope, so a second learner on this browser never sees the first one's notes. */
 function Scratchpad({ labId }: { labId: string }) {
+  const scope = useStorageScope();
+  return <ScopedScratchpad key={scope} labId={labId} scope={scope} />;
+}
+
+function ScopedScratchpad({ labId, scope }: { labId: string; scope: string }) {
+  const key = scratchKey(scope, labId);
   const [text, setText] = useState(() => {
     try {
-      return localStorage.getItem(SCRATCH_KEY(labId)) ?? '';
+      claimGuest(localStorage, scratchKey(GUEST_SCOPE, labId), key);
+      return localStorage.getItem(key) ?? '';
     } catch {
       return '';
     }
@@ -56,7 +64,7 @@ function Scratchpad({ labId }: { labId: string }) {
         onChange={(e) => {
           setText(e.target.value);
           try {
-            localStorage.setItem(SCRATCH_KEY(labId), e.target.value);
+            localStorage.setItem(key, e.target.value);
           } catch {
             // ignore
           }

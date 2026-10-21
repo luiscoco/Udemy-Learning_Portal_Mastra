@@ -17,7 +17,12 @@ beforeAll(() => {
 
 const text = 'Customers can request a refund within 30 days of delivery. <img src=x onerror=alert(1)>';
 const data: Data = {
-  claims: [{ text: 'You can request a refund within 30 days.', citations: [{ n: 1, sourceId: 'refunds', quote: 'request a refund within 30 days', quoteStart: 14, quoteEnd: 45 }] }],
+  claims: [
+    {
+      text: 'You can request a refund within 30 days.',
+      citations: [{ n: 1, sourceId: 'refunds', quote: 'request a refund within 30 days', quoteStart: 14, quoteEnd: 45 }],
+    },
+  ],
   sources: { refunds: { title: 'support-handbook.md', location: 'support-handbook.md#refunds', text } },
   blocked: [{ text: 'Students get 20% off.', reasons: ['UNKNOWN_SOURCE: kb-9 was not among the provided sources'] }],
   fallback: false,

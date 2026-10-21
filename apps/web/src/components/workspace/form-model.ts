@@ -59,7 +59,8 @@ export function buildInput(fields: InputField[], raw: RawValues): { values: Inpu
     if (f.kind === 'file') {
       const files = Array.isArray(r) ? r : [];
       if (files.length > f.maxFiles) errors[f.name] = `Choose at most ${f.maxFiles} file(s).`;
-      else if (files.length > 0) values[f.name] = files; // sizes and types are judged by the server
+      else if (files.length > 0)
+        values[f.name] = files; // sizes and types are judged by the server
       else if (f.required) errors[f.name] = 'This field is required.';
       continue;
     }
