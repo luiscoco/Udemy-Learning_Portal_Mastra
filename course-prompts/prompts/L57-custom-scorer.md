@@ -1,6 +1,6 @@
 # L57 — Custom scorer
 
-**Module:** 12 Evaluation and Observability · **Step 70 of 91** · **OpenSpec change:** `lab-57-custom-scorer`
+**Module:** 12 Evaluation and Observability · **Step 70 of 92** · **OpenSpec change:** `lab-57-custom-scorer`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

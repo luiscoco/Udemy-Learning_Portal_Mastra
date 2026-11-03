@@ -1,6 +1,6 @@
 # L02 — Explore project architecture
 
-**Module:** 01 Mastra Foundations · **Step 7 of 91** · **OpenSpec change:** `lab-02-explore-project-architecture`
+**Module:** 01 Mastra Foundations · **Step 7 of 92** · **OpenSpec change:** `lab-02-explore-project-architecture`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

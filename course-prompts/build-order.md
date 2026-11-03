@@ -88,10 +88,11 @@ Run the prompts strictly in this order, one per request. Follow-ups are marked.
 | 82 | [L66](prompts/L66-react-client-integration.md) | React client integration | 14 Full-Stack AI Applications | original |
 | 83 | [L67](prompts/L67-streaming-chat-ui.md) | Streaming chat UI | 14 Full-Stack AI Applications | original |
 | 84 | [L68](prompts/L68-workflow-visualizer.md) | Workflow visualizer | 14 Full-Stack AI Applications | original |
-| 85 | [L69](prompts/L69-voice-assistant.md) | Voice assistant | 14 Full-Stack AI Applications | original |
-| 86 | [L70](prompts/L70-interactive-agent-workspace.md) | Interactive agent workspace | 14 Full-Stack AI Applications | original |
-| 87 | [L71](prompts/L71-durable-production-persistence.md) | Durable production persistence | 15 Production and Capstone | original |
-| 88 | [L72](prompts/L72-configuration-and-packaging.md) | Configuration and packaging | 15 Production and Capstone | original |
-| 89 | [L73](prompts/L73-deploy-application.md) | Deploy application | 15 Production and Capstone | original |
-| 90 | [L74](prompts/L74-production-regression-suite.md) | Production regression suite | 15 Production and Capstone | original |
-| 91 | [L75](prompts/L75-enterprise-ai-assistant-capstone.md) | Enterprise AI Assistant capstone | 15 Production and Capstone | original |
+| 85 | [L68a](prompts/L68a-a-real-model-step-in-the-visualized-workflow.md) | A real model step in the visualized workflow | 14 Full-Stack AI Applications | **follow-up** |
+| 86 | [L69](prompts/L69-voice-assistant.md) | Voice assistant | 14 Full-Stack AI Applications | original |
+| 87 | [L70](prompts/L70-interactive-agent-workspace.md) | Interactive agent workspace | 14 Full-Stack AI Applications | original |
+| 88 | [L71](prompts/L71-durable-production-persistence.md) | Durable production persistence | 15 Production and Capstone | original |
+| 89 | [L72](prompts/L72-configuration-and-packaging.md) | Configuration and packaging | 15 Production and Capstone | original |
+| 90 | [L73](prompts/L73-deploy-application.md) | Deploy application | 15 Production and Capstone | original |
+| 91 | [L74](prompts/L74-production-regression-suite.md) | Production regression suite | 15 Production and Capstone | original |
+| 92 | [L75](prompts/L75-enterprise-ai-assistant-capstone.md) | Enterprise AI Assistant capstone | 15 Production and Capstone | original |

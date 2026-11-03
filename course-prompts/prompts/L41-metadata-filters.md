@@ -1,6 +1,6 @@
 # L41 — Metadata filters
 
-**Module:** 09 Advanced RAG · **Step 54 of 91** · **OpenSpec change:** `lab-41-metadata-filters`
+**Module:** 09 Advanced RAG · **Step 54 of 92** · **OpenSpec change:** `lab-41-metadata-filters`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

@@ -1,6 +1,6 @@
 # L06b — Actionable model provider errors
 
-**Module:** 02 Agent Generation and Streaming · **Step 13 of 91** · **OpenSpec change:** `fix-provider-error-mapping`
+**Module:** 02 Agent Generation and Streaming · **Step 13 of 92** · **OpenSpec change:** `fix-provider-error-mapping`
 
 Follow-up prompt added from the reference build: a change the platform needed that the original prompts did not ask for. Run it in this position. Paste the copy-ready prompt below as one request to your coding assistant.
 

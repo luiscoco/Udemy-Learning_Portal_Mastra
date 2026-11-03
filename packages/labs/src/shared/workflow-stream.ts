@@ -32,7 +32,18 @@ export interface WorkflowRunResult<T = unknown> {
   iterations: IterationTrace[];
   /** Mastra's own per-step record (status, output, startedAt/endedAt epoch ms): measured, not estimated. */
   stepRecords: Record<string, { status?: string; output?: unknown; startedAt?: number; endedAt?: number }>;
+  /** Agent steps (createStep(agent)): what model really ran and what it streamed (L68). */
+  agentSteps: AgentStepTrace[];
   error?: string;
+}
+
+export interface AgentStepTrace {
+  /** Mastra's stepName (the agent id), without nested-workflow prefixes. */
+  stepName: string;
+  modelId?: string;
+  provider?: string;
+  text: string;
+  tokens: number;
 }
 
 /** Minimal structural view of a Mastra workflow run (createRun() result). */
@@ -61,6 +72,7 @@ export async function streamWorkflow<T = unknown>(
   const startInputs = new Map<string, unknown>();
   const steps: StepTrace[] = [];
   const iterations: IterationTrace[] = [];
+  const agentSteps: AgentStepTrace[] = [];
   const t0 = Date.now();
   try {
     const stream = run.stream({ inputData });
@@ -117,8 +129,31 @@ export async function streamWorkflow<T = unknown>(
             workflowId,
             stepId: `${id}[${index}]`,
             status: status === 'success' ? 'success' : 'failed',
-            output: { ...(status === 'success' ? { item: p.iterationOutput } : {}), progress: `${it.completedCount}/${it.totalCount}` },
+            output: {
+              ...(status === 'success' ? { item: p.iterationOutput } : {}),
+              progress: `${it.completedCount}/${it.totalCount}`,
+            },
           });
+          break;
+        }
+        case 'workflow-step-output': {
+          // An agent step forwards its own stream: tokens go to Live output; step-start names the model.
+          const out = (p.output ?? {}) as { from?: string; type?: string; payload?: Record<string, unknown> };
+          if (out.from !== 'AGENT') break;
+          const name = String(p.stepName ?? '');
+          let trace = agentSteps.find((a) => a.stepName === name);
+          if (!trace) agentSteps.push((trace = { stepName: name, text: '', tokens: 0 }));
+          if (out.type === 'text-delta') {
+            const delta = String(out.payload?.text ?? '');
+            if (delta) {
+              trace.text += delta;
+              trace.tokens += 1;
+              ctx.emit({ type: 'token', text: delta });
+            }
+          } else if (out.type === 'step-start') {
+            if (out.payload?.modelId) trace.modelId = String(out.payload.modelId);
+            if (out.payload?.provider) trace.provider = String(out.payload.provider);
+          }
           break;
         }
         case 'workflow-finish': {
@@ -152,6 +187,7 @@ export async function streamWorkflow<T = unknown>(
       steps,
       iterations,
       stepRecords: stepRecords as WorkflowRunResult['stepRecords'],
+      agentSteps,
       ...(final.error
         ? { error: typeof final.error === 'string' ? final.error : String(final.error.message ?? final.error) }
         : {}),

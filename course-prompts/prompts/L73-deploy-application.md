@@ -1,6 +1,6 @@
 # L73 — Deploy application
 
-**Module:** 15 Production and Capstone · **Step 89 of 91** · **OpenSpec change:** `lab-73-deploy-application`
+**Module:** 15 Production and Capstone · **Step 90 of 92** · **OpenSpec change:** `lab-73-deploy-application`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

@@ -1,6 +1,6 @@
 # L50 — Multi-server MCP agent
 
-**Module:** 10 Model Context Protocol · **Step 63 of 91** · **OpenSpec change:** `lab-50-multi-server-mcp-agent`
+**Module:** 10 Model Context Protocol · **Step 63 of 92** · **OpenSpec change:** `lab-50-multi-server-mcp-agent`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

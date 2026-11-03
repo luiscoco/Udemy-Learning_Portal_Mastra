@@ -45,6 +45,8 @@ describe('Lab 68', () => {
       'packItem',
       'shipping',
       'shipping.bookCourier',
+      'shipping.prepareEmail',
+      'shipping.emailWriter',
       'shipping.notifyCustomer',
     ]);
     expect(out.statuses).toMatchObject({
@@ -53,7 +55,15 @@ describe('Lab 68', () => {
       packItem: 'success',
       'shipping.notifyCustomer': 'success',
     });
-    expect(Object.values(out.statuses).filter((s) => s === 'success')).toHaveLength(10);
+    expect(Object.values(out.statuses).filter((s) => s === 'success')).toHaveLength(12);
+    // The model step: tokens streamed into Live output equal the draft it produced, which quotes the tracking id.
+    const tokens = events.flatMap((e) => (e.type === 'token' ? [e.text] : [])).join('');
+    expect(out.agentSteps).toHaveLength(1);
+    expect(out.agentSteps[0]).toMatchObject({ nodeId: 'shipping.emailWriter', provider: 'offline-sim' });
+    expect(out.agentSteps[0]!.text).toBe(tokens);
+    expect(tokens).toContain('TRK-5521');
+    expect(out.graph!.nodes.find((n) => n.id === 'shipping.emailWriter')?.kind).toBe('step');
+    expect(out.simulated).toBe(true);
     // Every graph node id is a step id the stream actually used (or a skipped alternative).
     const streamed = new Set(events.flatMap((e) => (e.type === 'workflow-step' ? [e.stepId.replace(/\[\d+\]$/, '')] : [])));
     for (const n of out.graph!.nodes) expect(streamed.has(n.id) || out.statuses[n.id] === 'skipped').toBe(true);
@@ -74,6 +84,14 @@ describe('Lab 68', () => {
     expect(fraud.out.workflowStatus).toBe('failed');
     const nested = await run({ failStep: 'bookCourier' });
     expect(nested.result?.validation?.passed).toBe(true);
+    const writer = await run({ failStep: 'emailWriter' });
+    expect(writer.result?.validation?.passed).toBe(true);
+    expect(writer.out.statuses).toMatchObject({
+      'shipping.prepareEmail': 'success',
+      'shipping.emailWriter': 'failed',
+      'shipping.notifyCustomer': 'not-reached',
+    });
+    expect(writer.out.agentSteps.every((a) => !a.text)).toBe(true);
     expect(nested.out.statuses).toMatchObject({
       packItem: 'success',
       'shipping.bookCourier': 'failed',

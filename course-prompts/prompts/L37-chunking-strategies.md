@@ -1,6 +1,6 @@
 # L37 — Chunking strategies
 
-**Module:** 08 RAG and Knowledge Systems · **Step 49 of 91** · **OpenSpec change:** `lab-37-chunking-strategies`
+**Module:** 08 RAG and Knowledge Systems · **Step 49 of 92** · **OpenSpec change:** `lab-37-chunking-strategies`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

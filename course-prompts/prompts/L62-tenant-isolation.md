@@ -1,6 +1,6 @@
 # L62 — Tenant isolation
 
-**Module:** 13 Security and Reliability · **Step 75 of 91** · **OpenSpec change:** `lab-62-tenant-isolation`
+**Module:** 13 Security and Reliability · **Step 75 of 92** · **OpenSpec change:** `lab-62-tenant-isolation`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

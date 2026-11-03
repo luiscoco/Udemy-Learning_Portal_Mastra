@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Agent } from '@mastra/core/agent';
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 
 export const ROLES = ['learner', 'supervisor'] as const;
@@ -44,19 +45,46 @@ function step<O extends z.ZodTypeAny>(
 
 const Ok = z.object({ ok: z.boolean() });
 
-function orderFulfilment(init: RunInput) {
+export const TRACKING_ID = 'TRK-5521';
+export const WRITER_INSTRUCTIONS =
+  'You write the body of a shipping notification email in two short sentences. ' +
+  'Mention the tracking id exactly as given. Do not use placeholders such as [Name].';
+
+/**
+ * The real model step (L68 live scenario): a Mastra agent run as a native workflow step via createStep(agent).
+ * It takes { prompt } and returns { text }; its tokens stream through the workflow as AGENT output chunks.
+ */
+function emailWriter(model: unknown) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return new Agent({ id: 'emailWriter', name: 'Email writer', instructions: WRITER_INSTRUCTIONS, model: model as any });
+}
+
+function orderFulfilment(init: RunInput, model: unknown) {
   const shipping = createWorkflow({
     id: 'shipping',
-    description: 'Book a courier and tell the customer.',
+    description: 'Book a courier, draft the email with a model, and send it.',
     inputSchema: z.any(),
     outputSchema: z.any(),
   })
     .then(
       step(init, 'bookCourier', 'Books a courier for the parcel.', z.object({ trackingId: z.string() }), () => ({
-        trackingId: 'TRK-5521',
+        trackingId: TRACKING_ID,
       })),
     )
-    .then(step(init, 'notifyCustomer', 'Emails the tracking id.', Ok, () => ({ ok: true })))
+    .then(
+      step(init, 'prepareEmail', 'Builds the prompt for the email writer.', z.object({ prompt: z.string() }), (i, input) => ({
+        prompt:
+          `Tracking id: ${(input as { trackingId?: string }).trackingId ?? TRACKING_ID}. ` +
+          `Order value: €${i.orderValue}, ${i.items} item${i.items === 1 ? '' : 's'}. Write the shipping notification.`,
+      })),
+    )
+    .then(createStep(emailWriter(model)))
+    .then(
+      step(init, 'notifyCustomer', 'Sends the drafted email.', z.object({ ok: z.boolean(), email: z.string() }), (_i, input) => ({
+        ok: true,
+        email: String((input as { text?: string }).text ?? ''),
+      })),
+    )
     .commit();
   return createWorkflow({
     id: 'order-fulfilment',
@@ -93,7 +121,7 @@ function orderFulfilment(init: RunInput) {
     .commit();
 }
 
-function refundOverride(init: RunInput) {
+function refundOverride(init: RunInput, _model?: unknown) {
   return createWorkflow({
     id: 'refund-override',
     description: 'Override a refund decision.',
@@ -105,7 +133,7 @@ function refundOverride(init: RunInput) {
     .commit();
 }
 
-function payrollExport(init: RunInput) {
+function payrollExport(init: RunInput, _model?: unknown) {
   return createWorkflow({
     id: 'payroll-export',
     description: 'Export payroll data.',

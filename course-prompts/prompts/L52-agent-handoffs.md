@@ -1,6 +1,6 @@
 # L52 — Agent handoffs
 
-**Module:** 11 Multi-Agent Architectures · **Step 65 of 91** · **OpenSpec change:** `lab-52-agent-handoffs`
+**Module:** 11 Multi-Agent Architectures · **Step 65 of 92** · **OpenSpec change:** `lab-52-agent-handoffs`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

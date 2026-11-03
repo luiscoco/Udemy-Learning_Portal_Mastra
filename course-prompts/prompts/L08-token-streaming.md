@@ -1,6 +1,6 @@
 # L08 — Token streaming
 
-**Module:** 02 Agent Generation and Streaming · **Step 16 of 91** · **OpenSpec change:** `lab-08-token-streaming`
+**Module:** 02 Agent Generation and Streaming · **Step 16 of 92** · **OpenSpec change:** `lab-08-token-streaming`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

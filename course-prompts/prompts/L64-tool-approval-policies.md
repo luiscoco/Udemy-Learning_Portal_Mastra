@@ -1,6 +1,6 @@
 # L64 — Tool approval policies
 
-**Module:** 13 Security and Reliability · **Step 79 of 91** · **OpenSpec change:** `lab-64-tool-approval-policies`
+**Module:** 13 Security and Reliability · **Step 79 of 92** · **OpenSpec change:** `lab-64-tool-approval-policies`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

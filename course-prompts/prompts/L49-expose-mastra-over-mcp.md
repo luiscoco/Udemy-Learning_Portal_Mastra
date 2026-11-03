@@ -1,6 +1,6 @@
 # L49 — Expose Mastra over MCP
 
-**Module:** 10 Model Context Protocol · **Step 62 of 91** · **OpenSpec change:** `lab-49-expose-mastra-over-mcp`
+**Module:** 10 Model Context Protocol · **Step 62 of 92** · **OpenSpec change:** `lab-49-expose-mastra-over-mcp`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

@@ -19,6 +19,9 @@ test('lab-68: live workflow graph with real statuses; a hidden workflow reveals 
   await expect(node('autoApprove')).toHaveAttribute('data-status', 'success');
   await expect(node('managerReview')).toHaveAttribute('data-status', 'skipped');
   await expect(node('shipping.notifyCustomer')).toHaveAttribute('data-status', 'success');
+  // The model step: its node succeeded and its drafted email streamed into Live output.
+  await expect(node('shipping.emailWriter')).toHaveAttribute('data-status', 'success');
+  await expect(page.getByTestId('token-output')).toContainText('TRK-5521');
   await expect(page.getByTestId('visible-workflows')).toHaveText('Workflows you can see: Order fulfilment');
 
   const results = await new AxeBuilder({ page })

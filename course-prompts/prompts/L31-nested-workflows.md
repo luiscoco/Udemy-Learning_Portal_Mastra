@@ -1,6 +1,6 @@
 # L31 — Nested workflows
 
-**Module:** 07 Advanced Workflows · **Step 43 of 91** · **OpenSpec change:** `lab-31-nested-workflows`
+**Module:** 07 Advanced Workflows · **Step 43 of 92** · **OpenSpec change:** `lab-31-nested-workflows`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

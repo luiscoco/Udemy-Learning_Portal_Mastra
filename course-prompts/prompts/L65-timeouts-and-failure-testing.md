@@ -1,6 +1,6 @@
 # L65 — Timeouts and failure testing
 
-**Module:** 13 Security and Reliability · **Step 81 of 91** · **OpenSpec change:** `lab-65-timeouts-and-failure-testing`
+**Module:** 13 Security and Reliability · **Step 81 of 92** · **OpenSpec change:** `lab-65-timeouts-and-failure-testing`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

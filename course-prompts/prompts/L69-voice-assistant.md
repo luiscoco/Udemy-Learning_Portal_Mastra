@@ -1,10 +1,10 @@
 # L69 — Voice assistant
 
-**Module:** 14 Full-Stack AI Applications · **Step 85 of 91** · **OpenSpec change:** `lab-69-voice-assistant`
+**Module:** 14 Full-Stack AI Applications · **Step 86 of 92** · **OpenSpec change:** `lab-69-voice-assistant`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 
-Previous: [L68](L68-workflow-visualizer.md) · Next: [L70](L70-interactive-agent-workspace.md)
+Previous: [L68a](L68a-a-real-model-step-in-the-visualized-workflow.md) · Next: [L70](L70-interactive-agent-workspace.md)
 
 ## Copy-ready prompt
 

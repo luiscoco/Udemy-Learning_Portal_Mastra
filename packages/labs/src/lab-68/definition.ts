@@ -1,4 +1,5 @@
 import type { LabDefinitionInput } from '@mlp/contracts';
+import { DEFAULT_LIVE_MODELS } from '@mlp/mastra-runtime';
 
 export const lab68Definition = {
   id: 'lab-68',
@@ -15,7 +16,8 @@ export const lab68Definition = {
     'A branch that is not taken never starts, so it is shown as skipped, and steps after a failure are shown as not reached rather than pretending to be pending. ' +
     'The graph is read-only: it shows the run and cannot change it. ' +
     'Visibility is checked on the server: a workflow your role may not see is not listed, and asking for it gets exactly the same answer as a workflow that does not exist, so its name and steps never leak. ' +
-    'All steps here simulate business logic offline, so you can slow them down and make any of them fail.',
+    'One step is a real model: the nested shipping workflow runs a Mastra agent as a native step, createStep(agent), to draft the customer email, and its tokens stream into Live output while its node is running. ' +
+    'The other steps simulate business logic, so you can slow them down and make any of them fail; offline, a scripted model drafts the email.',
   objectives: [
     'Build a workflow graph from Mastra’s serialized step graph instead of by hand',
     'Map live workflow-step events onto graph nodes by step id',
@@ -66,6 +68,7 @@ export const lab68Definition = {
         { value: 'checkFraud', label: 'checkFraud' },
         { value: 'packItem', label: 'packItem' },
         { value: 'bookCourier', label: 'bookCourier (nested)' },
+        { value: 'emailWriter', label: 'emailWriter (the model step)' },
       ],
     },
     {
@@ -79,6 +82,14 @@ export const lab68Definition = {
       required: true,
       help: 'Slow the run down to watch the graph change.',
     },
+    {
+      kind: 'select',
+      name: 'modelId',
+      label: 'Model for the email step',
+      default: 'openai/gpt-5-mini',
+      options: DEFAULT_LIVE_MODELS.map((id) => ({ value: id, label: id })),
+      help: 'Used in live mode. Offline, a scripted model drafts the email.',
+    },
   ],
   exampleInput: {
     role: 'learner',
@@ -87,10 +98,11 @@ export const lab68Definition = {
     items: 3,
     failStep: 'none',
     stepDelayMs: 150,
+    modelId: 'openai/gpt-5-mini',
   },
   expectedOutput: {
     description:
-      'The graph has 13 nodes: validation, two parallel checks, a decision, two branch alternatives, item listing, packing per item, and the nested shipping workflow with two steps. autoApprove succeeds and managerReview is skipped; everything else succeeds. Only order-fulfilment is listed for a learner.',
+      'The graph has 13 nodes: validation, two parallel checks, a decision, two branch alternatives, item listing, packing per item, and the nested shipping workflow (header, bookCourier, prepareEmail, the emailWriter model step, notifyCustomer). autoApprove succeeds and managerReview is skipped; everything else succeeds, and the drafted email streams into Live output and mentions TRK-5521. Only order-fulfilment is listed for a learner.',
     example: {
       role: 'learner',
       visible: [{ id: 'order-fulfilment', title: 'Order fulfilment' }],
@@ -106,6 +118,7 @@ export const lab68Definition = {
       'Make checkFraud fail: it turns red, and everything after it shows as not reached.',
       'Set the workflow id to refund-override as a learner: the answer is the same as for “no-such-workflow”. Switch the role to supervisor and try again.',
       'Try payroll-export with both roles: nobody in this lab may see it.',
+      'Switch to live mode: watch the emailWriter node run while the real model’s draft streams into Live output; then make emailWriter fail and see notifyCustomer not reached.',
       'Open workflow-graph.ts in Source and find how each serializedStepGraph entry type becomes nodes and edges.',
     ],
     prediction: 'If you drew the graph by hand in the UI, what would happen the day someone adds a step to the workflow?',
@@ -207,6 +220,7 @@ export const lab68Definition = {
     { id: 'branch-reflected', label: 'Exactly one branch ran; the other is shown as skipped' },
     { id: 'failure-reflected', label: 'A failing step shows as failed, and the steps after it as not reached' },
     { id: 'live-order', label: 'Each step was shown running before its result' },
+    { id: 'agent-step-reflected', label: 'The model step shows its real status, and its streamed draft is what it produced' },
     { id: 'hidden-indistinguishable', label: 'Only the workflows your role may see are listed' },
   ],
   instructorOutline: {
@@ -224,11 +238,12 @@ export const lab68Definition = {
     ],
   },
   execution: {
-    modes: ['offline'],
+    modes: ['offline', 'live'],
     defaultTimeoutMs: 30_000,
     maxTimeoutMs: 60_000,
     budget: {},
-    costNotice: 'Free: real Mastra workflows whose steps simulate business logic offline. No model is called.',
+    costNotice:
+      'Offline is free. In live mode one step calls your configured model once to draft a short email, usually well under a cent; the emailWriter fault fails before the provider is called.',
   },
   tags: ['workflows', 'visualization', 'dag', 'authorization'],
 } satisfies LabDefinitionInput;

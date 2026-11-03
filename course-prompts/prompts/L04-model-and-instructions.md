@@ -1,6 +1,6 @@
 # L04 — Model and instructions
 
-**Module:** 01 Mastra Foundations · **Step 9 of 91** · **OpenSpec change:** `lab-04-model-and-instructions`
+**Module:** 01 Mastra Foundations · **Step 9 of 92** · **OpenSpec change:** `lab-04-model-and-instructions`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

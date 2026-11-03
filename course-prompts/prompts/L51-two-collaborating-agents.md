@@ -1,6 +1,6 @@
 # L51 — Two collaborating agents
 
-**Module:** 11 Multi-Agent Architectures · **Step 64 of 91** · **OpenSpec change:** `lab-51-two-collaborating-agents`
+**Module:** 11 Multi-Agent Architectures · **Step 64 of 92** · **OpenSpec change:** `lab-51-two-collaborating-agents`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

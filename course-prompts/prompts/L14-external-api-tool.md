@@ -1,6 +1,6 @@
 # L14 — External API tool
 
-**Module:** 03 Tools and Function Calling · **Step 22 of 91** · **OpenSpec change:** `lab-14-external-api-tool`
+**Module:** 03 Tools and Function Calling · **Step 22 of 92** · **OpenSpec change:** `lab-14-external-api-tool`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

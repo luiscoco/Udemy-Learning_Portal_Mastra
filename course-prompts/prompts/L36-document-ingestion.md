@@ -1,6 +1,6 @@
 # L36 — Document ingestion
 
-**Module:** 08 RAG and Knowledge Systems · **Step 48 of 91** · **OpenSpec change:** `lab-36-document-ingestion`
+**Module:** 08 RAG and Knowledge Systems · **Step 48 of 92** · **OpenSpec change:** `lab-36-document-ingestion`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

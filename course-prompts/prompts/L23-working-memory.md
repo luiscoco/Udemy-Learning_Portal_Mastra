@@ -1,6 +1,6 @@
 # L23 — Working memory
 
-**Module:** 05 Conversational Memory · **Step 34 of 91** · **OpenSpec change:** `lab-23-working-memory`
+**Module:** 05 Conversational Memory · **Step 34 of 92** · **OpenSpec change:** `lab-23-working-memory`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

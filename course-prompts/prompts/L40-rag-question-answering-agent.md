@@ -1,6 +1,6 @@
 # L40 — RAG question-answering agent
 
-**Module:** 08 RAG and Knowledge Systems · **Step 53 of 91** · **OpenSpec change:** `lab-40-rag-question-answering-agent`
+**Module:** 08 RAG and Knowledge Systems · **Step 53 of 92** · **OpenSpec change:** `lab-40-rag-question-answering-agent`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

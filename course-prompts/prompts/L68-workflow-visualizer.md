@@ -1,10 +1,10 @@
 # L68 — Workflow visualizer
 
-**Module:** 14 Full-Stack AI Applications · **Step 84 of 91** · **OpenSpec change:** `lab-68-workflow-visualizer`
+**Module:** 14 Full-Stack AI Applications · **Step 84 of 92** · **OpenSpec change:** `lab-68-workflow-visualizer`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 
-Previous: [L67](L67-streaming-chat-ui.md) · Next: [L69](L69-voice-assistant.md)
+Previous: [L67](L67-streaming-chat-ui.md) · Next: [L68a](L68a-a-real-model-step-in-the-visualized-workflow.md)
 
 ## Copy-ready prompt
 

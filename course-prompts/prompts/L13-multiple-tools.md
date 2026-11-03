@@ -1,6 +1,6 @@
 # L13 — Multiple tools
 
-**Module:** 03 Tools and Function Calling · **Step 21 of 91** · **OpenSpec change:** `lab-13-multiple-tools`
+**Module:** 03 Tools and Function Calling · **Step 21 of 92** · **OpenSpec change:** `lab-13-multiple-tools`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

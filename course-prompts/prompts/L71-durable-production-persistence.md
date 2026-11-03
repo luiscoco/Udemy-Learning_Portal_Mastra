@@ -1,6 +1,6 @@
 # L71 — Durable production persistence
 
-**Module:** 15 Production and Capstone · **Step 87 of 91** · **OpenSpec change:** `lab-71-durable-production-persistence`
+**Module:** 15 Production and Capstone · **Step 88 of 92** · **OpenSpec change:** `lab-71-durable-production-persistence`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

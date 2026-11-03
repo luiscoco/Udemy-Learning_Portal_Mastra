@@ -1,6 +1,6 @@
 # L01 — Create a Mastra project
 
-**Module:** 01 Mastra Foundations · **Step 6 of 91** · **OpenSpec change:** `lab-01-create-a-mastra-project`
+**Module:** 01 Mastra Foundations · **Step 6 of 92** · **OpenSpec change:** `lab-01-create-a-mastra-project`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

@@ -1,6 +1,6 @@
 # L07a — Outgoing secret check
 
-**Module:** 02 Agent Generation and Streaming · **Step 15 of 91** · **OpenSpec change:** `chore-outgoing-secret-check`
+**Module:** 02 Agent Generation and Streaming · **Step 15 of 92** · **OpenSpec change:** `chore-outgoing-secret-check`
 
 Follow-up prompt added from the reference build: a change the platform needed that the original prompts did not ask for. Run it in this position. Paste the copy-ready prompt below as one request to your coding assistant.
 

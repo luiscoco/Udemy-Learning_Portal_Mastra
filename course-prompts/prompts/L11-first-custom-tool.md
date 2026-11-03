@@ -1,6 +1,6 @@
 # L11 — First custom tool
 
-**Module:** 03 Tools and Function Calling · **Step 19 of 91** · **OpenSpec change:** `lab-11-first-custom-tool`
+**Module:** 03 Tools and Function Calling · **Step 19 of 92** · **OpenSpec change:** `lab-11-first-custom-tool`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

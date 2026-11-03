@@ -1,6 +1,6 @@
 # L24 — Semantic recall
 
-**Module:** 05 Conversational Memory · **Step 35 of 91** · **OpenSpec change:** `lab-24-semantic-recall`
+**Module:** 05 Conversational Memory · **Step 35 of 92** · **OpenSpec change:** `lab-24-semantic-recall`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

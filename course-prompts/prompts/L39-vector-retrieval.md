@@ -1,6 +1,6 @@
 # L39 — Vector retrieval
 
-**Module:** 08 RAG and Knowledge Systems · **Step 52 of 91** · **OpenSpec change:** `lab-39-vector-retrieval`
+**Module:** 08 RAG and Knowledge Systems · **Step 52 of 92** · **OpenSpec change:** `lab-39-vector-retrieval`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 
