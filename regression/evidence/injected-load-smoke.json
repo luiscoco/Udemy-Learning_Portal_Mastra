@@ -27,9 +27,7 @@
         "healthP95Ms": 100,
         "runP95Ms": 5000
       },
-      "findings": [
-        "health p95 412 ms > 100 ms"
-      ],
+      "findings": ["health p95 412 ms > 100 ms"],
       "injected": true,
       "durationMs": 1983
     }

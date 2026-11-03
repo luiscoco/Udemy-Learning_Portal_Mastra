@@ -22,10 +22,7 @@
         "maxCritical": 0,
         "minPages": 150
       },
-      "findings": [
-        "serious color-contrast on /labs/injected (1 node(s))",
-        "1 serious violation(s) > 0"
-      ],
+      "findings": ["serious color-contrast on /labs/injected (1 node(s))", "1 serious violation(s) > 0"],
       "injected": true,
       "durationMs": 321773
     }

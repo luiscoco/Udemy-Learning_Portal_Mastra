@@ -19,10 +19,7 @@
         "httpChecks": "8/8"
       },
       "thresholds": {
-        "failOn": [
-          "high",
-          "critical"
-        ],
+        "failOn": ["high", "critical"],
         "allowlist": [
           "GHSA-f897-62hf-6gxq until 2026-12-31",
           "GHSA-jm63-cq47-j5jp until 2026-12-31",

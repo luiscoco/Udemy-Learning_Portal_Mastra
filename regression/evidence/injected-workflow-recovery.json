@@ -13,21 +13,12 @@
       "metrics": {
         "tests": 3,
         "passed": 2,
-        "durationsMs": [
-          6924,
-          11479,
-          0
-        ]
+        "durationsMs": [6924, 11479, 0]
       },
       "thresholds": {
-        "requiredFiles": [
-          "packages/labs/src/lab-32/lab32.restart.test.ts",
-          "packages/labs/src/lab-71/lab71.restart.test.ts"
-        ]
+        "requiredFiles": ["packages/labs/src/lab-32/lab32.restart.test.ts", "packages/labs/src/lab-71/lab71.restart.test.ts"]
       },
-      "findings": [
-        "injected: resume re-ran a side effect: failed"
-      ],
+      "findings": ["injected: resume re-ran a side effect: failed"],
       "injected": true,
       "durationMs": 14407
     }

@@ -1,7 +1,7 @@
 {
-  "commit": "5a8721409f5e",
-  "dirty": true,
-  "at": "2026-11-03T16:36:54.741Z",
+  "commit": "0f276ea535d8",
+  "dirty": false,
+  "at": "2026-11-03T16:55:08.911Z",
   "node": "v24.14.1",
   "platform": "win32",
   "injected": null,
@@ -19,10 +19,7 @@
         "httpChecks": "8/8"
       },
       "thresholds": {
-        "failOn": [
-          "high",
-          "critical"
-        ],
+        "failOn": ["high", "critical"],
         "allowlist": [
           "GHSA-f897-62hf-6gxq until 2026-12-31",
           "GHSA-jm63-cq47-j5jp until 2026-12-31",
@@ -33,19 +30,19 @@
         ]
       },
       "findings": [],
-      "durationMs": 2173
+      "durationMs": 4046
     },
     {
       "gate": "load-smoke",
       "status": "pass",
       "metrics": {
         "healthRequests": 300,
-        "healthP50Ms": 4,
-        "healthP95Ms": 9,
+        "healthP50Ms": 9,
+        "healthP95Ms": 22,
         "runsStarted": 24,
         "runsCompleted": 24,
-        "overloadRejections429": 34,
-        "runP95Ms": 1862
+        "overloadRejections429": 33,
+        "runP95Ms": 1739
       },
       "thresholds": {
         "healthRequests": 300,
@@ -56,7 +53,7 @@
         "runP95Ms": 5000
       },
       "findings": [],
-      "durationMs": 1971
+      "durationMs": 2067
     },
     {
       "gate": "eval-regression",
@@ -71,7 +68,7 @@
         "passRateTolerance": 0
       },
       "findings": [],
-      "durationMs": 604
+      "durationMs": 635
     },
     {
       "gate": "tracing",
@@ -85,7 +82,7 @@
         "baselineSpans": 34
       },
       "findings": [],
-      "durationMs": 604
+      "durationMs": 635
     },
     {
       "gate": "workflow-recovery",
@@ -93,19 +90,13 @@
       "metrics": {
         "tests": 2,
         "passed": 2,
-        "durationsMs": [
-          5138,
-          9879
-        ]
+        "durationsMs": [8411, 14504]
       },
       "thresholds": {
-        "requiredFiles": [
-          "packages/labs/src/lab-32/lab32.restart.test.ts",
-          "packages/labs/src/lab-71/lab71.restart.test.ts"
-        ]
+        "requiredFiles": ["packages/labs/src/lab-32/lab32.restart.test.ts", "packages/labs/src/lab-71/lab71.restart.test.ts"]
       },
       "findings": [],
-      "durationMs": 11974
+      "durationMs": 18376
     },
     {
       "gate": "accessibility",
@@ -123,7 +114,7 @@
         "minPages": 150
       },
       "findings": [],
-      "durationMs": 199204
+      "durationMs": 279419
     }
   ]
 }

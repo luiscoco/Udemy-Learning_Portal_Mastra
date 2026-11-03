@@ -19,9 +19,7 @@
         "baselinePassRate": 0.75,
         "passRateTolerance": 0
       },
-      "findings": [
-        "golden fixture \"reference answer\" regressed: injected: score changed"
-      ],
+      "findings": ["golden fixture \"reference answer\" regressed: injected: score changed"],
       "injected": true,
       "durationMs": 1004
     }
