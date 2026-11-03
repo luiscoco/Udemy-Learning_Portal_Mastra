@@ -6,9 +6,12 @@
 FROM node:24-bookworm-slim AS build
 WORKDIR /app
 # Whole workspace: every package.json is needed for npm ci, and the lab sources are read at run time
-# (Source tab). .dockerignore keeps .env, .data, node_modules and test output out of the context.
+# (Source tab). .dockerignore keeps .env, .data, node_modules and test output out of the context, and
+# npm run deploy:azure builds from a git archive of the commit (tracked files only).
 COPY . .
-RUN npm ci --no-audit --no-fund \
+# Defence in depth: local secrets and data must never end up in an image, whatever the build context was.
+RUN rm -rf secrets .data .env .env.local \
+ && npm ci --no-audit --no-fund \
  && npm run build \
  && npm prune --omit=dev --no-audit --no-fund \
  && rm -rf e2e test-results playwright-report course-prompts openspec .github

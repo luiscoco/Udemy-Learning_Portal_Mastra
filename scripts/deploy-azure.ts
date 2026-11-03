@@ -1,12 +1,24 @@
 // Repeatable staging deployment to Azure Container Apps (L73). Idempotent: run it again to deploy a new commit.
 //   npm run deploy:azure                    build the current commit in ACR and roll it out
 //   npm run deploy:azure -- --rollback      run the previous release's image again
-//   options: --rg mlp-staging-rg --location westeurope --app mlp-staging --allow-dirty
-// Needs: Azure CLI signed in (az login). No local Docker: the image is built by `az acr build`.
+//   options: --rg mlp-staging-rg --location northeurope --app mlp-staging --allow-dirty
+// Needs: Azure CLI signed in (az login). No local Docker: the image is built by `az acr build` from a
+// `git archive` of HEAD (committed files only; uncommitted changes are never deployed).
 // Secrets are generated once into secrets/staging/ (gitignored) and are never printed.
 import { spawnSync } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { hashUserEntry } from '../packages/auth/src/index.ts';
 
@@ -129,7 +141,8 @@ async function main() {
   const dirty = spawnSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).stdout.trim();
   if (dirty && !flag('allow-dirty'))
     throw new Error('The working tree has uncommitted changes; commit first or pass --allow-dirty.');
-  const tag = spawnSync('git', ['rev-parse', '--short=12', 'HEAD'], { encoding: 'utf8' }).stdout.trim() + (dirty ? '-dirty' : '');
+  if (dirty) log('uncommitted changes are NOT deployed: the image is built from the committed HEAD only');
+  const tag = spawnSync('git', ['rev-parse', '--short=12', 'HEAD'], { encoding: 'utf8' }).stdout.trim();
 
   log(`resource group ${RG} (${LOCATION})`);
   az(['group', 'create', '-n', RG, '-l', LOCATION, '--tags', 'project=mastra-learning-platform', 'stage=staging']);
@@ -140,8 +153,33 @@ async function main() {
   }
   const acr = azJson<{ id: string; loginServer: string }>(['acr', 'show', '-g', RG, '-n', ACR])!;
   const image = `${acr.loginServer}/mastra-learning-platform:${tag}`;
-  log(`building ${image} in ACR (the build log follows)`);
-  az(['acr', 'build', '-r', ACR, '-t', `mastra-learning-platform:${tag}`, '--platform', 'linux/amd64', '.'], { json: false });
+  // The build context is a git archive of HEAD: only committed files, so the gitignored secrets/, .env, .data and
+  // node_modules can never reach the image, and the image is exactly the tagged commit. (az acr build applies
+  // .dockerignore with its own matcher, so it is not relied on to keep secrets out.)
+  const context = mkdtempSync(join(tmpdir(), 'mlp-build-'));
+  try {
+    const archived = spawnSync(`git archive --format=tar HEAD | tar -x -C "${context}"`, { shell: true, encoding: 'utf8' });
+    if (archived.status !== 0) throw new Error(`git archive failed: ${archived.stderr.trim().slice(0, 200)}`);
+    for (const forbidden of ['secrets', '.env', '.data', 'node_modules'])
+      if (existsSync(join(context, forbidden))) throw new Error(`refusing to build: ${forbidden} is in the build context`);
+    const sizeOf = (d: string): [number, number] =>
+      readdirSync(d, { withFileTypes: true }).reduce<[number, number]>(
+        ([n, b], e) => {
+          const f = join(d, e.name);
+          if (!e.isDirectory()) return [n + 1, b + statSync(f).size];
+          const [cn, cb] = sizeOf(f);
+          return [n + cn, b + cb];
+        },
+        [0, 0],
+      );
+    const [files, bytes] = sizeOf(context);
+    log(`building ${image} in ACR from HEAD (${files} files, ${(bytes / 1e6).toFixed(1)} MB)`);
+    az(['acr', 'build', '-r', ACR, '-t', `mastra-learning-platform:${tag}`, '--platform', 'linux/amd64', context], {
+      json: false,
+    });
+  } finally {
+    rmSync(context, { recursive: true, force: true });
+  }
 
   if (!azJson(['identity', 'show', '-g', RG, '-n', IDENTITY], true)) {
     log(`managed identity ${IDENTITY}`);
