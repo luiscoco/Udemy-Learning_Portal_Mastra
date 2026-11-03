@@ -3,6 +3,7 @@ import { ApiErrorCodeSchema } from './api-error.js';
 import { LabIdSchema } from './catalog.js';
 import { RuntimeModeSchema } from './health.js';
 import { InputValuesSchema } from './lab.js';
+import { WorkflowGraphSchema } from './workflow-graph.js';
 
 // ---------- Requests ----------
 
@@ -116,6 +117,8 @@ export const ExecutionEventSchema = z.discriminatedUnion('type', [
     output: z.unknown().optional(),
     durationMs: z.number().nonnegative().optional(),
   }),
+  /** The DAG of the workflow a run is about to execute (L68); node ids match workflow-step stepIds. */
+  z.object({ ...eventBase, type: z.literal('workflow-graph'), workflowId: z.string(), graph: WorkflowGraphSchema }),
   z.object({
     ...eventBase,
     type: z.literal('approval-request'),
@@ -167,6 +170,7 @@ export const EXECUTION_EVENT_TYPES = [
   'tool-start',
   'tool-finish',
   'workflow-step',
+  'workflow-graph',
   'approval-request',
   'approval-resolved',
   'result',

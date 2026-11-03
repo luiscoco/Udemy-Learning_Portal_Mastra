@@ -11,6 +11,7 @@ import { useSession } from '../../lib/auth-context';
 import { Badge, Button, Card } from '../ui/primitives';
 import { ApprovalPanel } from './ApprovalPanel';
 import { ChatPanel } from './ChatPanel';
+import { WorkflowGraph, visibleWorkflowsOf } from './WorkflowGraph';
 import { AgentConversation, agentConversationOf } from './AgentConversation';
 import { CitedAnswer, citedAnswerOf } from './CitedAnswer';
 import { McpCapabilityMatrix, mcpCapabilitiesOf } from './McpCapabilityMatrix';
@@ -261,6 +262,25 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
       ) : null}
 
       <ApprovalPanel approvals={waiting} onDecide={decide} />
+
+      {state.workflowGraph ? (
+        <Section title="Workflow" id={`${id}-workflow`}>
+          <WorkflowGraph
+            graph={state.workflowGraph}
+            steps={state.steps}
+            finished={state.phase === 'finished'}
+            finalStatuses={(state.output as { statuses?: Record<string, string> } | undefined)?.statuses}
+          />
+        </Section>
+      ) : null}
+      {state.phase === 'finished' && visibleWorkflowsOf(state.output) ? (
+        <p className="text-sm" data-testid="visible-workflows">
+          Workflows you can see:{' '}
+          {visibleWorkflowsOf(state.output)!
+            .map((w) => w.title)
+            .join(', ') || 'none'}
+        </p>
+      ) : null}
 
       <Section title="Live output" id={`${id}-output`}>
         <Card className="min-h-20 p-4">

@@ -25,6 +25,8 @@ function describe(e: ExecutionEvent): string {
       return `${e.toolName} ${e.status} in ${Math.round(e.durationMs)} ms`;
     case 'workflow-step':
       return `step ${e.stepId}: ${e.status}`;
+    case 'workflow-graph':
+      return `workflow ${e.workflowId}: ${e.graph.nodes.length} steps`;
     case 'approval-request':
       return `approval needed for ${e.toolName}: ${e.message}`;
     case 'approval-resolved':

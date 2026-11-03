@@ -1,4 +1,4 @@
-import type { ExecutionEvent, RunTerminalStatus, ValidationResult } from '@mlp/contracts';
+import type { ExecutionEvent, RunTerminalStatus, ValidationResult, WorkflowGraph } from '@mlp/contracts';
 
 export interface ToolCallView {
   toolCallId: string;
@@ -44,6 +44,8 @@ export interface RunState {
   tools: ToolCallView[];
   steps: StepView[];
   approvals: ApprovalView[];
+  /** The DAG of the workflow this run executes, when the lab sends one (L68). */
+  workflowGraph?: WorkflowGraph;
   output?: unknown;
   validation?: ValidationResult;
   effective?: Record<string, unknown>;
@@ -114,6 +116,9 @@ export function runReducer(state: RunState, action: RunAction): RunState {
             : [...state.steps, view];
           break;
         }
+        case 'workflow-graph':
+          next.workflowGraph = e.graph;
+          break;
         case 'approval-request':
           next.approvals = [
             ...state.approvals,
