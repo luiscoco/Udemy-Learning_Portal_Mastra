@@ -202,7 +202,18 @@ async function main() {
       }
       if (status !== 'Succeeded')
         throw new Error(`ACR build ${queued.runId} ended ${status}: see az acr task logs -r ${ACR} --run-id ${queued.runId}`);
-      log(`build ${queued.runId} succeeded in ${Math.round((Date.now() - started) / 1000)} s`);
+      // ACR's own timestamps: the queue command already waited for the upload, so local time would under-report.
+      const run = azJson<{ startTime: string; finishTime: string }>([
+        'acr',
+        'task',
+        'show-run',
+        '-r',
+        ACR,
+        '--run-id',
+        queued.runId,
+      ]);
+      const took = run ? Math.round((Date.parse(run.finishTime) - Date.parse(run.startTime)) / 1000) : NaN;
+      log(`build ${queued.runId} succeeded in ${took} s (ACR run time)`);
     } finally {
       rmSync(context, { recursive: true, force: true });
     }

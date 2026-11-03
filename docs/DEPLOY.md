@@ -69,6 +69,21 @@ This checks the definition of done against the real URL and writes `secrets/stag
 4. A password login returns a `Secure; HttpOnly; SameSite=Strict` cookie.
 5. **Streaming:** a lab-00 run's SSE tokens arrive spread over time, before `complete`, through the ingress (not buffered).
 6. **Persistence:** a lab-71 durable note is written, the revision is restarted, readiness is awaited again, and a second run recalls the first note and applies no migrations.
+   The process uptime must drop after the restart, which proves that a new process answered.
+
+Last recorded result: **11/11 passed** on 2026-11-03 against `1c44e430447f`. SSE tokens arrived spread out between 198 and 823 ms, the uptime fell from 75 s to 14 s across the restart, and 6 notes survived two deployments, a rollback and three restarts.
+
+## What the first real deployment taught us (2026-11-03)
+
+These findings are now handled by `scripts/deploy-azure.ts`:
+
+| Problem | Fix |
+| --- | --- |
+| **The region refused new customers.** `westeurope` answered `RequestDisallowedByAzure` for this subscription. | The default is `northeurope`, and every resource gets `-l <location>` explicitly. |
+| **`.dockerignore` is not a secret boundary.** `az acr build` applies it with its own matcher, and the first upload ran for over 12 minutes (it was stopped before anything reached the registry). | The build context is a `git archive` of HEAD: about 1,400 committed files, 6 MB. Gitignored `secrets/`, `.env`, `.data` and `node_modules` cannot be included, and the script refuses to build if they appear. The Dockerfile also deletes them. |
+| **Streaming build logs crashes the CLI on Windows.** `'charmap' codec can't encode`: `az.cmd` runs Python with `-I`, so `PYTHONIOENCODING` is ignored. | `az acr build --no-logs` queues the build, and the script polls `az acr task show-run`. Read a failed build with `az acr task logs`, or in the portal. |
+| **`az role assignment list --assignee` needs a Microsoft Graph token.** | List by scope and role, then filter by principal ID locally. |
+| **Sign-in expiry with a personal Microsoft account.** `AADSTS9002313` (interaction required), even for resource management, a couple of hours after sign-in. | `az config set core.enable_broker_on_windows=false`, then `az login --use-device-code`. |
 
 ## Roll back
 
