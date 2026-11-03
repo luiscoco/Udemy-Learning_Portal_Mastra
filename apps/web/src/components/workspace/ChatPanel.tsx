@@ -202,29 +202,31 @@ export function ChatPanel({ definition }: { definition: LabDefinition }) {
         ) : null}
       </div>
 
-      <ol
-        ref={listRef}
+      {/* The log role sits on a wrapper: on the <ol> itself it would strip the list semantics of its items. */}
+      <div
         role="log"
         aria-label="Conversation"
         aria-live="polite"
         tabIndex={0}
-        className="flex max-h-[28rem] min-h-40 flex-col gap-3 overflow-y-auto rounded-lg border border-border p-3"
+        className="max-h-[28rem] min-h-40 overflow-y-auto rounded-lg border border-border p-3"
       >
-        {messages.length === 0 && !pending ? <li className="text-sm text-fg-muted">No messages yet. Say hello.</li> : null}
-        {messages.map((m) => (
-          <Bubble key={m.id} role={m.role} status={m.status} text={m.text} />
-        ))}
-        {pending !== null ? <Bubble role="user" status="complete" text={pending} /> : null}
-        {streaming ? (
-          <li data-testid="chat-streaming" className="max-w-[85%] self-start rounded-lg bg-surface-muted px-3 py-2 text-sm">
-            <span className="sr-only">Assistant (streaming): </span>
-            {state.tokenText}
-            <span aria-hidden="true" className="ml-0.5 animate-pulse">
-              ▍
-            </span>
-          </li>
-        ) : null}
-      </ol>
+        <ol ref={listRef} className="flex flex-col gap-3">
+          {messages.length === 0 && !pending ? <li className="text-sm text-fg-muted">No messages yet. Say hello.</li> : null}
+          {messages.map((m) => (
+            <Bubble key={m.id} role={m.role} status={m.status} text={m.text} />
+          ))}
+          {pending !== null ? <Bubble role="user" status="complete" text={pending} /> : null}
+          {streaming ? (
+            <li data-testid="chat-streaming" className="max-w-[85%] self-start rounded-lg bg-surface-muted px-3 py-2 text-sm">
+              <span className="sr-only">Assistant (streaming): </span>
+              {state.tokenText}
+              <span aria-hidden="true" className="ml-0.5 animate-pulse">
+                ▍
+              </span>
+            </li>
+          ) : null}
+        </ol>
+      </div>
 
       <form
         className="flex flex-col gap-2"

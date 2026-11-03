@@ -1,0 +1,42 @@
+{
+  "commit": "5a8721409f5e",
+  "dirty": true,
+  "at": "2026-11-03T16:37:24.520Z",
+  "node": "v24.14.1",
+  "platform": "win32",
+  "injected": "security",
+  "passed": false,
+  "gates": [
+    {
+      "gate": "security",
+      "status": "fail",
+      "metrics": {
+        "advisories": {
+          "moderate": 3,
+          "high": 4
+        },
+        "allowlisted": 6,
+        "httpChecks": "8/8"
+      },
+      "thresholds": {
+        "failOn": [
+          "high",
+          "critical"
+        ],
+        "allowlist": [
+          "GHSA-f897-62hf-6gxq until 2026-12-31",
+          "GHSA-jm63-cq47-j5jp until 2026-12-31",
+          "GHSA-46jr-4wx8-v453 until 2026-12-31",
+          "GHSA-rvq5-wwqv-78pq until 2026-12-31",
+          "GHSA-6prh-2h8m-c8cw until 2026-12-31",
+          "GHSA-rmxm-3fg6-px4f until 2026-12-31"
+        ]
+      },
+      "findings": [
+        "high advisory GHSA-inje-cted-0000 in injected-package is not allowlisted: Injected regression: unreviewed high advisory"
+      ],
+      "injected": true,
+      "durationMs": 2116
+    }
+  ]
+}

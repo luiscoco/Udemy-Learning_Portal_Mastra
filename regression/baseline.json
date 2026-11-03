@@ -1,0 +1,51 @@
+{
+  "$comment": "L74 baselines, recorded from a real offline run. Update only with review (docs/REGRESSION.md).",
+  "eval": {
+    "goldenCount": 12,
+    "experiment": {
+      "passRate": 0.75,
+      "items": {
+        "out-of-scope": true,
+        "suspend-resume": false,
+        "tool-validation": true,
+        "workflow-steps": true
+      }
+    }
+  },
+  "tracing": [
+    "0:workflow_run:workflow run: 'traced-pipeline'",
+    "1:workflow_parallel:parallel: '2 branches'",
+    "1:workflow_step:workflow step: 'answer'",
+    "1:workflow_step:workflow step: 'classify'",
+    "2:agent_run:agent run: 'writer'",
+    "2:workflow_step:workflow step: 'research'",
+    "2:workflow_step:workflow step: 'review'",
+    "3:agent_run:agent run: 'researcher'",
+    "3:agent_run:agent run: 'reviewer'",
+    "3:model_generation:llm: 'openai/gpt-5-mini'",
+    "4:model_generation:llm: 'openai/gpt-5-mini'",
+    "4:model_generation:llm: 'openai/gpt-5-mini'",
+    "4:model_step:step: 0",
+    "5:model_inference:inference: 0",
+    "5:model_step:step: 0",
+    "5:model_step:step: 0",
+    "5:model_step:step: 1",
+    "5:processor_run:llm request processor: provider-history-compat",
+    "5:processor_run:llm request processor: unsupported-file-handler",
+    "6:model_chunk:chunk: 'text'",
+    "6:model_inference:inference: 0",
+    "6:model_inference:inference: 0",
+    "6:model_inference:inference: 1",
+    "6:processor_run:llm request processor: provider-history-compat",
+    "6:processor_run:llm request processor: provider-history-compat",
+    "6:processor_run:llm request processor: provider-history-compat",
+    "6:processor_run:llm request processor: unsupported-file-handler",
+    "6:processor_run:llm request processor: unsupported-file-handler",
+    "6:processor_run:llm request processor: unsupported-file-handler",
+    "6:tool_call:tool: 'search_sources'",
+    "7:model_chunk:chunk: 'text'",
+    "7:model_chunk:chunk: 'text'",
+    "7:model_chunk:chunk: 'tool-call'",
+    "7:model_chunk:chunk: 'tool-result'"
+  ]
+}

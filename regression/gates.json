@@ -1,0 +1,57 @@
+{
+  "$comment": "L74 release gates. Changing a threshold or the allowlist needs review: see docs/REGRESSION.md.",
+  "security": {
+    "failOn": ["high", "critical"],
+    "allowlist": [
+      {
+        "id": "GHSA-f897-62hf-6gxq",
+        "package": "@modelcontextprotocol/node",
+        "reason": "Pinned exactly by @mastra/mcp 2.4.1; the fix needs @mastra/mcp 2.7.0, which requires @mastra/core >= 1.79 (platform pinned on 1.78.0). MCP HTTP servers run only inside lab runs, bound to 127.0.0.1 with per-run bearer tokens and torn down after the run; the public API exposes no MCP endpoint.",
+        "expires": "2026-12-31"
+      },
+      {
+        "id": "GHSA-jm63-cq47-j5jp",
+        "package": "@modelcontextprotocol/server",
+        "reason": "Same dependency path and exposure as GHSA-f897-62hf-6gxq: each lab run creates its own loopback server and transport; no transport is shared between clients.",
+        "expires": "2026-12-31"
+      },
+      {
+        "id": "GHSA-46jr-4wx8-v453",
+        "package": "@modelcontextprotocol/server",
+        "reason": "Same dependency path; loopback-only fixture servers reachable by the lab's own client, never by learners or the network.",
+        "expires": "2026-12-31"
+      },
+      {
+        "id": "GHSA-rvq5-wwqv-78pq",
+        "package": "@modelcontextprotocol/server",
+        "reason": "Same dependency path; the L49 facade issues a fresh random token per run for one loopback server, so a token for another service never exists in this deployment.",
+        "expires": "2026-12-31"
+      },
+      {
+        "id": "GHSA-6prh-2h8m-c8cw",
+        "package": "@modelcontextprotocol/client",
+        "reason": "Moderate (below failOn); listed for the record. The MCP client only connects to loopback fixture servers; remote MCP servers are release-gated.",
+        "expires": "2026-12-31"
+      },
+      {
+        "id": "GHSA-rmxm-3fg6-px4f",
+        "package": "@hono/node-server",
+        "reason": "Moderate (below failOn); listed for the record. serveStatic is not used; the package is only the MCP node transport's HTTP server on loopback.",
+        "expires": "2026-12-31"
+      }
+    ]
+  },
+  "load": {
+    "healthRequests": 300,
+    "healthConcurrency": 16,
+    "runs": 24,
+    "runConcurrency": 8,
+    "healthP95Ms": 100,
+    "runP95Ms": 5000
+  },
+  "eval": { "passRateTolerance": 0 },
+  "recovery": {
+    "requiredFiles": ["packages/labs/src/lab-32/lab32.restart.test.ts", "packages/labs/src/lab-71/lab71.restart.test.ts"]
+  },
+  "a11y": { "maxSerious": 0, "maxCritical": 0, "minPages": 140 }
+}

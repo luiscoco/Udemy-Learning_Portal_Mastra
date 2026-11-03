@@ -1,0 +1,751 @@
+{
+  "commit": "5a8721409f5e",
+  "at": "2026-11-03T16:36:54.741Z",
+  "measurements": {
+    "security": {
+      "advisories": [
+        {
+          "id": "GHSA-rmxm-3fg6-px4f",
+          "package": "@hono/node-server",
+          "severity": "moderate",
+          "title": "@hono/node-server: `serveStatic` decodes the request path a second time, leading to bypass of middleware on static paths"
+        },
+        {
+          "id": "GHSA-6prh-2h8m-c8cw",
+          "package": "@modelcontextprotocol/client",
+          "severity": "moderate",
+          "title": "MCP TypeScript client SDK: HTTP client transports and OAuth requests followed cross-origin redirects and re-sent custom headers and request bodies"
+        },
+        {
+          "id": "GHSA-f897-62hf-6gxq",
+          "package": "@modelcontextprotocol/node",
+          "severity": "high",
+          "title": "MCP TypeScript SDK: HTTP server transports and handlers did not limit request body size or JSON-RPC batch length"
+        },
+        {
+          "id": "GHSA-jm63-cq47-j5jp",
+          "package": "@modelcontextprotocol/server",
+          "severity": "high",
+          "title": "MCP  TypeScript server SDK: Shared transport or server instances delivered one HTTP client's messages to another"
+        },
+        {
+          "id": "GHSA-46jr-4wx8-v453",
+          "package": "@modelcontextprotocol/server",
+          "severity": "high",
+          "title": "MCP TypeScript SDK: One HTTP request within the default size limit could exhaust server memory during validation"
+        },
+        {
+          "id": "GHSA-rvq5-wwqv-78pq",
+          "package": "@modelcontextprotocol/server",
+          "severity": "moderate",
+          "title": "MCP TypeScript SDK: Server bearer authentication accepted tokens issued for another service"
+        }
+      ],
+      "http": [
+        { "name": "no X-Powered-By header", "ok": true, "detail": "absent" },
+        { "name": "auth responses are not cached", "ok": true, "detail": "no-store / no-store" },
+        {
+          "name": "session cookie is HttpOnly, SameSite=Strict and Secure in production",
+          "ok": true,
+          "detail": "HttpOnly, SameSite=Strict, Secure"
+        },
+        { "name": "anonymous run routes answer 401", "ok": true, "detail": "start 401, events 401" },
+        { "name": "cross-origin POST is refused", "ok": true, "detail": "status 403" },
+        { "name": "error bodies carry no stack traces or paths", "ok": true, "detail": "404/400" },
+        { "name": "repeated failed logins are rate limited (429)", "ok": true, "detail": "statuses 401,429 after 10 attempts" },
+        { "name": "server logs contain no secret values", "ok": true, "detail": "checked" }
+      ]
+    },
+    "load": {
+      "healthMs": [
+        4, 6, 7, 7, 8, 8, 9, 9, 9, 10, 11, 11, 12, 12, 13, 13, 2, 9, 11, 11, 11, 7, 7, 7, 7, 10, 10, 10, 10, 10, 9, 9, 9, 4, 4, 4,
+        4, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 9, 9, 9, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 9, 4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 5, 6, 6, 6, 6, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        4, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 1, 1
+      ],
+      "healthErrors": 0,
+      "runs": [
+        { "status": 202, "terminal": "succeeded", "completeMs": 288 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 290 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 290 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 290 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 1862 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 1813 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 1877 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 1798 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 300 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 300 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 301 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 301 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 296 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 296 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 296 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 296 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 300 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 300 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 299 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 298 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 285 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 299 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 299 },
+        { "status": 202, "terminal": "succeeded", "completeMs": 299 }
+      ],
+      "overloadRejections": 34
+    },
+    "eval": {
+      "golden": [
+        { "name": "reference answer", "ok": true, "detail": "missing: none" },
+        { "name": "partial: chaining missing (0.6 × 0.6667 + 0.4 × 1)", "ok": true, "detail": "missing: chaining" },
+        { "name": "partial and one off-topic sentence (0.6 × 0.6667 + 0.4 × 0.6667)", "ok": true, "detail": "missing: chaining" },
+        { "name": "off-topic answer", "ok": true, "detail": "missing: order, schemas, chaining" },
+        { "name": "reference plus a known-wrong claim (1 − 0.35)", "ok": true, "detail": "missing: none" },
+        { "name": "reference repeated past the word limit (1 − 0.1)", "ok": true, "detail": "missing: none" },
+        { "name": "empty answer: not scorable", "ok": true, "detail": "not scorable: the answer has fewer than 3 words" },
+        { "name": "reference answer", "ok": true, "detail": "missing: none" },
+        {
+          "name": "partial: resume data and storage missing (0.6 × 0.5 + 0.4)",
+          "ok": true,
+          "detail": "missing: resume-data, storage"
+        },
+        { "name": "known-wrong claim only (0.4 − 0.35)", "ok": true, "detail": "missing: suspend, resume, resume-data, storage" },
+        { "name": "reference answer", "ok": true, "detail": "missing: none" },
+        {
+          "name": "partial: only the input schema (0.6 × 0.25 + 0.4)",
+          "ok": true,
+          "detail": "missing: create-tool, before-execute, error-to-model"
+        }
+      ],
+      "experiment": {
+        "passRate": 0.75,
+        "items": { "out-of-scope": true, "suspend-resume": false, "tool-validation": true, "workflow-steps": true }
+      }
+    },
+    "tracing": [
+      {
+        "id": "60fb0a33863951a8",
+        "parentId": null,
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "workflow run: 'traced-pipeline'",
+        "type": "workflow_run",
+        "attributes": { "status": "success" },
+        "error": null
+      },
+      {
+        "id": "d9c3efc79f96ddb1",
+        "parentId": "60fb0a33863951a8",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "workflow step: 'classify'",
+        "type": "workflow_step",
+        "attributes": { "status": "success" },
+        "error": null
+      },
+      {
+        "id": "892174e2efc40429",
+        "parentId": "60fb0a33863951a8",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "parallel: '2 branches'",
+        "type": "workflow_parallel",
+        "attributes": {},
+        "error": null
+      },
+      {
+        "id": "fbba75506b1f2356",
+        "parentId": "892174e2efc40429",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "workflow step: 'research'",
+        "type": "workflow_step",
+        "attributes": { "status": "success" },
+        "error": null
+      },
+      {
+        "id": "70ccf55cb9d921fd",
+        "parentId": "892174e2efc40429",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "workflow step: 'review'",
+        "type": "workflow_step",
+        "attributes": { "status": "success" },
+        "error": null
+      },
+      {
+        "id": "eb777fdaa753d390",
+        "parentId": "fbba75506b1f2356",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "agent run: 'researcher'",
+        "type": "agent_run",
+        "attributes": {},
+        "error": null
+      },
+      {
+        "id": "5fae41cb7c211e00",
+        "parentId": "70ccf55cb9d921fd",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "agent run: 'reviewer'",
+        "type": "agent_run",
+        "attributes": {},
+        "error": null
+      },
+      {
+        "id": "1acbb4814fdc5ff1",
+        "parentId": "5fae41cb7c211e00",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "llm: 'openai/gpt-5-mini'",
+        "type": "model_generation",
+        "attributes": {
+          "model": "openai/gpt-5-mini",
+          "provider": "offline-sim",
+          "finishReason": "stop",
+          "inputTokens": 31,
+          "outputTokens": 14
+        },
+        "error": null
+      },
+      {
+        "id": "8c41fc436e270213",
+        "parentId": "eb777fdaa753d390",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "llm: 'openai/gpt-5-mini'",
+        "type": "model_generation",
+        "attributes": {
+          "model": "openai/gpt-5-mini",
+          "provider": "offline-sim",
+          "finishReason": "stop",
+          "inputTokens": 74,
+          "outputTokens": 36
+        },
+        "error": null
+      },
+      {
+        "id": "93388bcc4021340f",
+        "parentId": "1acbb4814fdc5ff1",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "step: 0",
+        "type": "model_step",
+        "attributes": { "finishReason": "stop", "stepIndex": 0, "inputTokens": 31, "outputTokens": 14 },
+        "error": null
+      },
+      {
+        "id": "f6b123de380e0ba5",
+        "parentId": "8c41fc436e270213",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "step: 0",
+        "type": "model_step",
+        "attributes": { "finishReason": "tool-calls", "stepIndex": 0, "inputTokens": 37, "outputTokens": 0 },
+        "error": null
+      },
+      {
+        "id": "dbfb05ce01f885c7",
+        "parentId": "93388bcc4021340f",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "llm request processor: provider-history-compat",
+        "type": "processor_run",
+        "attributes": {},
+        "error": null
+      },
+      {
+        "id": "2572300e93c474a5",
+        "parentId": "f6b123de380e0ba5",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "llm request processor: provider-history-compat",
+        "type": "processor_run",
+        "attributes": {},
+        "error": null
+      },
+      {
+        "id": "d249eb31568799ce",
+        "parentId": "93388bcc4021340f",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "llm request processor: unsupported-file-handler",
+        "type": "processor_run",
+        "attributes": {},
+        "error": null
+      },
+      {
+        "id": "b880e57e4d9469b7",
+        "parentId": "f6b123de380e0ba5",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "llm request processor: unsupported-file-handler",
+        "type": "processor_run",
+        "attributes": {},
+        "error": null
+      },
+      {
+        "id": "8c3aba6ee3fe92bf",
+        "parentId": "93388bcc4021340f",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "inference: 0",
+        "type": "model_inference",
+        "attributes": {
+          "model": "openai/gpt-5-mini",
+          "provider": "offline-sim",
+          "finishReason": "stop",
+          "stepIndex": 0,
+          "inputTokens": 31,
+          "outputTokens": 14
+        },
+        "error": null
+      },
+      {
+        "id": "75dca4329dfd1af2",
+        "parentId": "f6b123de380e0ba5",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "inference: 0",
+        "type": "model_inference",
+        "attributes": {
+          "model": "openai/gpt-5-mini",
+          "provider": "offline-sim",
+          "finishReason": "tool-calls",
+          "stepIndex": 0,
+          "inputTokens": 37,
+          "outputTokens": 0
+        },
+        "error": null
+      },
+      {
+        "id": "e21d512582a2be39",
+        "parentId": "8c3aba6ee3fe92bf",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "chunk: 'text'",
+        "type": "model_chunk",
+        "attributes": {},
+        "error": null
+      },
+      {
+        "id": "0db9db8458975ebe",
+        "parentId": "75dca4329dfd1af2",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "chunk: 'tool-call'",
+        "type": "model_chunk",
+        "attributes": {},
+        "error": null
+      },
+      {
+        "id": "74831a19a46f25f0",
+        "parentId": "f6b123de380e0ba5",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "tool: 'search_sources'",
+        "type": "tool_call",
+        "attributes": { "toolCallId": "call_1", "success": true },
+        "error": null
+      },
+      {
+        "id": "b7062f10475315fc",
+        "parentId": "75dca4329dfd1af2",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "chunk: 'tool-result'",
+        "type": "model_chunk",
+        "attributes": {},
+        "error": null
+      },
+      {
+        "id": "813cc81c84a44922",
+        "parentId": "8c41fc436e270213",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "step: 1",
+        "type": "model_step",
+        "attributes": { "finishReason": "stop", "stepIndex": 1, "inputTokens": 37, "outputTokens": 36 },
+        "error": null
+      },
+      {
+        "id": "90087d200e8e1f82",
+        "parentId": "813cc81c84a44922",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "llm request processor: provider-history-compat",
+        "type": "processor_run",
+        "attributes": {},
+        "error": null
+      },
+      {
+        "id": "40e3204db3cbc54b",
+        "parentId": "813cc81c84a44922",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "llm request processor: unsupported-file-handler",
+        "type": "processor_run",
+        "attributes": {},
+        "error": null
+      },
+      {
+        "id": "9e3946af62bc1e68",
+        "parentId": "813cc81c84a44922",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "inference: 1",
+        "type": "model_inference",
+        "attributes": {
+          "model": "openai/gpt-5-mini",
+          "provider": "offline-sim",
+          "finishReason": "stop",
+          "stepIndex": 1,
+          "inputTokens": 37,
+          "outputTokens": 36
+        },
+        "error": null
+      },
+      {
+        "id": "e8584fac4bbe03e9",
+        "parentId": "9e3946af62bc1e68",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "chunk: 'text'",
+        "type": "model_chunk",
+        "attributes": {},
+        "error": null
+      },
+      {
+        "id": "9780ec9b901cac96",
+        "parentId": "60fb0a33863951a8",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "workflow step: 'answer'",
+        "type": "workflow_step",
+        "attributes": { "status": "success" },
+        "error": null
+      },
+      {
+        "id": "12b324d0d46c5968",
+        "parentId": "9780ec9b901cac96",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "agent run: 'writer'",
+        "type": "agent_run",
+        "attributes": {},
+        "error": null
+      },
+      {
+        "id": "b1f5b126096c825e",
+        "parentId": "12b324d0d46c5968",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "llm: 'openai/gpt-5-mini'",
+        "type": "model_generation",
+        "attributes": {
+          "model": "openai/gpt-5-mini",
+          "provider": "offline-sim",
+          "finishReason": "stop",
+          "inputTokens": 66,
+          "outputTokens": 38
+        },
+        "error": null
+      },
+      {
+        "id": "48523ae7b792ceb6",
+        "parentId": "b1f5b126096c825e",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "step: 0",
+        "type": "model_step",
+        "attributes": { "finishReason": "stop", "stepIndex": 0, "inputTokens": 66, "outputTokens": 38 },
+        "error": null
+      },
+      {
+        "id": "941cd7d4681b2362",
+        "parentId": "48523ae7b792ceb6",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "llm request processor: provider-history-compat",
+        "type": "processor_run",
+        "attributes": {},
+        "error": null
+      },
+      {
+        "id": "f0ed6ca2e93f9186",
+        "parentId": "48523ae7b792ceb6",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "llm request processor: unsupported-file-handler",
+        "type": "processor_run",
+        "attributes": {},
+        "error": null
+      },
+      {
+        "id": "71149b03c7f42ec5",
+        "parentId": "48523ae7b792ceb6",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "inference: 0",
+        "type": "model_inference",
+        "attributes": {
+          "model": "openai/gpt-5-mini",
+          "provider": "offline-sim",
+          "finishReason": "stop",
+          "stepIndex": 0,
+          "inputTokens": 66,
+          "outputTokens": 38
+        },
+        "error": null
+      },
+      {
+        "id": "fa6c6e456d6bf06c",
+        "parentId": "71149b03c7f42ec5",
+        "traceId": "04ed6b8538faa47b2b0756268fce3cac",
+        "name": "chunk: 'text'",
+        "type": "model_chunk",
+        "attributes": {},
+        "error": null
+      }
+    ],
+    "recovery": [
+      {
+        "file": "C:/00. IMPORTANTE - Mastra/Learning_Portal_Mastra/packages/labs/src/lab-32/lab32.restart.test.ts",
+        "name": "lab-32 real process restart a new process resumes the suspended run from its checkpoint; earlier side effects ran once",
+        "status": "passed",
+        "durationMs": 5138.468
+      },
+      {
+        "file": "C:/00. IMPORTANTE - Mastra/Learning_Portal_Mastra/packages/labs/src/lab-71/lab71.restart.test.ts",
+        "name": "lab-71 real process restart and restore a new process reads progress, documents, runs and the thread; a restore in another process rolls back later writes",
+        "status": "passed",
+        "durationMs": 9879.467700000001
+      }
+    ],
+    "a11y": [
+      { "url": "/labs/lab-00?tab=learn", "violations": [] },
+      { "url": "/labs/lab-00?tab=run", "violations": [] },
+      { "url": "/labs/lab-01?tab=learn", "violations": [] },
+      { "url": "/labs/lab-01?tab=run", "violations": [] },
+      { "url": "/labs/lab-02?tab=learn", "violations": [] },
+      { "url": "/labs/lab-02?tab=run", "violations": [] },
+      { "url": "/labs/lab-03?tab=learn", "violations": [] },
+      { "url": "/labs/lab-03?tab=run", "violations": [] },
+      { "url": "/labs/lab-04?tab=learn", "violations": [] },
+      { "url": "/labs/lab-04?tab=run", "violations": [] },
+      { "url": "/labs/lab-05?tab=learn", "violations": [] },
+      { "url": "/labs/lab-05?tab=run", "violations": [] },
+      { "url": "/labs/lab-06?tab=learn", "violations": [] },
+      { "url": "/labs/lab-06?tab=run", "violations": [] },
+      { "url": "/labs/lab-07?tab=learn", "violations": [] },
+      { "url": "/labs/lab-07?tab=run", "violations": [] },
+      { "url": "/labs/lab-08?tab=learn", "violations": [] },
+      { "url": "/labs/lab-08?tab=run", "violations": [] },
+      { "url": "/labs/lab-09?tab=learn", "violations": [] },
+      { "url": "/labs/lab-09?tab=run", "violations": [] },
+      { "url": "/labs/lab-10?tab=learn", "violations": [] },
+      { "url": "/labs/lab-10?tab=run", "violations": [] },
+      { "url": "/labs/lab-11?tab=learn", "violations": [] },
+      { "url": "/labs/lab-11?tab=run", "violations": [] },
+      { "url": "/labs/lab-12?tab=learn", "violations": [] },
+      { "url": "/labs/lab-12?tab=run", "violations": [] },
+      { "url": "/labs/lab-13?tab=learn", "violations": [] },
+      { "url": "/labs/lab-13?tab=run", "violations": [] },
+      { "url": "/labs/lab-14?tab=learn", "violations": [] },
+      { "url": "/labs/lab-14?tab=run", "violations": [] },
+      { "url": "/labs/lab-15?tab=learn", "violations": [] },
+      { "url": "/labs/lab-15?tab=run", "violations": [] },
+      { "url": "/labs/lab-16?tab=learn", "violations": [] },
+      { "url": "/labs/lab-16?tab=run", "violations": [] },
+      { "url": "/labs/lab-17?tab=learn", "violations": [] },
+      { "url": "/labs/lab-17?tab=run", "violations": [] },
+      { "url": "/labs/lab-18?tab=learn", "violations": [] },
+      { "url": "/labs/lab-18?tab=run", "violations": [] },
+      { "url": "/labs/lab-19?tab=learn", "violations": [] },
+      { "url": "/labs/lab-19?tab=run", "violations": [] },
+      { "url": "/labs/lab-20?tab=learn", "violations": [] },
+      { "url": "/labs/lab-20?tab=run", "violations": [] },
+      { "url": "/labs/lab-21?tab=learn", "violations": [] },
+      { "url": "/labs/lab-21?tab=run", "violations": [] },
+      { "url": "/labs/lab-22?tab=learn", "violations": [] },
+      { "url": "/labs/lab-22?tab=run", "violations": [] },
+      { "url": "/labs/lab-23?tab=learn", "violations": [] },
+      { "url": "/labs/lab-23?tab=run", "violations": [] },
+      { "url": "/labs/lab-24?tab=learn", "violations": [] },
+      { "url": "/labs/lab-24?tab=run", "violations": [] },
+      { "url": "/labs/lab-25?tab=learn", "violations": [] },
+      { "url": "/labs/lab-25?tab=run", "violations": [] },
+      { "url": "/labs/lab-26?tab=learn", "violations": [] },
+      { "url": "/labs/lab-26?tab=run", "violations": [] },
+      { "url": "/labs/lab-27?tab=learn", "violations": [] },
+      { "url": "/labs/lab-27?tab=run", "violations": [] },
+      { "url": "/labs/lab-28?tab=learn", "violations": [] },
+      { "url": "/labs/lab-28?tab=run", "violations": [] },
+      { "url": "/labs/lab-29?tab=learn", "violations": [] },
+      { "url": "/labs/lab-29?tab=run", "violations": [] },
+      { "url": "/labs/lab-30?tab=learn", "violations": [] },
+      { "url": "/labs/lab-30?tab=run", "violations": [] },
+      { "url": "/labs/lab-31?tab=learn", "violations": [] },
+      { "url": "/labs/lab-31?tab=run", "violations": [] },
+      { "url": "/labs/lab-32?tab=learn", "violations": [] },
+      { "url": "/labs/lab-32?tab=run", "violations": [] },
+      { "url": "/labs/lab-33?tab=learn", "violations": [] },
+      { "url": "/labs/lab-33?tab=run", "violations": [] },
+      { "url": "/labs/lab-34?tab=learn", "violations": [] },
+      { "url": "/labs/lab-34?tab=run", "violations": [] },
+      { "url": "/labs/lab-35?tab=learn", "violations": [] },
+      { "url": "/labs/lab-35?tab=run", "violations": [] },
+      { "url": "/labs/lab-36?tab=learn", "violations": [] },
+      { "url": "/labs/lab-36?tab=run", "violations": [] },
+      { "url": "/labs/lab-37?tab=learn", "violations": [] },
+      { "url": "/labs/lab-37?tab=run", "violations": [] },
+      { "url": "/labs/lab-38?tab=learn", "violations": [] },
+      { "url": "/labs/lab-38?tab=run", "violations": [] },
+      { "url": "/labs/lab-39?tab=learn", "violations": [] },
+      { "url": "/labs/lab-39?tab=run", "violations": [] },
+      { "url": "/labs/lab-40?tab=learn", "violations": [] },
+      { "url": "/labs/lab-40?tab=run", "violations": [] },
+      { "url": "/labs/lab-41?tab=learn", "violations": [] },
+      { "url": "/labs/lab-41?tab=run", "violations": [] },
+      { "url": "/labs/lab-42?tab=learn", "violations": [] },
+      { "url": "/labs/lab-42?tab=run", "violations": [] },
+      { "url": "/labs/lab-43?tab=learn", "violations": [] },
+      { "url": "/labs/lab-43?tab=run", "violations": [] },
+      { "url": "/labs/lab-44?tab=learn", "violations": [] },
+      { "url": "/labs/lab-44?tab=run", "violations": [] },
+      { "url": "/labs/lab-45?tab=learn", "violations": [] },
+      { "url": "/labs/lab-45?tab=run", "violations": [] },
+      { "url": "/labs/lab-46?tab=learn", "violations": [] },
+      { "url": "/labs/lab-46?tab=run", "violations": [] },
+      { "url": "/labs/lab-47?tab=learn", "violations": [] },
+      { "url": "/labs/lab-47?tab=run", "violations": [] },
+      { "url": "/labs/lab-48?tab=learn", "violations": [] },
+      { "url": "/labs/lab-48?tab=run", "violations": [] },
+      { "url": "/labs/lab-49?tab=learn", "violations": [] },
+      { "url": "/labs/lab-49?tab=run", "violations": [] },
+      { "url": "/labs/lab-50?tab=learn", "violations": [] },
+      { "url": "/labs/lab-50?tab=run", "violations": [] },
+      { "url": "/labs/lab-51?tab=learn", "violations": [] },
+      { "url": "/labs/lab-51?tab=run", "violations": [] },
+      { "url": "/labs/lab-52?tab=learn", "violations": [] },
+      { "url": "/labs/lab-52?tab=run", "violations": [] },
+      { "url": "/labs/lab-53?tab=learn", "violations": [] },
+      { "url": "/labs/lab-53?tab=run", "violations": [] },
+      { "url": "/labs/lab-54?tab=learn", "violations": [] },
+      { "url": "/labs/lab-54?tab=run", "violations": [] },
+      { "url": "/labs/lab-55?tab=learn", "violations": [] },
+      { "url": "/labs/lab-55?tab=run", "violations": [] },
+      { "url": "/labs/lab-56?tab=learn", "violations": [] },
+      { "url": "/labs/lab-56?tab=run", "violations": [] },
+      { "url": "/labs/lab-57?tab=learn", "violations": [] },
+      { "url": "/labs/lab-57?tab=run", "violations": [] },
+      { "url": "/labs/lab-58?tab=learn", "violations": [] },
+      { "url": "/labs/lab-58?tab=run", "violations": [] },
+      { "url": "/labs/lab-59?tab=learn", "violations": [] },
+      { "url": "/labs/lab-59?tab=run", "violations": [] },
+      { "url": "/labs/lab-60?tab=learn", "violations": [] },
+      { "url": "/labs/lab-60?tab=run", "violations": [] },
+      { "url": "/labs/lab-61?tab=learn", "violations": [] },
+      { "url": "/labs/lab-61?tab=run", "violations": [] },
+      { "url": "/labs/lab-62?tab=learn", "violations": [] },
+      { "url": "/labs/lab-62?tab=run", "violations": [] },
+      { "url": "/labs/lab-63?tab=learn", "violations": [] },
+      { "url": "/labs/lab-63?tab=run", "violations": [] },
+      { "url": "/labs/lab-64?tab=learn", "violations": [] },
+      { "url": "/labs/lab-64?tab=run", "violations": [] },
+      { "url": "/labs/lab-65?tab=learn", "violations": [] },
+      { "url": "/labs/lab-65?tab=run", "violations": [] },
+      { "url": "/labs/lab-66?tab=learn", "violations": [] },
+      { "url": "/labs/lab-66?tab=run", "violations": [] },
+      { "url": "/labs/lab-67?tab=learn", "violations": [] },
+      { "url": "/labs/lab-67?tab=run", "violations": [] },
+      { "url": "/labs/lab-68?tab=learn", "violations": [] },
+      { "url": "/labs/lab-68?tab=run", "violations": [] },
+      { "url": "/labs/lab-69?tab=learn", "violations": [] },
+      { "url": "/labs/lab-69?tab=run", "violations": [] },
+      { "url": "/labs/lab-70?tab=learn", "violations": [] },
+      { "url": "/labs/lab-70?tab=run", "violations": [] },
+      { "url": "/labs/lab-71?tab=learn", "violations": [] },
+      { "url": "/labs/lab-71?tab=run", "violations": [] },
+      { "url": "/labs/lab-72?tab=learn", "violations": [] },
+      { "url": "/labs/lab-72?tab=run", "violations": [] },
+      { "url": "/labs/lab-73?tab=learn", "violations": [] },
+      { "url": "/labs/lab-73?tab=run", "violations": [] },
+      { "url": "/labs/lab-74?tab=learn", "violations": [] },
+      { "url": "/labs/lab-74?tab=run", "violations": [] }
+    ]
+  },
+  "config": {
+    "$comment": "L74 release gates. Changing a threshold or the allowlist needs review: see docs/REGRESSION.md.",
+    "security": {
+      "failOn": ["high", "critical"],
+      "allowlist": [
+        {
+          "id": "GHSA-f897-62hf-6gxq",
+          "package": "@modelcontextprotocol/node",
+          "reason": "Pinned exactly by @mastra/mcp 2.4.1; the fix needs @mastra/mcp 2.7.0, which requires @mastra/core >= 1.79 (platform pinned on 1.78.0). MCP HTTP servers run only inside lab runs, bound to 127.0.0.1 with per-run bearer tokens and torn down after the run; the public API exposes no MCP endpoint.",
+          "expires": "2026-12-31"
+        },
+        {
+          "id": "GHSA-jm63-cq47-j5jp",
+          "package": "@modelcontextprotocol/server",
+          "reason": "Same dependency path and exposure as GHSA-f897-62hf-6gxq: each lab run creates its own loopback server and transport; no transport is shared between clients.",
+          "expires": "2026-12-31"
+        },
+        {
+          "id": "GHSA-46jr-4wx8-v453",
+          "package": "@modelcontextprotocol/server",
+          "reason": "Same dependency path; loopback-only fixture servers reachable by the lab's own client, never by learners or the network.",
+          "expires": "2026-12-31"
+        },
+        {
+          "id": "GHSA-rvq5-wwqv-78pq",
+          "package": "@modelcontextprotocol/server",
+          "reason": "Same dependency path; the L49 facade issues a fresh random token per run for one loopback server, so a token for another service never exists in this deployment.",
+          "expires": "2026-12-31"
+        },
+        {
+          "id": "GHSA-6prh-2h8m-c8cw",
+          "package": "@modelcontextprotocol/client",
+          "reason": "Moderate (below failOn); listed for the record. The MCP client only connects to loopback fixture servers; remote MCP servers are release-gated.",
+          "expires": "2026-12-31"
+        },
+        {
+          "id": "GHSA-rmxm-3fg6-px4f",
+          "package": "@hono/node-server",
+          "reason": "Moderate (below failOn); listed for the record. serveStatic is not used; the package is only the MCP node transport's HTTP server on loopback.",
+          "expires": "2026-12-31"
+        }
+      ]
+    },
+    "load": {
+      "healthRequests": 300,
+      "healthConcurrency": 16,
+      "runs": 24,
+      "runConcurrency": 8,
+      "healthP95Ms": 100,
+      "runP95Ms": 5000
+    },
+    "eval": { "passRateTolerance": 0 },
+    "recovery": {
+      "requiredFiles": ["packages/labs/src/lab-32/lab32.restart.test.ts", "packages/labs/src/lab-71/lab71.restart.test.ts"]
+    },
+    "a11y": { "maxSerious": 0, "maxCritical": 0, "minPages": 140 }
+  },
+  "baseline": {
+    "$comment": "L74 baselines, recorded from a real offline run. Update only with review (docs/REGRESSION.md).",
+    "eval": {
+      "goldenCount": 12,
+      "experiment": {
+        "passRate": 0.75,
+        "items": { "out-of-scope": true, "suspend-resume": false, "tool-validation": true, "workflow-steps": true }
+      }
+    },
+    "tracing": [
+      "0:workflow_run:workflow run: 'traced-pipeline'",
+      "1:workflow_parallel:parallel: '2 branches'",
+      "1:workflow_step:workflow step: 'answer'",
+      "1:workflow_step:workflow step: 'classify'",
+      "2:agent_run:agent run: 'writer'",
+      "2:workflow_step:workflow step: 'research'",
+      "2:workflow_step:workflow step: 'review'",
+      "3:agent_run:agent run: 'researcher'",
+      "3:agent_run:agent run: 'reviewer'",
+      "3:model_generation:llm: 'openai/gpt-5-mini'",
+      "4:model_generation:llm: 'openai/gpt-5-mini'",
+      "4:model_generation:llm: 'openai/gpt-5-mini'",
+      "4:model_step:step: 0",
+      "5:model_inference:inference: 0",
+      "5:model_step:step: 0",
+      "5:model_step:step: 0",
+      "5:model_step:step: 1",
+      "5:processor_run:llm request processor: provider-history-compat",
+      "5:processor_run:llm request processor: unsupported-file-handler",
+      "6:model_chunk:chunk: 'text'",
+      "6:model_inference:inference: 0",
+      "6:model_inference:inference: 0",
+      "6:model_inference:inference: 1",
+      "6:processor_run:llm request processor: provider-history-compat",
+      "6:processor_run:llm request processor: provider-history-compat",
+      "6:processor_run:llm request processor: provider-history-compat",
+      "6:processor_run:llm request processor: unsupported-file-handler",
+      "6:processor_run:llm request processor: unsupported-file-handler",
+      "6:processor_run:llm request processor: unsupported-file-handler",
+      "6:tool_call:tool: 'search_sources'",
+      "7:model_chunk:chunk: 'text'",
+      "7:model_chunk:chunk: 'text'",
+      "7:model_chunk:chunk: 'tool-call'",
+      "7:model_chunk:chunk: 'tool-result'"
+    ]
+  }
+}

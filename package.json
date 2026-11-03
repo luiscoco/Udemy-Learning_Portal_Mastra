@@ -33,7 +33,8 @@
     "make-secrets": "tsx scripts/make-secrets.ts",
     "smoke:container": "tsx scripts/container-smoke.ts",
     "deploy:azure": "tsx scripts/deploy-azure.ts",
-    "smoke:staging": "tsx scripts/staging-smoke.ts"
+    "smoke:staging": "tsx scripts/staging-smoke.ts",
+    "regression": "tsx scripts/regression.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
