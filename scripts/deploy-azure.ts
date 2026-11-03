@@ -46,8 +46,6 @@ function az(cmd: string[], opts: { allowFail?: boolean; json?: boolean; quiet?: 
   const r = spawnSync('az', full.map(quote), {
     shell: true,
     encoding: 'utf8',
-    // The CLI is Python: on Windows its console encoding (cp1252) crashes on Unicode in streamed build logs.
-    env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' },
     maxBuffer: 64 * 1024 * 1024,
     stdio: ['ignore', 'pipe', opts.quiet ? 'pipe' : 'inherit'],
   });
@@ -180,9 +178,31 @@ async function main() {
         );
       const [files, bytes] = sizeOf(context);
       log(`building ${image} in ACR from HEAD (${files} files, ${(bytes / 1e6).toFixed(1)} MB)`);
-      az(['acr', 'build', '-r', ACR, '-t', `mastra-learning-platform:${tag}`, '--platform', 'linux/amd64', context], {
-        json: false,
-      });
+      // --no-logs: streaming the build log crashes the CLI on Windows (az.cmd runs Python isolated, so its cp1252
+      // console encoding cannot be overridden). Queue the build, then poll the run until it ends.
+      const queued = azJson<{ runId: string }>([
+        'acr',
+        'build',
+        '-r',
+        ACR,
+        '-t',
+        `mastra-learning-platform:${tag}`,
+        '--platform',
+        'linux/amd64',
+        '--no-logs',
+        context,
+      ])!;
+      let status = 'Queued';
+      const started = Date.now();
+      while (['Queued', 'Started', 'Running'].includes(status) && Date.now() - started < 30 * 60_000) {
+        await new Promise((r) => setTimeout(r, 15_000));
+        status = az(['acr', 'task', 'show-run', '-r', ACR, '--run-id', queued.runId, '--query', 'status', '-o', 'tsv'], {
+          json: false,
+        });
+      }
+      if (status !== 'Succeeded')
+        throw new Error(`ACR build ${queued.runId} ended ${status}: see az acr task logs -r ${ACR} --run-id ${queued.runId}`);
+      log(`build ${queued.runId} succeeded in ${Math.round((Date.now() - started) / 1000)} s`);
     } finally {
       rmSync(context, { recursive: true, force: true });
     }
