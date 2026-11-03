@@ -17,3 +17,6 @@ e2e/.auth/
 
 # TypeScript incremental build caches
 *.tsbuildinfo
+
+# Local container secrets (scripts/make-secrets.mjs)
+secrets/

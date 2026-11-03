@@ -62,7 +62,7 @@ export function LoginPage() {
           </label>
           {auth.session?.login.passwordRequired ? (
             <label className="flex flex-col gap-1 text-sm font-medium">
-              Passcode
+              {auth.session.login.kind === 'password' ? 'Password' : 'Passcode'}
               <input
                 name="password"
                 type="password"

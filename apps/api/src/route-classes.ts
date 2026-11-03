@@ -5,6 +5,7 @@
  */
 export const ROUTE_CLASSES = {
   'GET /api/health': 'public',
+  'GET /api/ready': 'public',
   'GET /api/catalog': 'public',
   'GET /api/auth/session': 'public',
   'POST /api/auth/login': 'public',

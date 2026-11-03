@@ -8,6 +8,7 @@ import {
   LabSourceResponseSchema,
   LabSummaryListSchema,
   PreflightResultSchema,
+  ReadinessResponseSchema,
   RunSnapshotSchema,
   SessionResponseSchema,
   StartRunResponseSchema,
@@ -63,7 +64,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
     method: 'GET' | 'POST',
     path: string,
     schema: S,
-    opts: { body?: unknown; headers?: Record<string, string>; signal?: AbortSignal } = {},
+    opts: { body?: unknown; headers?: Record<string, string>; signal?: AbortSignal; acceptStatuses?: number[] } = {},
   ): Promise<z.infer<S>> {
     const headers: Record<string, string> = { accept: 'application/json', ...opts.headers };
     if (opts.body !== undefined) headers['content-type'] = 'application/json';
@@ -73,7 +74,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
       ...(opts.body !== undefined ? { body: JSON.stringify(opts.body) } : {}),
       signal: opts.signal,
     });
-    if (!res.ok) throw await toApiClientError(res);
+    if (!res.ok && !opts.acceptStatuses?.includes(res.status)) throw await toApiClientError(res);
     const body: unknown = await res.json().catch(() => undefined);
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
@@ -149,6 +150,8 @@ export function createApiClient(options: ApiClientOptions = {}) {
 
   return {
     health: (signal?: AbortSignal) => request('GET', '/api/health', HealthResponseSchema, { signal }),
+    /** Readiness (L72): a 503 "not-ready" answer is returned as data, with the failing checks. */
+    ready: (signal?: AbortSignal) => request('GET', '/api/ready', ReadinessResponseSchema, { signal, acceptStatuses: [503] }),
     catalog: (signal?: AbortSignal) => request('GET', '/api/catalog', CatalogSchema, { signal }),
     auth: {
       session: (signal?: AbortSignal) => request('GET', '/api/auth/session', SessionResponseSchema, { signal }),

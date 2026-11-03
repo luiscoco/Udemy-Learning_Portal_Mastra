@@ -28,7 +28,10 @@
     "test:live": "cross-env RUN_LIVE_TESTS=1 vitest run packages/labs/src/live.test.ts apps/api/src/live.test.ts",
     "test:e2e:live": "cross-env E2E_LIVE=1 playwright test",
     "check:env-example": "node scripts/check-env-example.mjs",
-    "check:specs": "openspec validate --specs --strict --no-interactive"
+    "check:specs": "openspec validate --specs --strict --no-interactive",
+    "auth:hash-user": "tsx scripts/hash-user.ts",
+    "make-secrets": "tsx scripts/make-secrets.ts",
+    "smoke:container": "tsx scripts/container-smoke.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

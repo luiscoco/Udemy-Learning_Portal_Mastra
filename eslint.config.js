@@ -40,7 +40,7 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ['@mastra/*', '@mlp/auth', '@mlp/mastra-runtime', '@mlp/labs', '@mlp/api'],
+              group: ['@mastra/*', '@mlp/auth', '@mlp/deploy', '@mlp/mastra-runtime', '@mlp/labs', '@mlp/api'],
               message: 'Server-only package: call the API instead.',
             },
           ],
@@ -58,7 +58,7 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ['@mastra/*', '@mlp/auth', '@mlp/mastra-runtime', '@mlp/labs', '@mlp/lab-engine', '@mlp/api', 'node:*'],
+              group: ['@mastra/*', '@mlp/auth', '@mlp/deploy', '@mlp/mastra-runtime', '@mlp/labs', '@mlp/lab-engine', '@mlp/api', 'node:*'],
               message: 'The client SDK is browser-safe: only @mlp/contracts and zod.',
             },
           ],

@@ -24,5 +24,5 @@ export function resolveLabSourcePath(labId: string, path: string): string {
 
 /** Server-side scratch directory for lab artefacts (gitignored). Override with MLP_DATA_DIR. */
 export function dataDir(): string {
-  return process.env.MLP_DATA_DIR ?? join(labsPackageDir(), '..', '..', '.data');
+  return process.env.MLP_DATA_DIR?.trim() || join(labsPackageDir(), '..', '..', '.data');
 }

@@ -4,6 +4,7 @@
  */
 export const CLIENT_ROUTES = {
   'GET /api/health': 'health',
+  'GET /api/ready': 'ready',
   'GET /api/catalog': 'catalog',
   'GET /api/auth/session': 'auth.session',
   'POST /api/auth/login': 'auth.login',

@@ -3,6 +3,7 @@ import {
   assertSafeAuthConfig,
   clearCookie,
   DevIdentityProvider,
+  PasswordIdentityProvider,
   LoginRateLimiter,
   parseCookies,
   randomSecret,
@@ -29,7 +30,7 @@ declare module 'express-serve-static-core' {
 const UNSAFE = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 export interface Auth {
-  provider: DevIdentityProvider;
+  provider: DevIdentityProvider | PasswordIdentityProvider;
   sessions: SessionManager;
   /** Attaches req.principal from the session cookie and enforces same-origin unsafe requests. */
   middleware: RequestHandler;
@@ -47,7 +48,10 @@ export const requireAuth: RequestHandler = (req, _res, next) => {
  * production or on a non-loopback host).
  */
 export function createAuth(config: AppConfig, logger: Logger): Auth {
-  const provider = new DevIdentityProvider({ users: config.AUTH_DEV_USERS.split(','), password: config.AUTH_DEV_PASSWORD });
+  const provider =
+    config.AUTH_PROVIDER === 'password'
+      ? new PasswordIdentityProvider({ users: config.AUTH_USERS ?? '' })
+      : new DevIdentityProvider({ users: config.AUTH_DEV_USERS.split(','), password: config.AUTH_DEV_PASSWORD });
   assertSafeAuthConfig({ nodeEnv: config.NODE_ENV, host: config.HOST, provider });
   const sessions = new SessionManager({
     secret: config.AUTH_SESSION_SECRET ?? randomSecret(),
@@ -71,7 +75,7 @@ export function createAuth(config: AppConfig, logger: Logger): Auth {
     authenticated: !!session,
     principal: session ? { ...session.principal } : null,
     provider: provider.id,
-    login: { kind: 'dev', passwordRequired: provider.passwordRequired },
+    login: { kind: provider.id, passwordRequired: provider.passwordRequired },
     expiresAt: session ? new Date(session.expiresAt).toISOString() : null,
   });
 

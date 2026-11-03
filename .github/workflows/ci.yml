@@ -52,3 +52,19 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  # L72 definition of done: the image builds, the container starts and becomes ready, a missing secret fails
+  # clearly, and readiness reflects a broken dependency (read-only data volume).
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: docker build -t mastra-learning-platform:ci .
+      - run: npm run smoke:container -- mastra-learning-platform:ci

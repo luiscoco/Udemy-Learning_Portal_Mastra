@@ -42,6 +42,21 @@ export interface ModelService {
     offline: ScriptedModelOptions['script'];
     tokenDelayMs?: number;
   }): ResolvedModel;
+  /**
+   * Checks that a provider key is accepted, with the provider's free model-list endpoint (L72). Only the HTTP
+   * status and the number of models come back: the key never leaves this service.
+   */
+  probeAuth(provider: ProbeProvider, signal: AbortSignal): Promise<ProviderProbe>;
+}
+
+export type ProbeProvider = 'openai' | 'anthropic';
+export interface ProviderProbe {
+  provider: ProbeProvider;
+  configured: boolean;
+  status: number | null;
+  ok: boolean;
+  models: number;
+  ms: number;
 }
 
 /** Durable Mastra memory for labs: one SQLite file per name under <dataDir>/memory. */
@@ -124,6 +139,28 @@ export function createModelService(env: Record<string, string | undefined>): Mod
   const { models: liveModels } = liveModelCatalog(env);
   return {
     liveModels,
+    async probeAuth(provider, signal) {
+      const key = provider === 'openai' ? env.OPENAI_API_KEY : env.ANTHROPIC_API_KEY;
+      const started = Date.now();
+      if (!key) return { provider, configured: false, status: null, ok: false, models: 0, ms: 0 };
+      const res = await fetch(
+        provider === 'openai' ? 'https://api.openai.com/v1/models' : 'https://api.anthropic.com/v1/models?limit=100',
+        {
+          headers:
+            provider === 'openai' ? { authorization: `Bearer ${key}` } : { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+          signal: AbortSignal.any([signal, AbortSignal.timeout(10_000)]),
+        },
+      );
+      const body = (await res.json().catch(() => ({}))) as { data?: unknown[] };
+      return {
+        provider,
+        configured: true,
+        status: res.status,
+        ok: res.ok,
+        models: Array.isArray(body.data) ? body.data.length : 0,
+        ms: Date.now() - started,
+      };
+    },
     selectableIds: () => liveModels.map((m) => m.id),
     resolve({ mode, modelId, offline, tokenDelayMs }) {
       const check = checkModelId(modelId);

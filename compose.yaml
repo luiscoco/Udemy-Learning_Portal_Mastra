@@ -1,0 +1,39 @@
+# Local production-like run (L72). First: node scripts/make-secrets.mjs (writes ./secrets, gitignored).
+#   docker compose up --build      then open http://127.0.0.1:8787
+# Secrets are mounted as files and read through <KEY>_FILE; they are never baked into the image.
+services:
+  api:
+    build: .
+    image: mastra-learning-platform:local
+    ports:
+      - '127.0.0.1:8787:8787'
+    environment:
+      MASTRA_MODE: offline
+      TRUST_PROXY: 'false'
+      LOG_LEVEL: info
+      AUTH_USERS_FILE: /run/secrets/auth_users
+      AUTH_SESSION_SECRET_FILE: /run/secrets/auth_session_secret
+      AUDIT_HMAC_KEY_FILE: /run/secrets/audit_hmac_key
+      # Live mode: set MASTRA_MODE=live and uncomment a provider key secret below.
+      # OPENAI_API_KEY_FILE: /run/secrets/openai_api_key
+    secrets:
+      - auth_users
+      - auth_session_secret
+      - audit_hmac_key
+      # - openai_api_key
+    volumes:
+      - data:/data
+    restart: unless-stopped
+
+secrets:
+  auth_users:
+    file: ./secrets/auth_users
+  auth_session_secret:
+    file: ./secrets/auth_session_secret
+  audit_hmac_key:
+    file: ./secrets/audit_hmac_key
+  # openai_api_key:
+  #   file: ./secrets/openai_api_key
+
+volumes:
+  data:
