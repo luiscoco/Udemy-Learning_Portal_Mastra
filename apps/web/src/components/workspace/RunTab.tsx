@@ -10,6 +10,7 @@ import { useAsync } from '../../lib/use-async';
 import { useSession } from '../../lib/auth-context';
 import { Badge, Button, Card } from '../ui/primitives';
 import { ApprovalPanel } from './ApprovalPanel';
+import { ChatPanel } from './ChatPanel';
 import { AgentConversation, agentConversationOf } from './AgentConversation';
 import { CitedAnswer, citedAnswerOf } from './CitedAnswer';
 import { McpCapabilityMatrix, mcpCapabilitiesOf } from './McpCapabilityMatrix';
@@ -137,6 +138,17 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
           Sign in to continue
         </Link>
       </Card>
+    );
+  if (definition.presentation === 'chat')
+    return (
+      <div className="flex flex-col gap-8">
+        <Section title="Preflight" id={`${id}-preflight`}>
+          <Preflight labId={definition.id} />
+        </Section>
+        <Section title="Chat" id={`${id}-chat`}>
+          <ChatPanel definition={definition} />
+        </Section>
+      </div>
     );
   return (
     <div className="flex flex-col gap-8">

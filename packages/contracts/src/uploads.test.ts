@@ -1,7 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { base64Length, DEFAULT_REQUEST_BYTES, InputFieldSchema, maxRequestBytes, uploadedFilesSchema, type InputField } from './lab.js';
+import {
+  base64Length,
+  DEFAULT_REQUEST_BYTES,
+  InputFieldSchema,
+  maxRequestBytes,
+  uploadedFilesSchema,
+  type InputField,
+} from './lab.js';
 
-const fileField: InputField = { kind: 'file', name: 'files', label: 'Files', accept: ['.txt'], maxBytes: 1000, maxFiles: 2, required: false };
+const fileField: InputField = {
+  kind: 'file',
+  name: 'files',
+  label: 'Files',
+  accept: ['.txt'],
+  maxBytes: 1000,
+  maxFiles: 2,
+  required: false,
+};
 
 describe('file uploads contract', () => {
   it('declares a file field with extensions, a per-file limit and a count limit', () => {
@@ -12,7 +27,12 @@ describe('file uploads contract', () => {
 
   it('bounds the number of files and their encoded size (with transport headroom)', () => {
     const schema = uploadedFilesSchema(fileField);
-    const f = (bytes: number) => ({ name: 'a.txt', type: 'text/plain', size: bytes, dataBase64: 'A'.repeat(base64Length(bytes)) });
+    const f = (bytes: number) => ({
+      name: 'a.txt',
+      type: 'text/plain',
+      size: bytes,
+      dataBase64: 'A'.repeat(base64Length(bytes)),
+    });
     expect(schema.safeParse([f(1000)]).success).toBe(true);
     expect(schema.safeParse([f(1200)]).success).toBe(true); // reaches the server, which rejects it per file
     expect(schema.safeParse([f(1300)]).success).toBe(false); // beyond the 1.25× headroom

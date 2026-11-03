@@ -241,6 +241,8 @@ export const LabDefinitionSchema = z
     instructorOutline: InstructorOutlineSchema,
     execution: ExecutionLimitsSchema,
     tags: z.array(z.string()).default([]),
+    /** How the Run tab presents the lab: a form (default) or a chat panel (L67). */
+    presentation: z.enum(['form', 'chat']).optional(),
   })
   .superRefine((def, ctx) => {
     // visibleWhen may only depend on a field declared earlier (so the form can evaluate it top-down).

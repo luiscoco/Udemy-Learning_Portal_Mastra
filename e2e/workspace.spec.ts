@@ -5,7 +5,9 @@ import { lab00Definition } from '../packages/labs/src/lab-00/definition';
 
 async function noSeriousViolations(page: Page) {
   const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
-  expect(r.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical').map((v) => `${v.id}: ${v.help}`)).toEqual([]);
+  expect(r.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical').map((v) => `${v.id}: ${v.help}`)).toEqual(
+    [],
+  );
 }
 
 const AVAILABLE = catalog.labs.filter((l) => l.status === 'available').length;

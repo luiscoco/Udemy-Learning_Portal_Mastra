@@ -66,3 +66,10 @@ Input fields and select options MAY declare `visibleWhen: { field, in }`, meanin
 #### Scenario: Unknown field
 - **WHEN** a field's `visibleWhen.field` names a field that does not exist
 - **THEN** parsing fails with a message naming the missing field
+
+### Requirement: Chat presentation contract
+The lab definition contract SHALL allow an optional presentation of form or chat, and a chat transcript schema SHALL describe the thread, its threads and messages with a complete, stopped or failed status.
+
+#### Scenario: Existing labs
+- **WHEN** a lab definition omits presentation
+- **THEN** it validates unchanged and renders as a form

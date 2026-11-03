@@ -8,7 +8,11 @@ test('lab-36: a learner uploads files; a valid one is ingested and a disguised o
   await page.getByLabel('Built-in fixtures').selectOption('none');
   await page.getByLabel('Store ingested documents in the course library').uncheck();
   await page.getByLabel('Your files (optional)').setInputFiles([
-    { name: 'team-notes.md', mimeType: 'text/markdown', buffer: Buffer.from('# Team notes\n\nPriority tickets are answered within four hours.\n') },
+    {
+      name: 'team-notes.md',
+      mimeType: 'text/markdown',
+      buffer: Buffer.from('# Team notes\n\nPriority tickets are answered within four hours.\n'),
+    },
     { name: 'holiday.txt', mimeType: 'text/plain', buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]) },
   ]);
   const list = page.getByRole('list', { name: 'Selected files for Your files (optional)' });
