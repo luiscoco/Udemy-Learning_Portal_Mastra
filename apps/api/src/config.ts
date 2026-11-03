@@ -35,6 +35,8 @@ export const ConfigSchema = z.object({
   AUTH_DEV_PASSWORD: optionalSecret,
   /** HMAC key for session ids (at least 32 characters); a random per-process key when unset. */
   AUTH_SESSION_SECRET: optionalSecret.refine((v) => v === undefined || v.length >= 32, 'must be at least 32 characters'),
+  /** Keys the L64 audit chains; without it a random key is generated once into .data/secrets. */
+  AUDIT_HMAC_KEY: optionalSecret.refine((v) => v === undefined || v.length >= 32, 'must be at least 32 characters'),
   AUTH_SESSION_TTL_MS: z.coerce
     .number()
     .int()
@@ -91,6 +93,7 @@ export function secretValues(config: AppConfig): string[] {
     config.GOOGLE_GENERATIVE_AI_API_KEY,
     config.AUTH_SESSION_SECRET,
     config.AUTH_DEV_PASSWORD,
+    config.AUDIT_HMAC_KEY,
   ].filter((v): v is string => Boolean(v));
 }
 
@@ -106,6 +109,7 @@ export function describeConfig(config: AppConfig): Record<string, string | numbe
     AUTH_DEV_USERS: config.AUTH_DEV_USERS,
     AUTH_DEV_PASSWORD: maskSecret(config.AUTH_DEV_PASSWORD),
     AUTH_SESSION_SECRET: maskSecret(config.AUTH_SESSION_SECRET),
+    AUDIT_HMAC_KEY: maskSecret(config.AUDIT_HMAC_KEY),
     OPENAI_API_KEY: maskSecret(config.OPENAI_API_KEY),
     ANTHROPIC_API_KEY: maskSecret(config.ANTHROPIC_API_KEY),
     GOOGLE_API_KEY: maskSecret(config.GOOGLE_API_KEY),

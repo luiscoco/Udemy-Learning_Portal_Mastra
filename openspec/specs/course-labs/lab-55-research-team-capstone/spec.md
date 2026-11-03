@@ -1,7 +1,7 @@
 # course-labs/lab-55-research-team-capstone Specification
 
 ## Purpose
-TBD - created by archiving change lab-55-research-team-capstone. Update Purpose after archive.
+Define the Research team capstone lab (L55): build a research team of agents (a lead, one researcher per sub-question, a synthesizer and a fact-checker) in one Mastra workflow that surfaces the evidence for every claim, flags unsupported claims and pauses for a human approval before anything is published.
 
 ## Requirements
 

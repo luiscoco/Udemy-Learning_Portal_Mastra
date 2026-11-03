@@ -1,6 +1,6 @@
 # L75 — Enterprise AI Assistant capstone
 
-**Module:** 15 Production and Capstone · **Step 89 of 89** · **OpenSpec change:** `lab-75-enterprise-ai-assistant-capstone`
+**Module:** 15 Production and Capstone · **Step 91 of 91** · **OpenSpec change:** `lab-75-enterprise-ai-assistant-capstone`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

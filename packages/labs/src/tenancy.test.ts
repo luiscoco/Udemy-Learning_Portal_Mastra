@@ -52,3 +52,23 @@ describe('storage partitions (L62)', () => {
     expect(offenders.sort()).toEqual(['paths.ts', 'services.ts', 'test-memory.ts']);
   });
 });
+
+describe('audit key (L64)', () => {
+  it('uses AUDIT_HMAC_KEY, otherwise generates one server-side key once and reuses it for every tenant', () => {
+    const secretsDir = join(testMemoryDir('audit-key'), 'secrets');
+    const a = createLabServices({ serverMode: 'offline', env: {}, memoryDir: root, secretsDir });
+    const key = a.auditKey();
+    expect(key.length).toBe(32);
+    expect(a.forTenant('dev:bob').auditKey().equals(key)).toBe(true);
+    expect(createLabServices({ serverMode: 'offline', env: {}, memoryDir: root, secretsDir }).auditKey().equals(key)).toBe(true);
+    const configured = createLabServices({
+      serverMode: 'offline',
+      env: { AUDIT_HMAC_KEY: 'c'.repeat(40) },
+      memoryDir: root,
+      secretsDir,
+    });
+    expect(configured.auditKey().toString()).toBe('c'.repeat(40));
+    const short = createLabServices({ serverMode: 'offline', env: { AUDIT_HMAC_KEY: 'short' }, memoryDir: root, secretsDir });
+    expect(() => short.auditKey()).toThrow(/at least 32/);
+  });
+});

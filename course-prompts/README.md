@@ -5,13 +5,13 @@ This folder holds every prompt needed to rebuild **mastra-learning-platform**, t
 | File | What it is |
 | --- | --- |
 | [00-master-rules.md](00-master-rules.md) | The original preamble: stack, how to run, **MASTER RULES** (save as `AGENTS.md`) and the common lab delivery contract. |
-| [build-order.md](build-order.md) | All 89 steps in the order to run them. |
+| [build-order.md](build-order.md) | All 91 steps in the order to run them. |
 | [prompts/](prompts/) | One file per step, each with a copy-ready prompt and links to the previous and next step. |
 
 ## What is in the pack
 
 - **79 original prompts**, unchanged: foundation milestones F01–F04 and labs L01–L75.
-- **10 follow-up prompts** (`F03a`, `L06a`, `L07a`, `L15a`, `L15b`, `L18a`, `L24a`, `L38a`, `L62a`, `L63a`). These are changes the reference build needed and the original prompts did not ask for. Some are platform capabilities that later labs depend on, such as interactive approvals and run tokens. The others fix defects that only showed up under real use: concurrent vector writes, approximate-search drift, and tenant gaps found in review. Each follow-up sits right after the step that needs it. Run it there so later labs build on the corrected platform.
+- **12 follow-up prompts** (`F03a`, `L06a`, `L06b`, `L07a`, `L15a`, `L15b`, `L18a`, `L24a`, `L38a`, `L62a`, `L63a`, `L64a`). These are changes the reference build needed and the original prompts did not ask for. Some are platform capabilities that later labs depend on, such as interactive approvals and run tokens. The others fix defects that only showed up under real use: concurrent vector writes, approximate-search drift, tenant and audit gaps found in review. Each follow-up sits right after the step that needs it. Run it there so later labs build on the corrected platform.
 
 ## How to build from zero
 

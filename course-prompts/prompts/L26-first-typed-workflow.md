@@ -1,6 +1,6 @@
 # L26 — First typed workflow
 
-**Module:** 06 Workflow Foundations · **Step 37 of 89** · **OpenSpec change:** `lab-26-first-typed-workflow`
+**Module:** 06 Workflow Foundations · **Step 38 of 91** · **OpenSpec change:** `lab-26-first-typed-workflow`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

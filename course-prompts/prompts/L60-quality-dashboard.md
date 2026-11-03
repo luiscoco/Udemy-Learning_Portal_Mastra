@@ -1,6 +1,6 @@
 # L60 — Quality dashboard
 
-**Module:** 12 Evaluation and Observability · **Step 72 of 89** · **OpenSpec change:** `lab-60-quality-dashboard`
+**Module:** 12 Evaluation and Observability · **Step 73 of 91** · **OpenSpec change:** `lab-60-quality-dashboard`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

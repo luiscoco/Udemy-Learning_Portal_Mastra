@@ -1,7 +1,7 @@
 # course-labs/lab-63-untrusted-input-and-prompt-injection Specification
 
 ## Purpose
-TBD - created by archiving change lab-63-untrusted-input-and-prompt-injection. Update Purpose after archive.
+Define the Untrusted input and prompt injection lab (L63): feed a support agent a poisoned document, watch an undefended agent act on it, and show that layered defences keep injected instructions from causing any unapproved side effect.
 
 ## Requirements
 

@@ -26,7 +26,7 @@ const tool = createTool({
 
 Run loop: for each `tool-call-approval`, check `eligibleApprover(decision, approver)` (never `self`, and only roles the rule names), then record the approval bound to `toolCallId` and `argsHash` before calling `agent.approveToolCall`, or call `agent.declineToolCall`.
 
-Audit: each JSONL entry stores `prevHash` and `hash = sha256(prevHash + canonical(entry))`. Verification recomputes the chain and reports the first broken entry. Edit a line in `.data/memory/tenants/<partition>/files/lab-64-audit/audit.jsonl` and rerun to see `audit-chain-intact` fail; tick "Start a new audit log" to rotate it.
+Audit: each JSONL entry stores `prevHash` and `hash = HMAC(serverKey, prevHash + canonical(entry))`, and `audit.jsonl.anchor.json` holds a keyed record of the last entry. Verification recomputes the chain with the server key (`services.auditKey()`, never stored next to the log) and checks the anchor, so an edited line, a chain rebuilt without the key, and removed trailing entries are all reported. Edit a line in `.data/memory/tenants/<partition>/files/lab-64-audit/audit.jsonl` and rerun to see `audit-chain-intact` fail; tick "Start a new audit log" to rotate it. Calls Mastra rejects for invalid input are audited too, with rule `input-validation`.
 
 Challenge outline: add `when.maxDailyRefundCents` to the rule schema; in `evaluate`, sum `executed` `issueRefund` entries of the same actor for today from `audit.read()` (only after `audit.verify().valid`), and deny when the new amount would exceed the cap.
 

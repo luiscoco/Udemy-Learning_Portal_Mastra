@@ -1,6 +1,6 @@
 # L66 — React client integration
 
-**Module:** 14 Full-Stack AI Applications · **Step 80 of 89** · **OpenSpec change:** `lab-66-react-client-integration`
+**Module:** 14 Full-Stack AI Applications · **Step 82 of 91** · **OpenSpec change:** `lab-66-react-client-integration`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

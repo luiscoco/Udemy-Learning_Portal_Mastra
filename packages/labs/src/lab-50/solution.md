@@ -13,7 +13,7 @@ const mcp = new MCPClient({
 
 try {
   // Per-server discovery: a server that is down is reported, not fatal.
-  const { toolsets, errors } = await mcp.listToolsetsWithErrors({ perServerTimeoutMs: 1500 });
+  const { toolsets, errors } = await mcp.listToolsetsWithErrors({ perServerTimeoutMs: 5000 });
   for (const [server, message] of Object.entries(errors)) console.warn(`${server} unavailable:`, message.split('\n')[0]);
 
   // Namespace policy: server_tool keys, so calc.info and data.info cannot collide.

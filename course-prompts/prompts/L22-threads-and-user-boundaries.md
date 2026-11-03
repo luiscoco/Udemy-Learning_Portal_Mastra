@@ -1,6 +1,6 @@
 # L22 — Threads and user boundaries
 
-**Module:** 05 Conversational Memory · **Step 32 of 89** · **OpenSpec change:** `lab-22-threads-and-user-boundaries`
+**Module:** 05 Conversational Memory · **Step 33 of 91** · **OpenSpec change:** `lab-22-threads-and-user-boundaries`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

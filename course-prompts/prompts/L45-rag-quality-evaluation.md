@@ -1,6 +1,6 @@
 # L45 — RAG quality evaluation
 
-**Module:** 09 Advanced RAG · **Step 57 of 89** · **OpenSpec change:** `lab-45-rag-quality-evaluation`
+**Module:** 09 Advanced RAG · **Step 58 of 91** · **OpenSpec change:** `lab-45-rag-quality-evaluation`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

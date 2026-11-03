@@ -1,6 +1,6 @@
 # L38 — Embeddings and store
 
-**Module:** 08 RAG and Knowledge Systems · **Step 49 of 89** · **OpenSpec change:** `lab-38-embeddings-and-store`
+**Module:** 08 RAG and Knowledge Systems · **Step 50 of 91** · **OpenSpec change:** `lab-38-embeddings-and-store`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

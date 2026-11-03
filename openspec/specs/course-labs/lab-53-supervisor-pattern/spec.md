@@ -1,7 +1,7 @@
 # course-labs/lab-53-supervisor-pattern Specification
 
 ## Purpose
-TBD - created by archiving change lab-53-supervisor-pattern. Update Purpose after archive.
+Define the Supervisor pattern lab (L53): build a supervisor agent that delegates research, planning and analysis to three worker agents with Mastra’s native sub-agents, enforce a delegation cap, a per-worker cap, a token budget and an iteration cap in the delegation hooks, and audit every decision.
 
 ## Requirements
 

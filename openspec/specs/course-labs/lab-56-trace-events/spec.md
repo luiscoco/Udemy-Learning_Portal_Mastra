@@ -1,7 +1,7 @@
 # course-labs/lab-56-trace-events Specification
 
 ## Purpose
-TBD - created by archiving change lab-56-trace-events. Update Purpose after archive.
+Define the Trace events lab (L56): instrument a Mastra workflow with three agents using the official @mastra/observability adapter, collect its spans with your own exporter, show them as a span tree, and verify that parents, trace ids and correlation ids stay coherent.
 
 ## Requirements
 

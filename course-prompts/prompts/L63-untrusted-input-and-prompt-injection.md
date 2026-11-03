@@ -1,6 +1,6 @@
 # L63 — Untrusted input and prompt injection
 
-**Module:** 13 Security and Reliability · **Step 76 of 89** · **OpenSpec change:** `lab-63-untrusted-input-and-prompt-injection`
+**Module:** 13 Security and Reliability · **Step 77 of 91** · **OpenSpec change:** `lab-63-untrusted-input-and-prompt-injection`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

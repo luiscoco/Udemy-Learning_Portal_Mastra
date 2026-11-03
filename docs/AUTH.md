@@ -12,6 +12,7 @@ All settings belong in the server's gitignored `.env`, never a browser variable.
 | `AUTH_DEV_USERS` | `learner` | Comma-separated local names, normalized to lowercase |
 | `AUTH_DEV_PASSWORD` | unset | Optional shared local passcode; no real account passwords |
 | `AUTH_SESSION_SECRET` | random per process | HMAC key, at least 32 characters when configured |
+| `AUDIT_HMAC_KEY` | generated once into `.data/secrets/audit-hmac.key` | Keys the L64 audit chains and head anchors; at least 32 characters when configured. Never stored next to a log, redacted from events and logs |
 | `AUTH_SESSION_TTL_MS` | `28800000` (8 hours) | Session lifetime, from 1 minute to 7 days |
 | `AUTH_LOGIN_RATE_MAX` | `10` | Login attempts per client IP per minute |
 

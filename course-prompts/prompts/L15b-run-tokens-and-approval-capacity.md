@@ -1,6 +1,6 @@
 # L15b — Run tokens and approval capacity
 
-**Module:** 03 Tools and Function Calling · **Step 24 of 89** · **OpenSpec change:** `run-tokens-and-approval-capacity`
+**Module:** 03 Tools and Function Calling · **Step 25 of 91** · **OpenSpec change:** `run-tokens-and-approval-capacity`
 
 Follow-up prompt added from the reference build: a change the platform needed that the original prompts did not ask for. Run it in this position. Paste the copy-ready prompt below as one request to your coding assistant.
 

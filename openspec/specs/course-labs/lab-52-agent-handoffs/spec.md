@@ -1,7 +1,7 @@
 # course-labs/lab-52-agent-handoffs Specification
 
 ## Purpose
-TBD - created by archiving change lab-52-agent-handoffs. Update Purpose after archive.
+Define the Agent handoffs lab (L52): route a customer request from a triage agent to the right specialist through an orchestrator that accepts or refuses every handoff, gives each specialist only the fields it needs, and stops cycles and endless transfers.
 
 ## Requirements
 

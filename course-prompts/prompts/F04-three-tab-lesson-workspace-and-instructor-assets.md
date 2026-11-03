@@ -1,6 +1,6 @@
 # F04 — Three-tab lesson workspace and instructor assets
 
-**Module:** Foundation · **Step 5 of 89**
+**Module:** Foundation · **Step 5 of 91**
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

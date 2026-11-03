@@ -1,6 +1,6 @@
 # L42 — Hybrid search
 
-**Module:** 09 Advanced RAG · **Step 54 of 89** · **OpenSpec change:** `lab-42-hybrid-search`
+**Module:** 09 Advanced RAG · **Step 55 of 91** · **OpenSpec change:** `lab-42-hybrid-search`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

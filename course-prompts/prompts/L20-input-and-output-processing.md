@@ -1,6 +1,6 @@
 # L20 — Input and output processing
 
-**Module:** 04 Agent Configuration and Context · **Step 30 of 89** · **OpenSpec change:** `lab-20-input-and-output-processing`
+**Module:** 04 Agent Configuration and Context · **Step 31 of 91** · **OpenSpec change:** `lab-20-input-and-output-processing`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

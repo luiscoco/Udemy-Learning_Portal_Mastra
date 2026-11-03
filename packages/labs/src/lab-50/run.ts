@@ -181,7 +181,9 @@ export const lab50: LabImplementation<Lab50Input, Lab50Output, LabServices> = {
     let clientDisconnected = false;
     try {
       let t0 = performance.now();
-      const discovered = await client.listToolsetsWithErrors({ perServerTimeoutMs: 1_500 });
+      // 5 s like L47: a healthy loopback server can take over 1.5 s to answer on a busy machine, and a
+      // server that is down is a closed port, which fails at once, so the longer bound costs nothing.
+      const discovered = await client.listToolsetsWithErrors({ perServerTimeoutMs: 5_000 });
       const servers: ServerReport[] = SERVER_ORDER.map((key) => {
         const err = discovered.errorDetails[key] ?? (discovered.errors[key] ? { message: discovered.errors[key]! } : undefined);
         if (err) {

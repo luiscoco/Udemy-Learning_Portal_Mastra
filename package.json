@@ -22,12 +22,13 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "check:bundle-secrets": "node scripts/check-bundle-secrets.mjs",
-    "verify": "npm run check:env-example && npm run lint && npm run typecheck && npm test && npm run build && npm run check:bundle-secrets",
+    "verify": "npm run check:env-example && npm run check:specs && npm run lint && npm run typecheck && npm test && npm run build && npm run check:bundle-secrets",
     "openspec": "openspec",
     "studio": "npm run dev -w course-project",
     "test:live": "cross-env RUN_LIVE_TESTS=1 vitest run packages/labs/src/live.test.ts apps/api/src/live.test.ts",
     "test:e2e:live": "cross-env E2E_LIVE=1 playwright test",
-    "check:env-example": "node scripts/check-env-example.mjs"
+    "check:env-example": "node scripts/check-env-example.mjs",
+    "check:specs": "openspec validate --specs --strict --no-interactive"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

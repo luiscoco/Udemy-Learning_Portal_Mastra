@@ -1,6 +1,6 @@
 # L72 — Configuration and packaging
 
-**Module:** 15 Production and Capstone · **Step 86 of 89** · **OpenSpec change:** `lab-72-configuration-and-packaging`
+**Module:** 15 Production and Capstone · **Step 88 of 91** · **OpenSpec change:** `lab-72-configuration-and-packaging`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

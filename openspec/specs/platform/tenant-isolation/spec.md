@@ -1,7 +1,7 @@
 # platform/tenant-isolation Specification
 
 ## Purpose
-TBD - created by archiving change lab-62-tenant-isolation. Update Purpose after archive.
+Keep every learner's stored data (threads, document libraries, saved files, datasets, workflow snapshots and browser-stored progress) in a partition derived from their authenticated identity, classify every API route as public or tenant-scoped, and migrate legacy shared data only explicitly.
 
 ## Requirements
 

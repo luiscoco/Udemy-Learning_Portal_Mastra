@@ -68,5 +68,45 @@ export function toCanonicalError(err: unknown, secrets: readonly string[] = []):
   if (err instanceof Error && err.name === 'AbortError') {
     return { code: 'CANCELLED', message: 'Operation aborted', retryable: false };
   }
+  const status = providerStatusOf(err);
+  if (status !== null) return providerError(status);
   return { code: 'INTERNAL', message: 'Lab execution failed', retryable: false };
+}
+
+/**
+ * The HTTP status of a model provider API error (AI SDK APICallError has `statusCode`), also when wrapped
+ * by retries or causes. Only the status is read: provider messages can echo request data.
+ */
+export function providerStatusOf(err: unknown, depth = 0): number | null {
+  if (!err || typeof err !== 'object' || depth > 4) return null;
+  const e = err as { statusCode?: unknown; cause?: unknown; lastError?: unknown; errors?: unknown };
+  if (typeof e.statusCode === 'number' && Number.isInteger(e.statusCode) && e.statusCode >= 400 && e.statusCode <= 599)
+    return e.statusCode;
+  for (const next of [e.cause, e.lastError, ...(Array.isArray(e.errors) ? e.errors : [])]) {
+    const found = providerStatusOf(next, depth + 1);
+    if (found !== null) return found;
+  }
+  return null;
+}
+
+function providerError(status: number): CanonicalError {
+  if (status === 401 || status === 403)
+    return {
+      code: 'NOT_CONFIGURED',
+      message: `The model provider rejected the API key or its permissions (HTTP ${status}). Check the key in the server .env.`,
+      retryable: false,
+    };
+  if (status === 429)
+    return {
+      code: 'TOO_MANY_REQUESTS',
+      message: 'The model provider rate-limited the request (HTTP 429). Retry shortly.',
+      retryable: true,
+    };
+  if (status === 408 || status >= 500)
+    return {
+      code: 'PROVIDER_ERROR',
+      message: `The model provider is unavailable (HTTP ${status}). Retry shortly.`,
+      retryable: true,
+    };
+  return { code: 'PROVIDER_ERROR', message: `The model provider rejected the request (HTTP ${status}).`, retryable: false };
 }

@@ -1,6 +1,6 @@
 # L03 — Create and register a first agent
 
-**Module:** 01 Mastra Foundations · **Step 8 of 89** · **OpenSpec change:** `lab-03-create-and-register-a-first-agent`
+**Module:** 01 Mastra Foundations · **Step 8 of 91** · **OpenSpec change:** `lab-03-create-and-register-a-first-agent`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

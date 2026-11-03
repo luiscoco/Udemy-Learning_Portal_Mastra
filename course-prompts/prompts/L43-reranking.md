@@ -1,6 +1,6 @@
 # L43 — Reranking
 
-**Module:** 09 Advanced RAG · **Step 55 of 89** · **OpenSpec change:** `lab-43-reranking`
+**Module:** 09 Advanced RAG · **Step 56 of 91** · **OpenSpec change:** `lab-43-reranking`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

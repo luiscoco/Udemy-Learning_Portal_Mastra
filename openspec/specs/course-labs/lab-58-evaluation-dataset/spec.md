@@ -1,7 +1,7 @@
 # course-labs/lab-58-evaluation-dataset Specification
 
 ## Purpose
-TBD - created by archiving change lab-58-evaluation-dataset. Update Purpose after archive.
+Define the Evaluation dataset lab (L58): store versioned evaluation scenarios (inputs and expected assertions) in a Mastra dataset, and run an agent over a chosen version with Mastra experiments and deterministic scorers, offline on the mock provider or live.
 
 ## Requirements
 

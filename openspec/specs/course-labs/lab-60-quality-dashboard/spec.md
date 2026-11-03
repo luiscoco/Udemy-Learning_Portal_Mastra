@@ -1,7 +1,7 @@
 # course-labs/lab-60-quality-dashboard Specification
 
 ## Purpose
-TBD - created by archiving change lab-60-quality-dashboard. Update Purpose after archive.
+Define the Quality dashboard lab (L60): build a quality dashboard from stored evaluation runs: pass-rate history, regressions since the last run, latency percentiles and trace links that open each scenario’s stored trace, with empty states that still guide you before the first run.
 
 ## Requirements
 

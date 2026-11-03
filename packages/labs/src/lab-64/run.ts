@@ -49,7 +49,8 @@ export interface Lab64Output {
   toolCalls: ToolTrace[];
   audit: {
     file: string;
-    rotatedPrevious: boolean;
+    /** Why the log was rotated before this run: on request, legacy (unkeyed) format, or retention. */
+    rotated: 'reset' | 'legacy' | 'retention' | null;
     before: { valid: boolean; entries: number; brokenAt?: number };
     after: { valid: boolean; entries: number; brokenAt?: number };
     thisRun: AuditEntry[];
@@ -141,11 +142,21 @@ export const lab64: LabImplementation<Lab64Input, Lab64Output, LabServices> = {
 
   async run(ctx, input) {
     const file = join(ctx.services.files(AUDIT_STORE), 'audit.jsonl');
-    const audit = new AuditLog(file);
-    const rotated = input.resetAudit ? await audit.rotate() : null;
+    const audit = new AuditLog(file, { key: ctx.services.auditKey() });
+    const rotated: Lab64Output['audit']['rotated'] = input.resetAudit
+      ? (await audit.rotate())
+        ? 'reset'
+        : null
+      : await audit.prepare();
+    if (rotated === 'legacy')
+      ctx.log('warn', 'An unkeyed audit log from an older version was archived: it can never be trusted.');
+    if (rotated === 'retention') ctx.log('info', 'The audit log reached its size limit and was rotated; the old file is kept.');
     const before = audit.verify();
     if (!before.valid)
-      ctx.log('warn', `The stored audit log is broken at entry ${before.brokenAt}: it was modified outside the platform.`);
+      ctx.log(
+        'warn',
+        `The stored audit log is broken at entry ${before.brokenAt} (${before.reason}): it was modified outside the platform.`,
+      );
 
     const actor = `operator (${input.role})`;
     const approvals: ApprovalBook = new Map();
@@ -182,18 +193,60 @@ export const lab64: LabImplementation<Lab64Input, Lab64Output, LabServices> = {
 
     ctx.emit({ type: 'workflow-step', stepId: 'agent', status: 'running', input: { role: input.role } });
     const startedAt = new Map<string, number>();
+    const entry = (
+      t: { toolName: string; toolCallId: string; args: unknown },
+      stage: 'policy' | 'execution',
+      decision: string,
+      reason: string,
+      ruleId: string,
+    ) =>
+      audit.append({
+        runId: ctx.runId,
+        actor,
+        role: input.role,
+        toolName: t.toolName,
+        toolCallId: t.toolCallId,
+        argsHash: argsHashOf(t.args),
+        args: mask(t.args),
+        stage,
+        decision,
+        ruleId,
+        reason,
+      });
+    /** Calls Mastra rejected before any hook ran (input failed the tool schema) still get audited. */
+    const auditUnaudited = async (traces: ToolTrace[]) => {
+      // Such a call can even reach the approval gate first: Mastra validates the input again on resume.
+      const mine = audit.read().filter((e) => e.runId === ctx.runId);
+      const has = (id: string, stage: string) => mine.some((e) => e.toolCallId === id && e.stage === stage);
+      for (const t of traces) {
+        if (t.status !== 'invalid' && t.status !== 'error') continue;
+        const why = t.error ?? (t.status === 'invalid' ? 'arguments failed the tool schema' : `tool call ended as ${t.status}`);
+        if (!has(t.toolCallId, 'policy'))
+          await entry(t, 'policy', 'deny', `rejected by Mastra before the policy ran: ${why}`, 'input-validation');
+        if (!has(t.toolCallId, 'execution'))
+          await entry(t, 'execution', 'not-invoked', `the tool never ran: ${why}`, 'input-validation');
+      }
+    };
+
     let res = await streamAgent(ctx, agent, input.request, { maxSteps: MAX_STEPS, startedAt });
     const toolCalls = [...res.tools];
+    await auditUnaudited(res.tools);
     let answer = res.text;
 
-    for (let round = 0; res.pendingApprovals.length > 0 && round < MAX_APPROVAL_ROUNDS; round++) {
+    // Every pending call ends approved or declined; beyond MAX_APPROVAL_ROUNDS the rest are declined.
+    for (let round = 0; res.pendingApprovals.length > 0 && round < MAX_APPROVAL_ROUNDS + 8; round++) {
       const pending = res.pendingApprovals[0]!;
       const d = evaluate(input.policy, { role: input.role, toolName: pending.toolName, args: pending.args });
       const eligible = eligibleApprover(d, input.approver);
       let decision: 'approved' | 'declined';
       let reason: string;
       let by: string = input.approver;
-      if (!eligible.ok) {
+      if (round >= MAX_APPROVAL_ROUNDS) {
+        decision = 'declined';
+        reason = `approval round limit reached (${MAX_APPROVAL_ROUNDS} decisions per run)`;
+        by = 'system (approval round limit)';
+        ctx.log('warn', `Declined ${pending.toolName}: ${reason}.`);
+      } else if (!eligible.ok) {
         decision = 'declined';
         reason = `separation of duties: ${eligible.reason}`;
         by = `system (on behalf of ${input.approver})`;
@@ -249,6 +302,7 @@ export const lab64: LabImplementation<Lab64Input, Lab64Output, LabServices> = {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       res = await consumeStream(ctx, resumed as any, { startedAt });
       toolCalls.push(...res.tools);
+      await auditUnaudited(res.tools);
       answer += res.text;
     }
     ctx.emit({ type: 'workflow-step', stepId: 'agent', status: 'success', output: { toolCalls: toolCalls.length } });
@@ -269,7 +323,7 @@ export const lab64: LabImplementation<Lab64Input, Lab64Output, LabServices> = {
         closed: [...sinks.closed],
       },
       toolCalls: toolCalls.map((t) => ({ ...t, args: mask(t.args) })),
-      audit: { file: `${AUDIT_STORE}/audit.jsonl`, rotatedPrevious: rotated !== null, before, after: audit.verify(), thisRun },
+      audit: { file: `${AUDIT_STORE}/audit.jsonl`, rotated, before, after: audit.verify(), thisRun },
       policyDefault: input.policy.default,
     };
   },

@@ -1,10 +1,10 @@
 # L07 — Behavior and instruction variants
 
-**Module:** 02 Agent Generation and Streaming · **Step 13 of 89** · **OpenSpec change:** `lab-07-behavior-and-instruction-variants`
+**Module:** 02 Agent Generation and Streaming · **Step 14 of 91** · **OpenSpec change:** `lab-07-behavior-and-instruction-variants`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 
-Previous: [L06a](L06a-live-output-for-non-streaming-labs.md) · Next: [L07a](L07a-outgoing-secret-check.md)
+Previous: [L06b](L06b-actionable-model-provider-errors.md) · Next: [L07a](L07a-outgoing-secret-check.md)
 
 ## Copy-ready prompt
 

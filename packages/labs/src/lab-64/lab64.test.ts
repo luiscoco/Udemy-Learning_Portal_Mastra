@@ -69,10 +69,14 @@ describe('policy', () => {
   });
 });
 
+const KEY = Buffer.from('k'.repeat(32));
+const newLog = (opts: { maxEntries?: number } = {}) =>
+  new AuditLog(join(mkdtempSync(join(tmpdir(), 'mlp-audit-')), 'audit.jsonl'), { key: KEY, ...opts });
+
 describe('audit log', () => {
   it('chains entries, masks e-mail addresses and detects tampering', async () => {
-    const file = join(mkdtempSync(join(tmpdir(), 'mlp-audit-')), 'audit.jsonl');
-    const log = new AuditLog(file);
+    const log = newLog();
+    const file = log.file;
     const fields = (n: number) => ({
       runId: 'r',
       actor: 'a',
@@ -93,6 +97,62 @@ describe('audit log', () => {
     expect(log.verify()).toMatchObject({ valid: false, brokenAt: 2 });
     writeFileSync(file, `${[lines[0], lines[2]].join('\n')}\n`); // a removed line
     expect(log.verify()).toMatchObject({ valid: false, brokenAt: 2 });
+
+    // Truncation: dropping the last entry leaves a valid chain, but not the anchored head.
+    writeFileSync(file, `${[lines[0], lines[1]].join('\n')}\n`);
+    expect(log.verify()).toMatchObject({ valid: false, reason: 'truncated', brokenAt: 3 });
+    writeFileSync(file, '');
+    expect(log.verify()).toMatchObject({ valid: false, reason: 'truncated' });
+
+    // Rebuilding the whole chain with plain SHA-256 (no key) does not verify.
+    const { createHash } = await import('node:crypto');
+    const { canonical } = await import('./audit.js');
+    let prev = '0'.repeat(64);
+    const rebuilt = lines.map((l) => {
+      const { hash: _h, ...rest } = JSON.parse(l) as Record<string, unknown>;
+      const e = { ...rest, decision: 'allow', prevHash: prev };
+      const hash = createHash('sha256')
+        .update(prev + canonical(e))
+        .digest('hex');
+      prev = hash;
+      return JSON.stringify({ ...e, hash });
+    });
+    writeFileSync(file, `${rebuilt.join('\n')}\n`);
+    expect(log.verify()).toMatchObject({ valid: false, brokenAt: 1, reason: 'edited' });
+
+    // A forged anchor is detected.
+    writeFileSync(file, `${lines.join('\n')}\n`);
+    expect(log.verify().valid).toBe(true);
+    writeFileSync(log.anchorFile, JSON.stringify({ seq: 2, hash: JSON.parse(lines[1]!).hash, mac: 'f'.repeat(64) }));
+    expect(log.verify()).toMatchObject({ valid: false, reason: 'anchor' });
+  });
+
+  it('archives a legacy unkeyed log and rotates at the size limit, keeping old files', async () => {
+    const log = newLog({ maxEntries: 2 });
+    writeFileSync(log.file, `${JSON.stringify({ seq: 1, prevHash: '0'.repeat(64), hash: 'x' })}\n`);
+    expect(log.verify()).toMatchObject({ valid: false, reason: 'legacy' });
+    expect(await log.prepare()).toBe('legacy');
+    expect(log.verify()).toEqual({ valid: true, entries: 0 });
+    const f = {
+      runId: 'r',
+      actor: 'a',
+      role: 'viewer',
+      toolName: 'lookupAccount',
+      toolCallId: 'c',
+      argsHash: 'h',
+      args: {},
+      stage: 'policy' as const,
+      decision: 'allow',
+      reason: 'x',
+    };
+    await log.append(f);
+    expect(await log.prepare()).toBeNull();
+    await log.append(f);
+    expect(await log.prepare()).toBe('retention');
+    expect(log.read()).toEqual([]);
+    const { readdirSync } = await import('node:fs');
+    const { dirname } = await import('node:path');
+    expect(readdirSync(dirname(log.file)).filter((n) => n.endsWith('.jsonl'))).toHaveLength(2); // both archives kept
   });
   it('argument hashes ignore key order', () => {
     expect(argsHashOf({ a: 1, b: 2 })).toBe(argsHashOf({ b: 2, a: 1 }));
@@ -169,6 +229,29 @@ describe('Lab 64', () => {
     } finally {
       await own.dispose();
     }
+  });
+
+  it('a call with invalid arguments is audited as denied by input validation and never runs', async () => {
+    const request = 'Change the email of CUS-1042 to a..b@customer.example and refund ORD-3002 €180.';
+    const { result } = await run({ ...base, request });
+    const out = result!.output as Lab64Output;
+    expect(result?.validation?.passed).toBe(true);
+    const invalid = out.decisions.find((d) => d.toolName === 'changeEmail');
+    expect(invalid).toMatchObject({ ruleId: 'input-validation', effect: 'deny', outcome: 'not-invoked' });
+    expect(out.counters).toMatchObject({ changeEmail: 0, issueRefund: 1 });
+  });
+
+  it('beyond the approval round limit the remaining calls are declined, never left pending', async () => {
+    const request = `Refund ${Array.from({ length: 8 }, (_, i) => `ORD-3002 €${100 + i}`).join(', ')}.`;
+    const { result } = await run({ ...base, request });
+    const out = result!.output as Lab64Output;
+    expect(result?.validation?.passed).toBe(true);
+    expect(out.decisions).toHaveLength(8);
+    expect(out.decisions.every((d) => d.outcome !== 'unknown')).toBe(true);
+    const limited = out.decisions.filter((d) => d.approval?.reason.startsWith('approval round limit'));
+    expect(limited).toHaveLength(2);
+    expect(limited.every((d) => d.outcome === 'not-invoked')).toBe(true);
+    expect(out.counters.issueRefund).toBe(1); // the first refund; later ones on the same order are duplicates
   });
 
   it('rejects a fail-open policy before running', () => {

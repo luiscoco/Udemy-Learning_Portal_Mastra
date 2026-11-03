@@ -1,7 +1,7 @@
 import type { RuntimeMode } from '@mlp/contracts';
 import { LabError } from '@mlp/lab-engine';
-import { createHash } from 'node:crypto';
-import { mkdirSync } from 'node:fs';
+import { createHash, randomBytes } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   checkModelId,
@@ -83,6 +83,11 @@ export interface LabServices {
    * snapshots, files) moves to that owner's partition. The runner calls it per run with the run owner.
    */
   forTenant(ownerId: string | null): LabServices;
+  /**
+   * Server-only key for keyed audit chains (L64): AUDIT_HMAC_KEY, or a key generated once into
+   * <dataDir>/secrets/audit-hmac.key. Never stored next to a log and never sent to a client.
+   */
+  auditKey(): Buffer;
 }
 
 export interface LabServicesConfig {
@@ -91,6 +96,28 @@ export interface LabServicesConfig {
   env?: Record<string, string | undefined>;
   /** Directory for memory databases (tests pass a temporary one). Defaults to <dataDir>/memory. */
   memoryDir?: string;
+  /** Directory for server-generated secrets (tests may pass a temporary one). Defaults to <dataDir>/secrets. */
+  secretsDir?: string;
+}
+
+/** Loads AUDIT_HMAC_KEY, or creates a random key file once. The value is never logged or returned to labs' outputs. */
+export function loadAuditKey(env: Record<string, string | undefined>, secretsDir: string): Buffer {
+  const configured = env.AUDIT_HMAC_KEY?.trim();
+  if (configured) {
+    if (configured.length < 32) throw new LabError('NOT_CONFIGURED', 'AUDIT_HMAC_KEY must be at least 32 characters.');
+    return Buffer.from(configured, 'utf8');
+  }
+  const file = join(secretsDir, 'audit-hmac.key');
+  if (!existsSync(file)) {
+    mkdirSync(secretsDir, { recursive: true });
+    try {
+      writeFileSync(file, randomBytes(32).toString('hex'), { flag: 'wx', mode: 0o600 });
+    } catch (err) {
+      // Another run created it first: use that one.
+      if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err;
+    }
+  }
+  return Buffer.from(readFileSync(file, 'utf8').trim(), 'hex');
 }
 
 export function createModelService(env: Record<string, string | undefined>): ModelService {
@@ -138,6 +165,8 @@ export function createLabServices(config: LabServicesConfig): LabServices {
   const memoryRoot = () => config.memoryDir ?? join(dataDir(), 'memory');
   const models = createModelService(config.env ?? {});
   const mastraVersion = getMastraVersion();
+  let key: Buffer | undefined;
+  const auditKey = () => (key ??= loadAuditKey(config.env ?? {}, config.secretsDir ?? join(dataDir(), 'secrets')));
   const view = (ownerId: string | null): LabServices => {
     const partition = partitionOf(ownerId);
     const root = () => join(memoryRoot(), TENANTS_DIR, partition);
@@ -152,6 +181,7 @@ export function createLabServices(config: LabServicesConfig): LabServices {
         return join(root(), 'files', name);
       },
       forTenant: view,
+      auditKey,
     };
   };
   return view(null);

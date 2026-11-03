@@ -1,6 +1,6 @@
 # L61 — Authenticated API
 
-**Module:** 13 Security and Reliability · **Step 73 of 89** · **OpenSpec change:** `lab-61-authenticated-api`
+**Module:** 13 Security and Reliability · **Step 74 of 91** · **OpenSpec change:** `lab-61-authenticated-api`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

@@ -1,7 +1,7 @@
 # course-labs/lab-57-custom-scorer Specification
 
 ## Purpose
-TBD - created by archiving change lab-57-custom-scorer. Update Purpose after archive.
+Define the Custom scorer lab (L57): build a deterministic Mastra scorer that grades an answer against a rubric and its expected output for completeness and relevance, with penalties for known-wrong claims, and exposes the full rationale behind every score.
 
 ## Requirements
 

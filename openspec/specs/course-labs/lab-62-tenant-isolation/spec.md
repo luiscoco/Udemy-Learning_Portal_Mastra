@@ -1,7 +1,7 @@
 # course-labs/lab-62-tenant-isolation Specification
 
 ## Purpose
-TBD - created by archiving change lab-62-tenant-isolation. Update Purpose after archive.
+Define the Tenant isolation lab (L62): enforce ownership scopes across threads, documents, runs and storage records by partitioning every learner’s stores on the server.
 
 ## Requirements
 

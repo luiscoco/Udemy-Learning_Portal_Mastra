@@ -1,6 +1,6 @@
 # L38a — Exact vector search for course stores
 
-**Module:** 08 RAG and Knowledge Systems · **Step 50 of 89** · **OpenSpec change:** `fix-exact-vector-search`
+**Module:** 08 RAG and Knowledge Systems · **Step 51 of 91** · **OpenSpec change:** `fix-exact-vector-search`
 
 Follow-up prompt added from the reference build: a change the platform needed that the original prompts did not ask for. Run it in this position. Paste the copy-ready prompt below as one request to your coding assistant.
 

@@ -1,6 +1,6 @@
 # F03a — Course outline in the catalog
 
-**Module:** Foundation · **Step 4 of 89** · **OpenSpec change:** `catalog-course-outline`
+**Module:** Foundation · **Step 4 of 91** · **OpenSpec change:** `catalog-course-outline`
 
 Follow-up prompt added from the reference build: a change the platform needed that the original prompts did not ask for. Run it in this position. Paste the copy-ready prompt below as one request to your coding assistant.
 

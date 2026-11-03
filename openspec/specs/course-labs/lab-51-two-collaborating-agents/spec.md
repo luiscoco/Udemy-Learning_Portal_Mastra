@@ -1,7 +1,7 @@
 # course-labs/lab-51-two-collaborating-agents Specification
 
 ## Purpose
-TBD - created by archiving change lab-51-two-collaborating-agents. Update Purpose after archive.
+Define the Two collaborating agents lab (L51): connect a research agent and an editor agent through an explicit Mastra workflow: the researcher records grounded notes, the editor writes a cited draft from those notes only, the researcher reviews it, and a bounded loop revises it before anything is published.
 
 ## Requirements
 

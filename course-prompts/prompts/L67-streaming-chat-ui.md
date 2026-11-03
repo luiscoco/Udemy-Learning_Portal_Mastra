@@ -1,6 +1,6 @@
 # L67 — Streaming chat UI
 
-**Module:** 14 Full-Stack AI Applications · **Step 81 of 89** · **OpenSpec change:** `lab-67-streaming-chat-ui`
+**Module:** 14 Full-Stack AI Applications · **Step 83 of 91** · **OpenSpec change:** `lab-67-streaming-chat-ui`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

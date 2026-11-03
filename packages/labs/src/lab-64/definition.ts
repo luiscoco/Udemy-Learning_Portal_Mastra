@@ -18,7 +18,7 @@ export const lab64Definition = {
     'The policy runs on the server through Mastra’s native hooks: requireApproval sends every non-allowed call to the approval gate, beforeApproval rejects denied calls there so they never execute and no human ever sees them, and confirmed calls suspend the run until approveToolCall or declineToolCall. ' +
     'Because beforeApproval does not run again on resume, execute() evaluates the policy once more and only runs a confirmed call whose arguments match the approval exactly. ' +
     'Confirmation is explicit and separated: the approver must hold a role the rule names, and nobody can approve their own action. ' +
-    'Every policy decision, approval and outcome is appended to an audit log in which each entry includes the hash of the one before it, so an edited, removed or reordered line is detected. ' +
+    'Every policy decision, approval and outcome is appended to an audit log in which each entry includes a keyed hash of the one before it, and a keyed anchor records the last entry, so an edited, removed, reordered or truncated log is detected. ' +
     'The log masks personal data and persists in your own storage partition across runs. ' +
     'All side effects happen in a sandbox, so you can try any policy safely.',
   objectives: [

@@ -1,7 +1,7 @@
 # course-labs/lab-59-compare-experiments Specification
 
 ## Purpose
-TBD - created by archiving change lab-59-compare-experiments. Update Purpose after archive.
+Define the Compare experiments lab (L59): run several agent configurations as Mastra experiments on the same dataset version and compare pass rate, score, tokens, latency and (only when the provider reports it) cost against a baseline, reproducibly, with JSON and CSV exports.
 
 ## Requirements
 

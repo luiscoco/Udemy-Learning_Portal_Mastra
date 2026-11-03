@@ -1,6 +1,6 @@
 # L09 — Structured JSON generation
 
-**Module:** 02 Agent Generation and Streaming · **Step 16 of 89** · **OpenSpec change:** `lab-09-structured-json-generation`
+**Module:** 02 Agent Generation and Streaming · **Step 17 of 91** · **OpenSpec change:** `lab-09-structured-json-generation`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

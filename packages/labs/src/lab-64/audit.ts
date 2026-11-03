@@ -1,5 +1,5 @@
-import { createHash } from 'node:crypto';
-import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync } from 'node:fs';
+import { createHash, createHmac } from 'node:crypto';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { KeyedLock } from '../shared/keyed-lock.js';
 
@@ -20,6 +20,7 @@ export interface AuditFields {
   reason: string;
 }
 export interface AuditEntry extends AuditFields {
+  v: number;
   seq: number;
   at: string;
   prevHash: string;
@@ -49,20 +50,52 @@ export function mask(value: unknown): unknown {
   return value;
 }
 
-const hashOf = (e: Omit<AuditEntry, 'hash'>) => sha256(e.prevHash + canonical(e));
+/** Entry format version: 2 = HMAC-keyed chain with a head anchor. Unversioned logs are legacy and never trusted. */
+export const AUDIT_VERSION = 2;
 
 const locks = new KeyedLock();
 
+export interface Verification {
+  valid: boolean;
+  entries: number;
+  brokenAt?: number;
+  reason?: 'edited' | 'truncated' | 'anchor' | 'unreadable' | 'legacy';
+}
+
 /**
- * Append-only, hash-chained audit log in one JSONL file. Changing, removing or reordering any line breaks
- * the chain from that line on. This is tamper-evident, not tamper-proof: whoever can rewrite the whole
- * file can rebuild the chain, so production logs also need an external anchor (WORM storage, a log service).
+ * Append-only audit log in one JSONL file, chained with a server-held HMAC key:
+ * hash = HMAC(key, prevHash + canonical(entry)). Editing, removing or reordering a line breaks the chain,
+ * and without the key nobody can rebuild it. A keyed head anchor (<file>.anchor.json) records the last
+ * entry, so removing entries from the end is detected too.
+ * Limit: whoever can restore an older, consistent log-and-anchor pair can roll back; production logs need an
+ * external, monotonic anchor (WORM storage, a log service).
  */
 export class AuditLog {
+  readonly anchorFile: string;
+  private readonly key: Buffer;
+  private readonly now: () => Date;
+  private readonly maxEntries: number;
+
   constructor(
     readonly file: string,
-    private readonly now: () => Date = () => new Date(),
-  ) {}
+    opts: { key: Buffer; now?: () => Date; maxEntries?: number },
+  ) {
+    if (opts.key.length < 16) throw new Error('audit key too short');
+    this.key = opts.key;
+    this.now = opts.now ?? (() => new Date());
+    this.maxEntries = opts.maxEntries ?? 5_000;
+    this.anchorFile = `${file}.anchor.json`;
+  }
+
+  private mac(data: string) {
+    return createHmac('sha256', this.key).update(data, 'utf8').digest('hex');
+  }
+  private hashOf(e: Omit<AuditEntry, 'hash'>) {
+    return this.mac(e.prevHash + canonical(e));
+  }
+  private anchorMac(seq: number, hash: string) {
+    return this.mac(`anchor:${seq}:${hash}`);
+  }
 
   read(): AuditEntry[] {
     if (!existsSync(this.file)) return [];
@@ -72,42 +105,99 @@ export class AuditLog {
       .map((l) => JSON.parse(l) as AuditEntry);
   }
 
-  verify(): { valid: boolean; entries: number; brokenAt?: number } {
-    let prev = GENESIS;
+  verify(): Verification {
     let entries: AuditEntry[];
     try {
       entries = this.read();
     } catch {
-      return { valid: false, entries: 0, brokenAt: 1 };
+      return { valid: false, entries: 0, brokenAt: 1, reason: 'unreadable' };
     }
+    let prev = GENESIS;
     for (const [i, e] of entries.entries()) {
       const { hash, ...rest } = e;
-      if (e.seq !== i + 1 || e.prevHash !== prev || hashOf(rest) !== hash)
-        return { valid: false, entries: entries.length, brokenAt: i + 1 };
+      if (e.v !== AUDIT_VERSION) return { valid: false, entries: entries.length, brokenAt: i + 1, reason: 'legacy' };
+      if (e.seq !== i + 1 || e.prevHash !== prev || this.hashOf(rest) !== hash)
+        return { valid: false, entries: entries.length, brokenAt: i + 1, reason: 'edited' };
       prev = hash;
     }
+    const anchor = this.readAnchor();
+    if (entries.length === 0 && !anchor) return { valid: true, entries: 0 };
+    if (!anchor || anchor.mac !== this.anchorMac(anchor.seq, anchor.hash))
+      return { valid: false, entries: entries.length, brokenAt: entries.length + 1, reason: 'anchor' };
+    const last = entries.at(-1);
+    if (!last || anchor.seq !== last.seq || anchor.hash !== last.hash)
+      return {
+        valid: false,
+        entries: entries.length,
+        brokenAt: Math.min(entries.length, anchor.seq) + 1,
+        reason: last && anchor.seq < last.seq ? 'anchor' : 'truncated',
+      };
     return { valid: true, entries: entries.length };
   }
 
-  /** Appends one entry, serialized per file so concurrent runs of the same learner never fork the chain. */
+  private readAnchor(): { seq: number; hash: string; mac: string } | null {
+    if (!existsSync(this.anchorFile)) return null;
+    try {
+      return JSON.parse(readFileSync(this.anchorFile, 'utf8')) as { seq: number; hash: string; mac: string };
+    } catch {
+      return null;
+    }
+  }
+
+  /** Appends one entry and moves the anchor, serialized per file so concurrent runs never fork the chain. */
   append(fields: AuditFields): Promise<AuditEntry> {
     return locks.run(this.file, async () => {
       const last = this.read().at(-1);
-      const base = { ...fields, seq: (last?.seq ?? 0) + 1, at: this.now().toISOString(), prevHash: last?.hash ?? GENESIS };
-      const entry: AuditEntry = { ...base, hash: hashOf(base) };
+      const base = {
+        ...fields,
+        v: AUDIT_VERSION,
+        seq: (last?.seq ?? 0) + 1,
+        at: this.now().toISOString(),
+        prevHash: last?.hash ?? GENESIS,
+      };
+      const entry: AuditEntry = { ...base, hash: this.hashOf(base) };
       mkdirSync(dirname(this.file), { recursive: true });
       appendFileSync(this.file, `${JSON.stringify(entry)}\n`);
+      writeFileSync(
+        this.anchorFile,
+        JSON.stringify({ seq: entry.seq, hash: entry.hash, mac: this.anchorMac(entry.seq, entry.hash) }),
+      );
       return entry;
     });
   }
 
-  /** Starts a new log; the old one is kept next to it, never deleted. */
+  /** Starts a new log; the old log and its anchor are kept next to it, never deleted. */
   rotate(): Promise<string | null> {
     return locks.run(this.file, async () => {
-      if (!existsSync(this.file)) return null;
-      const archived = this.file.replace(/\.jsonl$/, `.${this.now().toISOString().replace(/[:.]/g, '-')}.jsonl`);
-      renameSync(this.file, archived);
+      if (!existsSync(this.file) && !existsSync(this.anchorFile)) return null;
+      const stamp = this.now().toISOString().replace(/[:.]/g, '-');
+      const archived = this.file.replace(/\.jsonl$/, `.${stamp}.jsonl`);
+      if (existsSync(this.file)) renameSync(this.file, archived);
+      if (existsSync(this.anchorFile)) renameSync(this.anchorFile, `${archived}.anchor.json`);
       return archived;
     });
+  }
+
+  /**
+   * Before a run: archives a legacy (unkeyed) log, which can never be trusted, and applies retention by
+   * rotating a log that exceeded maxEntries. Returns why it rotated, or null.
+   */
+  async prepare(): Promise<'legacy' | 'retention' | null> {
+    const entries = (() => {
+      try {
+        return this.read();
+      } catch {
+        return null;
+      }
+    })();
+    if (entries && entries.length > 0 && entries.some((e) => e.v !== AUDIT_VERSION)) {
+      await this.rotate();
+      return 'legacy';
+    }
+    if (entries && entries.length >= this.maxEntries) {
+      await this.rotate();
+      return 'retention';
+    }
+    return null;
   }
 }

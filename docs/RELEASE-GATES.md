@@ -49,7 +49,7 @@ What is still required:
   - a separate worker process or sandbox for PDF parsing, so a pathological file cannot stall the API;
   - ☑ per-learner document libraries (L62): each learner's library lives in their own partition.
 - ☑ **Prompt injection and side effects (L63).** Write-capable tools must check every call against what the user asked for and who they are, inside `execute()`, and ask a human when untrusted text was read. Detection alone is not a control. Apply the L63 gateway pattern to every new write tool.
-- ☐ **Audit anchoring (from L64).** The L64 audit log is hash-chained and tamper-evident per learner file, but whoever can rewrite the whole file can rebuild the chain. Production audit logs need an external anchor (WORM/object-lock storage or a log service) and retention rules.
+- ☐ **Audit anchoring (from L64).** Partly done. ☑ Entries are chained with a server-held HMAC key (`AUDIT_HMAC_KEY` or a generated key in `.data/secrets`), so a rebuilt chain does not verify, and a keyed head anchor detects removed trailing entries; legacy unkeyed logs are archived, and logs rotate at 5,000 entries. ☐ Someone with file access can still restore an older, consistent log-and-anchor pair (rollback), and the anchor lives on the same disk. Production needs an external, monotonic anchor (WORM/object-lock storage or a log service), a managed key and retention rules.
 - ☐ **Sandbox for learner code.** Learner-submitted code never runs in the API process (master rule). Any future remote execution needs an isolated sandbox with no network and with CPU, memory and time limits.
 
 ## 5. Dependencies

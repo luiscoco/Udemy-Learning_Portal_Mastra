@@ -1,6 +1,6 @@
 # L27 — Sequential steps
 
-**Module:** 06 Workflow Foundations · **Step 38 of 89** · **OpenSpec change:** `lab-27-sequential-steps`
+**Module:** 06 Workflow Foundations · **Step 39 of 91** · **OpenSpec change:** `lab-27-sequential-steps`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

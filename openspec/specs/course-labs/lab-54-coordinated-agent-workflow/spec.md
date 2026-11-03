@@ -1,7 +1,7 @@
 # course-labs/lab-54-coordinated-agent-workflow Specification
 
 ## Purpose
-TBD - created by archiving change lab-54-coordinated-agent-workflow. Update Purpose after archive.
+Define the Coordinated agent workflow lab (L54): orchestrate an extractor, a diagnostician and a communicator agent with five typed workflow steps, validate every hand-over, retry failures with backoff, contain the final failure in an error boundary, and prove the step trace is the same on every run.
 
 ## Requirements
 

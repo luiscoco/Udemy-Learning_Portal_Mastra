@@ -1,6 +1,6 @@
 # L15 — Safe tool execution
 
-**Module:** 03 Tools and Function Calling · **Step 22 of 89** · **OpenSpec change:** `lab-15-safe-tool-execution`
+**Module:** 03 Tools and Function Calling · **Step 23 of 91** · **OpenSpec change:** `lab-15-safe-tool-execution`
 
 Original course prompt. Paste the copy-ready prompt below as one request to your coding assistant.
 

@@ -1,6 +1,6 @@
 # L63a — Prompt-injection gateway: write budget and negated requests
 
-**Module:** 13 Security and Reliability · **Step 77 of 89** · **OpenSpec change:** `fix-lab-63-write-budget-and-grants`
+**Module:** 13 Security and Reliability · **Step 78 of 91** · **OpenSpec change:** `fix-lab-63-write-budget-and-grants`
 
 Follow-up prompt added from the reference build: a change the platform needed that the original prompts did not ask for. Run it in this position. Paste the copy-ready prompt below as one request to your coding assistant.
 
