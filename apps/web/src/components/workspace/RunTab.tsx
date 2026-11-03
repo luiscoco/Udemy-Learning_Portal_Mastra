@@ -12,6 +12,7 @@ import { Badge, Button, Card } from '../ui/primitives';
 import { ApprovalPanel } from './ApprovalPanel';
 import { ChatPanel } from './ChatPanel';
 import { WorkflowGraph, visibleWorkflowsOf } from './WorkflowGraph';
+import { VoiceTurn, voiceTurnOf } from './VoiceTurn';
 import { AgentConversation, agentConversationOf } from './AgentConversation';
 import { CitedAnswer, citedAnswerOf } from './CitedAnswer';
 import { McpCapabilityMatrix, mcpCapabilitiesOf } from './McpCapabilityMatrix';
@@ -271,6 +272,11 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
             finished={state.phase === 'finished'}
             finalStatuses={(state.output as { statuses?: Record<string, string> } | undefined)?.statuses}
           />
+        </Section>
+      ) : null}
+      {state.phase === 'finished' && voiceTurnOf(state.output) ? (
+        <Section title="Voice turn" id={`${id}-voice`}>
+          <VoiceTurn turn={voiceTurnOf(state.output)!} />
         </Section>
       ) : null}
       {state.phase === 'finished' && visibleWorkflowsOf(state.output) ? (

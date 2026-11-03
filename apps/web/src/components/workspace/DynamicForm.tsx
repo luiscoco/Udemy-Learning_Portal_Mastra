@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { FILE_TRANSPORT_FACTOR, type InputField, type UploadedFile } from '@mlp/contracts';
 import { cn } from '../../lib/cn';
 import { isVisible, visibleOptions, type FieldErrors, type RawValues } from './form-model';
+import { MicRecorder } from './MicRecorder';
 
 const inputClass =
   'w-full rounded-lg border bg-surface px-3 py-2 text-sm text-fg disabled:opacity-60 aria-[invalid=true]:border-danger';
@@ -232,6 +233,14 @@ function FileField({
         }}
         className="text-sm text-fg file:mr-3 file:rounded-lg file:border file:border-border-strong file:bg-surface file:px-3 file:py-1.5 file:text-sm"
       />
+      {field.record ? (
+        <MicRecorder
+          disabled={disabled || files.length >= field.maxFiles}
+          onRecorded={(file) =>
+            file.size > ceiling ? setNotes([`${file.name}: the recording is too large to send`]) : onChange([...files, file])
+          }
+        />
+      ) : null}
       <p className="text-xs text-fg-muted">
         Allowed: {field.accept.join(', ')} · up to {formatBytes(field.maxBytes)} each · at most {field.maxFiles} file(s). The
         server checks each file’s real content.

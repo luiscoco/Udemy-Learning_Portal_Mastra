@@ -77,6 +77,8 @@ export const InputFieldSchema = z.discriminatedUnion('kind', [
     /** Per-file size limit enforced by the server (the browser only warns). */
     maxBytes: z.number().int().positive().max(5_000_000),
     maxFiles: z.number().int().min(1).max(10),
+    /** Offer an in-browser microphone recorder for this field (L69). */
+    record: z.boolean().optional(),
   }),
 ]);
 export type InputField = z.infer<typeof InputFieldSchema>;

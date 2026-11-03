@@ -145,3 +145,10 @@ When a run emits a workflow graph, the Run tab SHALL render it read-only with ea
 #### Scenario: Step finishes
 - **WHEN** a workflow-step success event arrives for a node
 - **THEN** that node shows Done, and nodes that never ran show Skipped or Not reached once the run has finished
+
+### Requirement: Microphone recording with an explicit permission notice
+A file input that requests recording SHALL show a notice about microphone access and where the audio goes before the browser asks for permission, and SHALL fall back to upload or typing when the browser cannot record.
+
+#### Scenario: Browser without MediaRecorder
+- **WHEN** the browser does not support recording
+- **THEN** the recorder says so and the learner can still upload a file or type
