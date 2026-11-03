@@ -103,6 +103,11 @@ export interface LabServices {
    * <dataDir>/secrets/audit-hmac.key. Never stored next to a log and never sent to a client.
    */
   auditKey(): Buffer;
+  /**
+   * The deployed staging origin (L73), from the server's STAGING_URL. Only https origins are accepted; labs
+   * probe this URL and never one supplied by a learner (no server-side request forgery).
+   */
+  readonly stagingUrl?: string;
 }
 
 export interface LabServicesConfig {
@@ -185,6 +190,17 @@ export function createModelService(env: Record<string, string | undefined>): Mod
   };
 }
 
+/** STAGING_URL reduced to an https origin, or undefined (anything else is ignored, never probed). */
+export function stagingOrigin(raw: string | undefined): string | undefined {
+  if (!raw?.trim()) return undefined;
+  try {
+    const u = new URL(raw.trim());
+    return u.protocol === 'https:' && !u.username && !u.password ? u.origin : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** The partition of an owner: a fixed-length hash, so no raw identity (or ../) ever reaches a path. */
 export function partitionOf(ownerId: string | null): string {
   if (ownerId === null) return 'local';
@@ -202,6 +218,7 @@ export function createLabServices(config: LabServicesConfig): LabServices {
   const memoryRoot = () => config.memoryDir ?? join(dataDir(), 'memory');
   const models = createModelService(config.env ?? {});
   const mastraVersion = getMastraVersion();
+  const stagingUrl = stagingOrigin(config.env?.STAGING_URL);
   let key: Buffer | undefined;
   const auditKey = () => (key ??= loadAuditKey(config.env ?? {}, config.secretsDir ?? join(dataDir(), 'secrets')));
   const view = (ownerId: string | null): LabServices => {
@@ -219,6 +236,7 @@ export function createLabServices(config: LabServicesConfig): LabServices {
       },
       forTenant: view,
       auditKey,
+      ...(stagingUrl ? { stagingUrl } : {}),
     };
   };
   return view(null);

@@ -36,7 +36,12 @@ const catalogPath = join(root, 'packages/lab-catalog/src/labs.ts');
 const catalog = readFileSync(catalogPath, 'utf8');
 const m = /AVAILABLE_LAB_NUMBERS: ReadonlySet<number> = new Set\(\[([^\]]*)\]\)/.exec(catalog);
 if (!m) throw new Error('AVAILABLE_LAB_NUMBERS not found');
-const nums = new Set(m[1].split(',').map((s) => Number(s.trim())).filter((x) => Number.isInteger(x)));
+const nums = new Set(
+  m[1]
+    .split(',')
+    .map((s) => Number(s.trim()))
+    .filter((x) => Number.isInteger(x)),
+);
 if (!nums.has(n)) {
   nums.add(n);
   const list = [...nums].sort((a, b) => a - b).join(', ');

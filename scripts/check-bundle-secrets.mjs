@@ -25,7 +25,9 @@ if (existsSync(dotenv)) {
 const secretNames = Object.keys(env).filter((k) => SECRET_KEY.test(k));
 const secretValues = secretNames.map((k) => env[k]).filter((v) => v && v.length >= 8);
 // Key names that would indicate server config leaking into the client.
-const forbiddenNames = [...new Set([...secretNames, 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GOOGLE_API_KEY', 'GOOGLE_GENERATIVE_AI_API_KEY'])];
+const forbiddenNames = [
+  ...new Set([...secretNames, 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GOOGLE_API_KEY', 'GOOGLE_GENERATIVE_AI_API_KEY']),
+];
 
 function* walk(dir) {
   for (const name of readdirSync(dir)) {
@@ -48,4 +50,6 @@ if (findings.length) {
   for (const f of findings) console.error('  ' + f);
   process.exit(1);
 }
-console.log(`[bundle-secrets] OK — scanned ${dist}, ${secretValues.length} secret value(s) and ${forbiddenNames.length} key name(s) absent.`);
+console.log(
+  `[bundle-secrets] OK — scanned ${dist}, ${secretValues.length} secret value(s) and ${forbiddenNames.length} key name(s) absent.`,
+);

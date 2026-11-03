@@ -31,7 +31,9 @@
     "check:specs": "openspec validate --specs --strict --no-interactive",
     "auth:hash-user": "tsx scripts/hash-user.ts",
     "make-secrets": "tsx scripts/make-secrets.ts",
-    "smoke:container": "tsx scripts/container-smoke.ts"
+    "smoke:container": "tsx scripts/container-smoke.ts",
+    "deploy:azure": "tsx scripts/deploy-azure.ts",
+    "smoke:staging": "tsx scripts/staging-smoke.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
