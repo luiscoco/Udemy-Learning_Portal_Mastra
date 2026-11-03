@@ -13,6 +13,7 @@ export interface ToolCallView {
 export interface StepView {
   stepId: string;
   status: string;
+  input?: unknown;
   output?: unknown;
   durationMs?: number;
 }
@@ -110,9 +111,11 @@ export function runReducer(state: RunState, action: RunAction): RunState {
           break;
         }
         case 'workflow-step': {
-          const view = { stepId: e.stepId, status: e.status, output: e.output, durationMs: e.durationMs };
+          const view = { stepId: e.stepId, status: e.status, input: e.input, output: e.output, durationMs: e.durationMs };
           next.steps = state.steps.some((s) => s.stepId === e.stepId)
-            ? state.steps.map((s) => (s.stepId === e.stepId ? { ...s, ...view, output: view.output ?? s.output } : s))
+            ? state.steps.map((s) =>
+                s.stepId === e.stepId ? { ...s, ...view, input: view.input ?? s.input, output: view.output ?? s.output } : s,
+              )
             : [...state.steps, view];
           break;
         }

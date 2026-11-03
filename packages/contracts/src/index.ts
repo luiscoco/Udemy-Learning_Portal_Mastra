@@ -5,6 +5,7 @@ export * from './catalog.js';
 export * from './chat.js';
 export * from './workflow-graph.js';
 export * from './voice-turn.js';
+export * from './workspace-turn.js';
 export * from './lab.js';
 export * from './events.js';
 export * from './progress.js';

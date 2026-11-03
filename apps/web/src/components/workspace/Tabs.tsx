@@ -38,7 +38,7 @@ export function Tabs<T extends string>({
 
   return (
     <div>
-      <div role="tablist" aria-label={label} onKeyDown={onKeyDown} className="flex gap-1 border-b border-border">
+      <div role="tablist" aria-label={label} onKeyDown={onKeyDown} className="flex flex-wrap gap-1 border-b border-border">
         {tabs.map((t, i) => {
           const isSel = t.id === selected;
           return (

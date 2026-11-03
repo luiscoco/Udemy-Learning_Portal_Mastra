@@ -11,6 +11,7 @@ import { useSession } from '../../lib/auth-context';
 import { Badge, Button, Card } from '../ui/primitives';
 import { ApprovalPanel } from './ApprovalPanel';
 import { ChatPanel } from './ChatPanel';
+import { AgentWorkspace } from './AgentWorkspace';
 import { WorkflowGraph, visibleWorkflowsOf } from './WorkflowGraph';
 import { VoiceTurn, voiceTurnOf } from './VoiceTurn';
 import { AgentConversation, agentConversationOf } from './AgentConversation';
@@ -140,6 +141,17 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
           Sign in to continue
         </Link>
       </Card>
+    );
+  if (definition.presentation === 'workspace')
+    return (
+      <div className="flex flex-col gap-8">
+        <Section title="Preflight" id={`${id}-preflight`}>
+          <Preflight labId={definition.id} />
+        </Section>
+        <Section title="Workspace" id={`${id}-workspace`}>
+          <AgentWorkspace definition={definition} />
+        </Section>
+      </div>
     );
   if (definition.presentation === 'chat')
     return (

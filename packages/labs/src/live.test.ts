@@ -47,6 +47,8 @@ function liveInput(labId: string, example: Record<string, unknown>): Record<stri
     case 'lab-69':
       // A real voice round trip: OpenAI speaks the sample, whisper-1 transcribes it, tts-1 speaks the answer.
       return hasOpenAI ? { ...example, voice: 'openai', modelId: openai } : null;
+    case 'lab-70':
+      return null; // needs seeded documents first: see the dedicated lab-70 test below
     case 'lab-57':
       // The scorer never calls a model; exercise the live path through the agent-written answer.
       return { ...example, answerSource: 'agent' };
@@ -82,6 +84,30 @@ describe.skipIf(!LIVE)('live provider runs', () => {
       for (const s of secrets) expect(JSON.stringify(events)).not.toContain(s);
     },
     90_000,
+  );
+
+  it.skipIf(!hasOpenAI)(
+    'lab-70 seeds the documents, then a real model plans, searches and answers with verified citations',
+    async () => {
+      const lab = allLabs.find((l) => l.implementation.definition.id === 'lab-70')!;
+      const base = { ...lab.implementation.definition.exampleInput, threadId: `live-${Date.now().toString(36)}` };
+      const seeded = runner.start('lab-70', { input: { ...base, action: 'seed' }, mode: 'live' });
+      expect((await runner.waitFor(seeded.runId)).status).toBe('succeeded');
+      const run = runner.start('lab-70', { input: { ...base, action: 'send', modelId: 'openai/gpt-5-mini' }, mode: 'live' });
+      const snap = await runner.waitFor(run.runId);
+      const events = runner.events(run.runId);
+      const result = events.find((e) => e.type === 'result');
+      expect(snap.status, JSON.stringify(events.find((e) => e.type === 'error'))).toBe('succeeded');
+      expect(
+        result?.type === 'result' && result.validation?.passed,
+        JSON.stringify(result?.type === 'result' ? result.validation : null),
+      ).toBe(true);
+      const out = (result?.type === 'result' ? result.output : {}) as { workspace: { citedAnswer?: { claims: unknown[] } } };
+      expect(out.workspace.citedAnswer?.claims.length ?? 0).toBeGreaterThan(0);
+      expect(JSON.stringify(result)).toContain('"simulated":false');
+      for (const s of secrets) expect(JSON.stringify(events)).not.toContain(s);
+    },
+    180_000,
   );
 
   it.skipIf(!hasOpenAI)(

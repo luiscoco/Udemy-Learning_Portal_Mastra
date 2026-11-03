@@ -87,3 +87,10 @@ A file input SHALL be able to request an in-browser recorder, and a voice turn s
 #### Scenario: Existing file inputs
 - **WHEN** a file input omits record
 - **THEN** it validates unchanged and shows no recorder
+
+### Requirement: Workspace turn contract
+The lab definition contract SHALL allow a workspace presentation, and a workspace turn schema SHALL describe the documents, thread messages, cited answer and tasks of a turn.
+
+#### Scenario: Existing presentations
+- **WHEN** a lab uses form or chat presentation
+- **THEN** it validates and renders unchanged

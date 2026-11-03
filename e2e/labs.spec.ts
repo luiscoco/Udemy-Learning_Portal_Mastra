@@ -23,6 +23,18 @@ for (const lab of released) {
       await page.getByRole('button', { name: 'Send', exact: true }).click();
       await expect(page.getByTestId('chat-message').last()).toHaveAttribute('data-role', 'assistant', { timeout: 100_000 });
       await expect(page.getByTestId('chat-message').last()).toHaveAttribute('data-status', 'complete');
+    } else if (definition.presentation === 'workspace') {
+      // A workspace lab: seed the sample documents, ask the example question, require a cited answer.
+      const panes = page.getByRole('group', { name: 'Show pane' });
+      await expect(page.getByTestId('ws-status')).toHaveText('', { timeout: 15_000 });
+      if (await panes.isVisible()) await panes.getByRole('button', { name: 'Knowledge' }).click();
+      await page.getByRole('button', { name: 'Seed sample documents' }).click();
+      await expect(page.getByTestId('ws-status')).toContainText('Seeded', { timeout: 30_000 });
+      if (await panes.isVisible()) await panes.getByRole('button', { name: 'Chat' }).click();
+      await page.locator(`#${lab.id}-ws-input`).fill(definition.exampleInput.message ?? 'Hello');
+      await page.getByRole('button', { name: 'Send', exact: true }).click();
+      await expect(page.getByTestId('ws-status')).toHaveText('', { timeout: 100_000 });
+      await expect(page.getByTestId('ws-message').last()).toHaveAttribute('data-role', 'assistant');
     } else {
       await page.getByRole('button', { name: 'Run', exact: true }).click();
       await expect(page.getByTestId('run-status')).toHaveText('Run succeeded — all checks passed', { timeout: 100_000 });
