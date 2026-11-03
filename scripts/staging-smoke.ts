@@ -168,11 +168,21 @@ async function main() {
 
   if (args.includes('--restart')) {
     const revision = az(['containerapp', 'show', '-g', RG, '-n', APP, '--query', 'properties.latestRevisionName']).stdout.trim();
+    const uptime = async () => ((await (await api('/api/health')).json()) as { uptimeSeconds: number }).uptimeSeconds;
+    const before = await uptime();
     const r = az(['containerapp', 'revision', 'restart', '-g', RG, '-n', APP, '--revision', revision]);
-    record('revision restarted', r.status === 0, revision);
-    await sleep(15_000);
-    const back = await waitReady();
-    record('ready again after the restart', true, `${Math.round(back / 1000)} s`);
+    record('revision restart requested', r.status === 0, revision);
+    // Prove a NEW process answers: its uptime must be lower than the old one's plus the time waited.
+    const requested = Date.now();
+    let after = Number.POSITIVE_INFINITY;
+    while (Date.now() - requested < 300_000) {
+      await sleep(5_000);
+      await waitReady();
+      after = await uptime().catch(() => Number.POSITIVE_INFINITY);
+      if (after < before + (Date.now() - requested) / 1000 - 5) break;
+    }
+    const restarted = after < before + (Date.now() - requested) / 1000 - 5;
+    record('a new process serves after the restart', restarted, `uptime ${before} s before, ${after} s after`);
     await login(); // in-memory sessions end with the process
   }
   const second = await runLab('lab-71', { ...l71.exampleInput, store: 'durable', note: 'second staging note' });

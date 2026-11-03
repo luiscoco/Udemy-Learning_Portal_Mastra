@@ -43,9 +43,11 @@ const quote = (a: string) => (/^[\w@%+=:,./-]+$/.test(a) ? a : `"${a.replace(/"/
 /** Runs az and returns stdout. On Windows az is a .cmd, so it runs through the shell with quoted arguments. */
 function az(cmd: string[], opts: { allowFail?: boolean; json?: boolean; quiet?: boolean } = {}): string {
   const full = [...cmd, ...(opts.json === false ? [] : ['-o', 'json']), '--only-show-errors'];
-  const r = spawnSync(process.platform === 'win32' ? 'az' : 'az', full.map(quote), {
+  const r = spawnSync('az', full.map(quote), {
     shell: true,
     encoding: 'utf8',
+    // The CLI is Python: on Windows its console encoding (cp1252) crashes on Unicode in streamed build logs.
+    env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' },
     maxBuffer: 64 * 1024 * 1024,
     stdio: ['ignore', 'pipe', opts.quiet ? 'pipe' : 'inherit'],
   });
@@ -156,29 +158,34 @@ async function main() {
   // The build context is a git archive of HEAD: only committed files, so the gitignored secrets/, .env, .data and
   // node_modules can never reach the image, and the image is exactly the tagged commit. (az acr build applies
   // .dockerignore with its own matcher, so it is not relied on to keep secrets out.)
-  const context = mkdtempSync(join(tmpdir(), 'mlp-build-'));
-  try {
-    const archived = spawnSync(`git archive --format=tar HEAD | tar -x -C "${context}"`, { shell: true, encoding: 'utf8' });
-    if (archived.status !== 0) throw new Error(`git archive failed: ${archived.stderr.trim().slice(0, 200)}`);
-    for (const forbidden of ['secrets', '.env', '.data', 'node_modules'])
-      if (existsSync(join(context, forbidden))) throw new Error(`refusing to build: ${forbidden} is in the build context`);
-    const sizeOf = (d: string): [number, number] =>
-      readdirSync(d, { withFileTypes: true }).reduce<[number, number]>(
-        ([n, b], e) => {
-          const f = join(d, e.name);
-          if (!e.isDirectory()) return [n + 1, b + statSync(f).size];
-          const [cn, cb] = sizeOf(f);
-          return [n + cn, b + cb];
-        },
-        [0, 0],
-      );
-    const [files, bytes] = sizeOf(context);
-    log(`building ${image} in ACR from HEAD (${files} files, ${(bytes / 1e6).toFixed(1)} MB)`);
-    az(['acr', 'build', '-r', ACR, '-t', `mastra-learning-platform:${tag}`, '--platform', 'linux/amd64', context], {
-      json: false,
-    });
-  } finally {
-    rmSync(context, { recursive: true, force: true });
+  const tags =
+    azJson<string[]>(['acr', 'repository', 'show-tags', '-n', ACR, '--repository', 'mastra-learning-platform'], true) ?? [];
+  if (tags.includes(tag)) log(`image ${image} already exists: skipping the build (tags are immutable commits)`);
+  else {
+    const context = mkdtempSync(join(tmpdir(), 'mlp-build-'));
+    try {
+      const archived = spawnSync(`git archive --format=tar HEAD | tar -x -C "${context}"`, { shell: true, encoding: 'utf8' });
+      if (archived.status !== 0) throw new Error(`git archive failed: ${archived.stderr.trim().slice(0, 200)}`);
+      for (const forbidden of ['secrets', '.env', '.data', 'node_modules'])
+        if (existsSync(join(context, forbidden))) throw new Error(`refusing to build: ${forbidden} is in the build context`);
+      const sizeOf = (d: string): [number, number] =>
+        readdirSync(d, { withFileTypes: true }).reduce<[number, number]>(
+          ([n, b], e) => {
+            const f = join(d, e.name);
+            if (!e.isDirectory()) return [n + 1, b + statSync(f).size];
+            const [cn, cb] = sizeOf(f);
+            return [n + cn, b + cb];
+          },
+          [0, 0],
+        );
+      const [files, bytes] = sizeOf(context);
+      log(`building ${image} in ACR from HEAD (${files} files, ${(bytes / 1e6).toFixed(1)} MB)`);
+      az(['acr', 'build', '-r', ACR, '-t', `mastra-learning-platform:${tag}`, '--platform', 'linux/amd64', context], {
+        json: false,
+      });
+    } finally {
+      rmSync(context, { recursive: true, force: true });
+    }
   }
 
   if (!azJson(['identity', 'show', '-g', RG, '-n', IDENTITY], true)) {
@@ -186,18 +193,11 @@ async function main() {
     az(['identity', 'create', '-g', RG, '-n', IDENTITY, '-l', LOCATION]);
   }
   const identity = azJson<{ id: string; principalId: string }>(['identity', 'show', '-g', RG, '-n', IDENTITY])!;
-  const pulls =
-    azJson<unknown[]>([
-      'role',
-      'assignment',
-      'list',
-      '--assignee',
-      identity.principalId,
-      '--scope',
-      acr.id,
-      '--role',
-      'AcrPull',
-    ]) ?? [];
+  // Filter by principal id locally: `--assignee` would resolve the principal through Microsoft Graph, which needs
+  // a separate token (and a fresh interactive login) that resource management does not.
+  const pulls = (
+    azJson<{ principalId: string }[]>(['role', 'assignment', 'list', '--scope', acr.id, '--role', 'AcrPull']) ?? []
+  ).filter((a) => a.principalId === identity.principalId);
   if (pulls.length === 0) {
     log('granting AcrPull to the identity');
     az([
