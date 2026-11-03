@@ -32,7 +32,7 @@ Every step is idempotent: running the script again deploys the current commit as
 
 | Step | Resource |
 | --- | --- |
-| 1 | Resource group `mlp-staging-rg` (`westeurope`; override with `--location`) |
+| 1 | Resource group `mlp-staging-rg` (`northeurope`; override with `--location` (westeurope refused new customers for this subscription in 2026-11)) |
 | 2 | Container registry `mlpstaging<hash>` (Basic, admin user disabled) and `az acr build` → `mastra-learning-platform:<commit>` |
 | 3 | User-assigned identity `mlp-staging-id` with **AcrPull** on the registry (the app pulls without passwords) |
 | 4 | Storage account `mlpstg<hash>` with the file share `mlpdata` (5 GiB), registered on the environment |

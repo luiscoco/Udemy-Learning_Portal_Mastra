@@ -17,7 +17,7 @@ const opt = (name: string, def: string) => {
 };
 const flag = (name: string) => args.includes(`--${name}`);
 const RG = opt('rg', 'mlp-staging-rg');
-const LOCATION = opt('location', 'westeurope');
+const LOCATION = opt('location', 'northeurope');
 const APP = opt('app', 'mlp-staging');
 const ENV = `${APP}-env`;
 const IDENTITY = `${APP}-id`;
@@ -136,7 +136,7 @@ async function main() {
 
   if (!azJson(['acr', 'show', '-g', RG, '-n', ACR], true)) {
     log(`container registry ${ACR} (Basic)`);
-    az(['acr', 'create', '-g', RG, '-n', ACR, '--sku', 'Basic', '--admin-enabled', 'false']);
+    az(['acr', 'create', '-g', RG, '-n', ACR, '-l', LOCATION, '--sku', 'Basic', '--admin-enabled', 'false']);
   }
   const acr = azJson<{ id: string; loginServer: string }>(['acr', 'show', '-g', RG, '-n', ACR])!;
   const image = `${acr.loginServer}/mastra-learning-platform:${tag}`;
@@ -145,7 +145,7 @@ async function main() {
 
   if (!azJson(['identity', 'show', '-g', RG, '-n', IDENTITY], true)) {
     log(`managed identity ${IDENTITY}`);
-    az(['identity', 'create', '-g', RG, '-n', IDENTITY]);
+    az(['identity', 'create', '-g', RG, '-n', IDENTITY, '-l', LOCATION]);
   }
   const identity = azJson<{ id: string; principalId: string }>(['identity', 'show', '-g', RG, '-n', IDENTITY])!;
   const pulls =

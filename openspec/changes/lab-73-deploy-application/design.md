@@ -4,7 +4,7 @@
 
 | Resource | Name | Notes |
 | --- | --- | --- |
-| Resource group | `mlp-staging-rg` | Region `westeurope` (override with `--location`). |
+| Resource group | `mlp-staging-rg` | Region `northeurope` (override with `--location`). |
 | Container registry | `mlpstaging<6 hex of sha256(subscription id + rg)>` | Basic SKU, admin disabled. The app pulls with a system-assigned identity that has the AcrPull role. |
 | Log Analytics + Container Apps environment | `mlp-staging-env` | The app's stdout JSON logs go to Log Analytics. |
 | Storage account | `mlpstg<6 hex>` | Standard_LRS. File share `mlpdata` registered as environment storage `mlpdata` (ReadWrite). |
