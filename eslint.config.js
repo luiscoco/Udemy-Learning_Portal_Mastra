@@ -48,4 +48,22 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // The client SDK runs in the browser: same rule (L66).
+    files: ['packages/client/**/*.ts'],
+    languageOptions: { globals: { ...globals.browser } },
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@mastra/*', '@mlp/auth', '@mlp/mastra-runtime', '@mlp/labs', '@mlp/lab-engine', '@mlp/api', 'node:*'],
+              message: 'The client SDK is browser-safe: only @mlp/contracts and zod.',
+            },
+          ],
+        },
+      ],
+    },
+  },
 );

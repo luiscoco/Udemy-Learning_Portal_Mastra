@@ -26,6 +26,7 @@ Each `Lxx` change inherits all MASTER RULES. Implement it in the existing monore
 | `apps/api` | Express 5 API. Validates with Zod, runs labs, streams SSE. The only process holding credentials. |
 | `packages/contracts` | Zod schemas + inferred types shared by web and API (no runtime deps besides zod). |
 | `packages/lab-catalog` | Module list, lab metadata registry (titles, ordering, status). Browser-safe. |
+| `packages/client` | Typed, browser-safe API SDK (L66): a method per API route, contract-validated responses, resumable SSE. The web app calls the API only through it; it holds no credentials. |
 | `packages/mastra-runtime` | Server-only Mastra adapters (model resolution, mock models, storage). |
 | `packages/labs` | Server-only lab implementations (`lab-XX/`). Added in F02. |
 | `openspec/` | OpenSpec specs and changes. |

@@ -8,6 +8,7 @@ Interactive learning platform for the **Mastra AI Agents 2026** Udemy course: a 
 | `apps/api` | Express API, the only process that touches Mastra or API keys (http://127.0.0.1:8787) |
 | `packages/contracts` | Shared Zod schemas and types |
 | `packages/lab-catalog` | Modules and labs registry |
+| `packages/client` | Typed API client SDK used by the web app (browser-safe, no credentials) |
 | `packages/mastra-runtime` | Server-only Mastra adapters |
 
 > **Local, single-learner use only for now.** Before exposing the platform publicly (a public host or a shared network), complete [docs/RELEASE-GATES.md](docs/RELEASE-GATES.md). Run authorization comes first.
@@ -75,7 +76,7 @@ Keys are read only by `apps/api`. The web bundle only receives variables prefixe
 
 ## API reference
 
-All bodies are JSON validated with the Zod schemas in `packages/contracts`. Errors use `{ error: { code, message, retryable?, details?, requestId } }`.
+All bodies are JSON validated with the Zod schemas in `packages/contracts`. Errors use `{ error: { code, message, retryable?, details?, requestId } }`. Clients should use `@mlp/client` (`createApiClient()`): it has a typed method for every route below, validates every response, turns errors into `ApiClientError`, and resumes event streams with `Last-Event-ID`. `apps/api/src/contract.test.ts` fails when a route has no SDK method.
 
 | Method & path | Purpose |
 | --- | --- |

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { emptyProgress, type ExecutionEvent, type ExecutionEventPayload, type InputField } from '@mlp/contracts';
-import { SseParser } from '../../lib/sse';
+import { SseParser } from '@mlp/client';
 import { applyProgressPatch } from '../../lib/progress-actions';
 import { buildInput, initialRawValues, serverDetailsToFieldErrors } from '../../components/workspace/form-model';
 import { scoreQuiz } from '../../components/workspace/QuizPanel';

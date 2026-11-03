@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { Router } from 'express';
-import type { CheckResult, LabSourceResponse, PreflightResult, SourceFile } from '@mlp/contracts';
+import type { CheckResult, LabSourceResponse, LabSummary, PreflightResult, SourceFile } from '@mlp/contracts';
 import { LabError, type LabRegistry, type LabRunner } from '@mlp/lab-engine';
 import { resolveLabSourcePath, type LabServices } from '@mlp/labs';
 import { getMastraVersion } from '@mlp/mastra-runtime';
@@ -28,7 +28,7 @@ export function labsRouter(deps: {
 
   router.get('/', (_req, res) => {
     res.json(
-      registry.definitions().map((d) => ({
+      registry.definitions().map((d): LabSummary => ({
         id: d.id,
         number: d.number,
         title: d.title,

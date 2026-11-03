@@ -22,6 +22,7 @@
     "vite": "8.3.4"
   },
   "dependencies": {
+    "@mlp/client": "0.1.0",
     "@mlp/contracts": "0.1.0",
     "@mlp/lab-catalog": "0.1.0",
     "prism-react-renderer": "2.4.1",

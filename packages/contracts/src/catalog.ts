@@ -44,3 +44,15 @@ export const CatalogSchema = z.object({
   labs: z.array(CatalogLabSchema),
 });
 export type Catalog = z.infer<typeof CatalogSchema>;
+
+/** One entry of GET /api/labs: a registered (implemented) lab and the modes it can run in. */
+export const LabSummarySchema = z.object({
+  id: LabIdSchema,
+  number: z.number().int().min(0).max(99),
+  title: z.string().min(1),
+  moduleId: ModuleIdSchema,
+  summary: z.string().min(1),
+  modes: z.array(z.enum(['offline', 'live'])).min(1),
+});
+export type LabSummary = z.infer<typeof LabSummarySchema>;
+export const LabSummaryListSchema = z.array(LabSummarySchema);

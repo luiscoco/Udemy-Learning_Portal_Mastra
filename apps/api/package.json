@@ -11,6 +11,7 @@
     "serve": "tsx src/server.ts"
   },
   "devDependencies": {
+    "@mlp/client": "0.1.0",
     "@types/express": "5.0.6",
     "@types/supertest": "7.2.1",
     "supertest": "7.3.1",
