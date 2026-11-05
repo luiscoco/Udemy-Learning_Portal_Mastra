@@ -8,13 +8,22 @@ import {
   LabSourceResponseSchema,
   LabSummaryListSchema,
   PreflightResultSchema,
+  PROGRESS_SUBJECT_HEADER,
+  ProgressEntrySchema,
+  ProgressSnapshotSchema,
   ReadinessResponseSchema,
   RunSnapshotSchema,
+  RecoverRunResponseSchema,
+  RecentRunsResponseSchema,
+  RUN_SUBJECT_HEADER,
   SessionResponseSchema,
   StartRunResponseSchema,
   type ApprovalDecision,
   type ExecutionEvent,
   type LoginRequest,
+  type ProgressWriteRequest,
+  type ProgressResetRequest,
+  type ProgressImportRequest,
 } from '@mlp/contracts';
 import type { z } from 'zod';
 
@@ -158,6 +167,28 @@ export function createApiClient(options: ApiClientOptions = {}) {
       login: (body: LoginRequest) => request('POST', '/api/auth/login', SessionResponseSchema, { body }),
       logout: () => request('POST', '/api/auth/logout', SessionResponseSchema, { body: {} }),
     },
+    progress: {
+      get: (subject: string, signal?: AbortSignal) =>
+        request('GET', '/api/progress', ProgressSnapshotSchema, { headers: { [PROGRESS_SUBJECT_HEADER]: enc(subject) }, signal }),
+      save: (subject: string, labId: string, body: ProgressWriteRequest, signal?: AbortSignal) =>
+        request('POST', `/api/progress/${enc(labId)}`, ProgressEntrySchema, {
+          body,
+          headers: { [PROGRESS_SUBJECT_HEADER]: enc(subject) },
+          signal,
+        }),
+      reset: (subject: string, labId: string, body: ProgressResetRequest, signal?: AbortSignal) =>
+        request('POST', `/api/progress/${enc(labId)}/reset`, ProgressEntrySchema, {
+          body,
+          headers: { [PROGRESS_SUBJECT_HEADER]: enc(subject) },
+          signal,
+        }),
+      import: (subject: string, body: ProgressImportRequest, signal?: AbortSignal) =>
+        request('POST', '/api/progress/import', ProgressSnapshotSchema, {
+          body,
+          headers: { [PROGRESS_SUBJECT_HEADER]: enc(subject) },
+          signal,
+        }),
+    },
     labs: {
       list: (signal?: AbortSignal) => request('GET', '/api/labs', LabSummaryListSchema, { signal }),
       get: (labId: string, signal?: AbortSignal) => request('GET', `/api/labs/${enc(labId)}`, LabDefinitionSchema, { signal }),
@@ -167,6 +198,16 @@ export function createApiClient(options: ApiClientOptions = {}) {
         request('GET', `/api/labs/${enc(labId)}/preflight`, PreflightResultSchema, { signal }),
     },
     runs: {
+      recent: (labId: string, subject: string, signal?: AbortSignal) =>
+        request('GET', `/api/runs?labId=${enc(labId)}`, RecentRunsResponseSchema, {
+          headers: { [RUN_SUBJECT_HEADER]: enc(subject) },
+          signal,
+        }),
+      recover: (runId: string, subject: string, signal?: AbortSignal) =>
+        request('POST', `/api/runs/${enc(runId)}/recover`, RecoverRunResponseSchema, {
+          headers: { [RUN_SUBJECT_HEADER]: enc(subject) },
+          signal,
+        }),
       start: (labId: string, body: StartRunRequest, signal?: AbortSignal) =>
         request('POST', `/api/labs/${enc(labId)}/runs`, StartRunResponseSchema, { body, signal }),
       get: (runId: string, signal?: AbortSignal) => request('GET', `/api/runs/${enc(runId)}`, RunSnapshotSchema, { signal }),

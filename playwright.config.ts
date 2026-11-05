@@ -12,8 +12,21 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = Number(process.env.E2E_PORT ?? 8797);
 const LIVE = process.env.E2E_LIVE === '1';
 const authFile = resolve('e2e/.auth/learner.json');
+const progressTag = Date.now().toString(36);
+const progressAccounts = Object.fromEntries(
+  ['desktop', 'mobile'].map((project) => [
+    project,
+    Object.fromEntries(
+      ['fresh', 'workspace', 'cross', 'offline', 'conflict', 'migration', 'alice', 'bob'].map((kind) => [
+        kind,
+        `p-${project}-${kind}-${progressTag}`,
+      ]),
+    ),
+  ]),
+);
 
 export default defineConfig({
+  metadata: { progressAccounts },
   testDir: './e2e',
   ...(LIVE ? { testMatch: ['live/**/*.spec.ts'] } : { testIgnore: ['live/**'] }),
   fullyParallel: true,
@@ -50,9 +63,19 @@ export default defineConfig({
       LOG_LEVEL: 'warn',
       WEB_DIST_DIR: 'apps/web/dist',
       MAX_CONCURRENT_RUNS: '8',
+      // The broad catalog suite deliberately starts many runs; dedicated limit tests use a separate low-limit API.
+      RUN_START_RATE_USER_MAX: '10000',
+      RUN_START_RATE_IP_MAX: '10000',
+      RUN_CONTROL_RATE_USER_MAX: '10000',
+      RUN_CONTROL_RATE_IP_MAX: '10000',
       MASTRA_MODE: LIVE ? 'live' : 'offline',
       AUTH_PROVIDER: 'dev',
-      AUTH_DEV_USERS: 'learner,alice,bob',
+      AUTH_DEV_USERS: [
+        'learner',
+        'alice',
+        'bob',
+        ...Object.values(progressAccounts).flatMap((accounts) => Object.values(accounts)),
+      ].join(','),
       AUTH_DEV_PASSWORD: '',
       AUTH_SESSION_SECRET: '',
       AUTH_LOGIN_RATE_MAX: '1000',

@@ -2,6 +2,7 @@ import { catalog } from '../packages/lab-catalog/src/index';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { lab00Definition } from '../packages/labs/src/lab-00/definition';
+import { progressAccount, progressSaved, signInProgress } from './progress-helpers';
 
 async function noSeriousViolations(page: Page) {
   const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
@@ -13,9 +14,11 @@ async function noSeriousViolations(page: Page) {
 const AVAILABLE = catalog.labs.filter((l) => l.status === 'available').length;
 const summary = (done: number) => `${done} of ${AVAILABLE} available ${AVAILABLE === 1 ? 'lab' : 'labs'} completed`;
 
-test('Dummy Lab 00 end-to-end: learn, run, cancel, source, quiz, persistent progress', async ({ page }) => {
+test('Dummy Lab 00 end-to-end: learn, run, cancel, source, quiz, persistent progress', async ({ page }, info) => {
   test.setTimeout(90_000);
+  await signInProgress(page, progressAccount(info, 'workspace'));
   await page.goto('/labs/lab-00');
+  await progressSaved(page);
   await expect(page.getByTestId('lab-status')).toHaveText('Not started');
 
   // Learn
@@ -73,6 +76,7 @@ test('Dummy Lab 00 end-to-end: learn, run, cancel, source, quiz, persistent prog
   await expect(page.getByTestId('lab-status')).toHaveText('Completed');
 
   // Persistence across reload
+  await progressSaved(page);
   await page.reload();
   await expect(page.getByTestId('lab-status')).toHaveText('Completed');
   await expect(page.getByTestId('progress-summary').first()).toHaveText(summary(1));

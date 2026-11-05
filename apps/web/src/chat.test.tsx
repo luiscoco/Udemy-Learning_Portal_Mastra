@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChatTranscript, ExecutionEventPayload } from '@mlp/contracts';
@@ -32,6 +32,7 @@ let scripts: Script[];
 let bodies: Record<string, unknown>[];
 let cancels: { runId: string; token: string | null }[];
 let streams: Map<string, ReadableStreamDefaultController<Uint8Array>>;
+let finishCancellation: (() => void) | undefined;
 
 /** A completed run whose result carries a transcript. */
 const finished =
@@ -52,6 +53,7 @@ beforeEach(() => {
   bodies = [];
   cancels = [];
   streams = new Map();
+  finishCancellation = undefined;
   let n = 0;
   vi.stubGlobal(
     'fetch',
@@ -85,11 +87,11 @@ beforeEach(() => {
       if (cancel) {
         cancels.push({ runId: cancel[1]!, token: (init?.headers as Record<string, string>)['x-run-token'] ?? null });
         const ctrl = streams.get(cancel[1]!);
-        // The server ends the stream shortly after the cancel.
-        setTimeout(() => {
+        // The test controls when the server finishes, so intermediate UI assertions do not race a timer.
+        finishCancellation = () => {
           ctrl?.enqueue(frame(cancel[1]!, 50, { type: 'complete', status: 'cancelled', durationMs: 9 }));
           ctrl?.close();
-        }, 30);
+        };
         return jsonResponse({
           runId: cancel[1],
           labId: 'lab-67',
@@ -166,6 +168,7 @@ describe('ChatPanel (L67)', () => {
     await user.click(screen.getByRole('button', { name: 'Stop' }));
     expect(screen.getByTestId('chat-status')).toHaveTextContent('Stopping…'); // before the server answers
     expect(cancels).toEqual([{ runId: 'run-2', token: 'tok-2-0123456789abcdef' }]);
+    await act(async () => finishCancellation!());
     const stopped = await screen.findByText('Stopped');
     expect(stopped.closest('[data-testid="chat-message"]')).toHaveAttribute('data-status', 'stopped');
     expect(screen.getByTestId('chat-status')).toHaveTextContent(/Stopped\. The partial reply is kept/);

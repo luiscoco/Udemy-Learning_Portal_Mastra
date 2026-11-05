@@ -7,6 +7,7 @@ import { createLogger } from './logger.js';
 import { ROUTE_CLASSES } from './route-classes.js';
 import { signIn } from './test-auth.js';
 import { testMemoryDir } from '@mlp/labs/test-memory';
+import { emptyProgress } from '@mlp/contracts';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Layer = { name: string; route?: { path: string; methods: Record<string, boolean> }; handle?: any };
@@ -94,6 +95,28 @@ describe('route audit (L62)', () => {
     const lab00Input = await labExample('lab-00');
     expect(approvalId).not.toBe('');
     const calls: Record<string, (cookie?: string) => Promise<Response>> = {
+      'GET /api/progress': (cookie) =>
+        fetch(`${base}/api/progress`, {
+          headers: { ...json, 'x-progress-subject': 'dev%3Aalice', ...(cookie ? { cookie } : {}) },
+        }),
+      'POST /api/progress/import': (cookie) =>
+        fetch(`${base}/api/progress/import`, {
+          method: 'POST',
+          headers: { ...json, 'x-progress-subject': 'dev%3Aalice', ...(cookie ? { cookie } : {}) },
+          body: JSON.stringify({ records: [emptyProgress('lab-01')] }),
+        }),
+      'POST /api/progress/:labId': (cookie) =>
+        fetch(`${base}/api/progress/lab-00`, {
+          method: 'POST',
+          headers: { ...json, 'x-progress-subject': 'dev%3Aalice', ...(cookie ? { cookie } : {}) },
+          body: JSON.stringify({ baseRevision: 0, record: emptyProgress('lab-00') }),
+        }),
+      'POST /api/progress/:labId/reset': (cookie) =>
+        fetch(`${base}/api/progress/lab-00/reset`, {
+          method: 'POST',
+          headers: { ...json, 'x-progress-subject': 'dev%3Aalice', ...(cookie ? { cookie } : {}) },
+          body: JSON.stringify({ baseRevision: 1 }),
+        }),
       'POST /api/labs/:labId/runs': (cookie) =>
         fetch(`${base}/api/labs/lab-00/runs`, {
           method: 'POST',
@@ -101,6 +124,13 @@ describe('route audit (L62)', () => {
           body: JSON.stringify({ input: lab00Input }),
         }),
       'GET /api/runs/:runId': (cookie) => fetch(`${base}/api/runs/${a.runId}`, { headers: cookie ? { cookie } : {} }),
+      'GET /api/runs': (cookie) =>
+        fetch(`${base}/api/runs?labId=lab-15`, { headers: { 'x-run-subject': 'dev%3Aalice', ...(cookie ? { cookie } : {}) } }),
+      'POST /api/runs/:runId/recover': (cookie) =>
+        fetch(`${base}/api/runs/${a.runId}/recover`, {
+          method: 'POST',
+          headers: { 'x-run-subject': 'dev%3Aalice', ...(cookie ? { cookie } : {}) },
+        }),
       'GET /api/runs/:runId/events': (cookie) =>
         fetch(`${base}/api/runs/${a.runId}/events`, {
           headers: cookie ? { cookie } : {},

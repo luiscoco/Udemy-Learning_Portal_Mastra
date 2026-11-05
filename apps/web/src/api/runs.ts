@@ -14,6 +14,9 @@ export function startRun(labId: string, body: ExecutionRequest, signal?: AbortSi
   return api.runs.start(labId, body, signal);
 }
 
+export const recoverRun = (runId: string, subject: string, signal?: AbortSignal) => api.runs.recover(runId, subject, signal);
+export const fetchRecentRuns = (labId: string, subject: string, signal?: AbortSignal) => api.runs.recent(labId, subject, signal);
+
 /** The run token (from startRun) proves this tab started the run; the API requires it for cancel and approvals. */
 export function cancelRun(runId: string, runToken: string): Promise<RunSnapshot> {
   return api.runs.cancel(runId, runToken);

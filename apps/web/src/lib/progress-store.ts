@@ -11,6 +11,21 @@ export interface ProgressStore {
   subscribe(listener: () => void): () => void;
   /** Switches to another learner's records (browser stores only; see storage-scope.ts). */
   setScope?(scope: string): void;
+  setIdentity?(subject: string | null): void;
+  getIdentity?(): string | null;
+  getSyncState?(): ProgressSyncState;
+  retrySync?(): Promise<void>;
+  resolveConflict?(labId: string, choice: 'server' | 'device'): Promise<void>;
+  exportBackup?(): unknown;
+}
+
+export interface ProgressSyncState {
+  phase: 'guest' | 'syncing' | 'saved' | 'offline' | 'conflict';
+  pending: number;
+  conflicts: string[];
+  message: string | null;
+  localDurable: boolean;
+  hasBackup: boolean;
 }
 
 abstract class BaseStore implements ProgressStore {
@@ -70,6 +85,8 @@ const StoredSchema = z.object({ version: z.literal(1), records: z.record(z.strin
  * Invalid or corrupt entries are ignored, never trusted.
  */
 export class LocalStorageProgressStore extends BaseStore {
+  private durable = true;
+  isDurable = () => this.durable;
   private cache: Record<string, ProgressRecord> | null = null;
   private key: string;
   private scope: string;
@@ -126,7 +143,9 @@ export class LocalStorageProgressStore extends BaseStore {
     this.cache = all;
     try {
       this.storage.setItem(this.key, JSON.stringify({ version: 1, records: all }));
+      this.durable = true;
     } catch {
+      this.durable = false;
       // Storage full or disabled: keep in-memory state for this session.
     }
   }

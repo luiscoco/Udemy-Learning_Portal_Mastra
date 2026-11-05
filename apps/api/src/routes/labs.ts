@@ -6,6 +6,7 @@ import { resolveLabSourcePath, type LabServices } from '@mlp/labs';
 import { getMastraVersion } from '@mlp/mastra-runtime';
 import type { AppConfig } from '../config.js';
 import { requireAuth } from '../auth.js';
+import type { RunRateLimiter } from '../run-rate-limit.js';
 
 const LANG: Record<string, SourceFile['language']> = { ts: 'typescript', tsx: 'tsx', json: 'json', md: 'markdown' };
 
@@ -22,6 +23,7 @@ export function labsRouter(deps: {
   registry: LabRegistry<LabServices>;
   runner: LabRunner<LabServices>;
   pinned: Record<string, string>;
+  limits: RunRateLimiter;
 }): Router {
   const { config, registry, runner, pinned } = deps;
   const router = Router();
@@ -106,7 +108,7 @@ export function labsRouter(deps: {
   });
 
   // Running a lab requires a signed-in learner; the run is bound to them (anonymous → 401).
-  router.post('/:labId/runs', requireAuth, (req, res) => {
+  router.post('/:labId/runs', requireAuth, deps.limits.middleware('start'), (req, res) => {
     const snapshot = runner.start(String(req.params.labId), req.body ?? {}, {
       requestId: req.requestId,
       correlationId: req.correlationId,

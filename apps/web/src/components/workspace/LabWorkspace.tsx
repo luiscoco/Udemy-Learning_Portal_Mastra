@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import type { LabDefinition } from '@mlp/contracts';
 import { useLabProgress } from '../../lib/progress-context';
+import { useProgressActions } from '../../lib/progress-actions';
 import { Badge } from '../ui/primitives';
 import { InstructorPanel } from './InstructorPanel';
 import { LearnTab } from './LearnTab';
@@ -15,6 +17,8 @@ type TabId = (typeof TAB_IDS)[number];
 
 function ProgressChecklist({ labId }: { labId: string }) {
   const p = useLabProgress(labId);
+  const { reset } = useProgressActions(labId);
+  const [confirmReset, setConfirmReset] = useState(false);
   const items = [
     { label: 'Lesson read', done: Boolean(p?.lessonRead) },
     { label: 'Run succeeded with passing checks', done: Boolean(p?.runSucceeded && p.checksPassed) },
@@ -36,12 +40,35 @@ function ProgressChecklist({ labId }: { labId: string }) {
           {i.done ? '✓' : '○'} {i.label}
         </span>
       ))}
+      {confirmReset ? (
+        <span className="flex flex-wrap items-center gap-2 text-sm">
+          Reset this lab, including notes and quiz answers?
+          <button
+            type="button"
+            className="underline"
+            onClick={() => {
+              reset();
+              setConfirmReset(false);
+            }}
+          >
+            Confirm reset
+          </button>
+          <button type="button" className="underline" onClick={() => setConfirmReset(false)}>
+            Keep progress
+          </button>
+        </span>
+      ) : (
+        <button type="button" className="text-xs underline" onClick={() => setConfirmReset(true)}>
+          Reset this lab’s progress
+        </button>
+      )}
     </section>
   );
 }
 
 /** Learn / Run / Source workspace for an available lab, plus quiz, self-check, notes and instructor assets. */
 export function LabWorkspace({ definition }: { definition: LabDefinition }) {
+  const progress = useLabProgress(definition.id);
   const [params, setParams] = useSearchParams();
   const raw = params.get('tab');
   const selected: TabId = TAB_IDS.includes(raw as TabId) ? (raw as TabId) : 'learn';
@@ -71,7 +98,7 @@ export function LabWorkspace({ definition }: { definition: LabDefinition }) {
         ]}
       />
       <div className="grid gap-10 border-t border-border pt-10 [&>*]:min-w-0">
-        <QuizPanel definition={definition} />
+        <QuizPanel key={JSON.stringify(progress?.quiz ?? null)} definition={definition} />
         <div className="grid gap-10 lg:grid-cols-2 [&>*]:min-w-0">
           <SelfCheckPanel definition={definition} />
           <NotesPanel definition={definition} />

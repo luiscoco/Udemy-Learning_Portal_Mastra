@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { emptyProgress } from '@mlp/contracts';
 import { catalog } from '@mlp/lab-catalog';
+import * as labCatalog from '@mlp/lab-catalog';
 import { searchLabs } from './components/layout/SearchBox';
 import { jsonResponse, renderApp, signedInSession } from './test-utils';
 
@@ -84,11 +85,9 @@ describe('home and sidebar', () => {
     expect(within(nav).getByRole('link', { name: /^lab-11: First custom tool \(/ })).toBeVisible();
   });
 
-  it('marks locked labs as locked and never as completed', () => {
+  it('never marks untouched labs as completed', () => {
     renderApp('/');
     const nav = screen.getAllByRole('navigation', { name: 'Course' })[0]!;
-    const locked = catalog.labs.find((l) => l.status === 'locked' && l.moduleId === 'module-01');
-    if (locked) expect(within(nav).getByRole('link', { name: `${locked.id}: ${locked.title} (Locked)` })).toBeInTheDocument();
     expect(within(nav).queryByRole('link', { name: /\(Completed\)/ })).toBeNull();
   });
 });
@@ -113,16 +112,22 @@ describe('routing', () => {
   });
 
   it('shows a locked preview without run controls', () => {
-    // First locked lab with a confirmed title, and its prerequisite.
-    const locked = catalog.labs.find((l) => l.status === 'locked' && l.titleConfirmed)!;
+    // Keep preview coverage with an explicit fixture even after the whole course is released.
+    const locked = { ...catalog.labs.find((l) => l.id === 'lab-75')!, status: 'locked' as const };
     const prereq = catalog.labs.find((l) => l.id === locked.prerequisites[0])!;
-    renderApp(`/labs/${locked.id}`);
-    expect(screen.getByRole('heading', { level: 1, name: new RegExp(locked.title) })).toBeInTheDocument();
-    expect(screen.getByText('This lab is not available yet')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /run/i })).toBeNull();
-    expect(
-      within(screen.getByRole('main')).getByRole('link', { name: new RegExp(`${prereq.id}: ${prereq.title}`) }),
-    ).toBeInTheDocument();
+    const original = labCatalog.getLab;
+    const lookup = vi.spyOn(labCatalog, 'getLab').mockImplementation((id) => (id === locked.id ? locked : original(id)));
+    try {
+      renderApp(`/labs/${locked.id}`);
+      expect(screen.getByRole('heading', { level: 1, name: new RegExp(locked.title) })).toBeInTheDocument();
+      expect(screen.getByText('This lab is not available yet')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /run/i })).toBeNull();
+      expect(
+        within(screen.getByRole('main')).getByRole('link', { name: new RegExp(`${prereq.id}: ${prereq.title}`) }),
+      ).toBeInTheDocument();
+    } finally {
+      lookup.mockRestore();
+    }
   });
 
   it('shows 404 for unknown labs and routes', () => {

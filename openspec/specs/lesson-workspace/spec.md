@@ -53,11 +53,15 @@ The workspace SHALL provide a scored quiz with explanations after submission and
 - **THEN** the score 3/4 is shown, the quiz counts as passed and explanations are visible
 
 ### Requirement: Persistent progress
-Progress SHALL be saved through the storage adapter and survive reloads; a lab becomes completed only when the lesson is marked read, a run succeeded with all checks passing and the quiz is passed.
+Progress SHALL be saved through the storage adapter and survive reloads; a lab becomes completed only when the lesson is marked read, a run succeeded with all checks passing and the quiz is passed. Authenticated progress SHALL also survive changing browsers through account synchronization, with offline drafts and conflicts surfaced accessibly. Guest progress SHALL remain local and eligible for migration on sign-in.
 
 #### Scenario: Reload keeps progress
 - **WHEN** a learner completes Dummy Lab 00 and reloads the page
 - **THEN** the lab and course progress still show it completed
+
+#### Scenario: Progress from another browser
+- **WHEN** the learner signs in from a second browser after a successful save
+- **THEN** their completion, quiz, notes and self-check records are restored
 
 ### Requirement: Instructor assets
 The workspace SHALL show the instructor demonstration outline (segments, minutes, talking points) and export it with the lab's objectives, checks and quiz as a JSON file.
@@ -159,3 +163,18 @@ For labs whose presentation is workspace, the Run tab SHALL show knowledge docum
 #### Scenario: Mobile width
 - **WHEN** the workspace is shown on a phone-sized screen
 - **THEN** one pane is visible at a time, the learner can switch panes, and the page does not scroll horizontally
+
+### Requirement: Standard execution reattachment
+Standard Run tabs SHALL restore a remembered execution after reload and offer explicit recovery of the learner's latest retained run. Browser storage SHALL contain only an account-scoped run identifier, never mutation capabilities or input payloads. Reattachment SHALL replay events without duplication and preserve live cancel/approval controls. Failed restoration and interrupted executions SHALL be surfaced accessibly without automatically starting a new execution.
+
+#### Scenario: Reload while waiting for approval
+- **WHEN** the learner reloads a standard Run tab during a live pending approval within the reconnect grace period
+- **THEN** the same run and approval are restored and its decision uses a recovered capability
+
+#### Scenario: Account changes
+- **WHEN** learner A signs out and learner B signs in on the same browser
+- **THEN** A's remembered run and late recovery responses do not appear in B's workspace
+
+#### Scenario: Reset the local execution view
+- **WHEN** the learner resets the execution view
+- **THEN** its remembered run identifier is removed without deleting server history or starting another run

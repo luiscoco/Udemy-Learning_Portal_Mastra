@@ -1,6 +1,7 @@
 import { catalog } from '../packages/lab-catalog/src/index';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { progressAccount, progressSaved, signInProgress } from './progress-helpers';
 
 const isMobile = (page: Page) => (page.viewportSize()?.width ?? 1280) < 1024;
 
@@ -51,12 +52,13 @@ test('deep links and the legacy ?lesson= query both open the lesson', async ({ p
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Dummy Lab 00');
 });
 
-test('locked labs show a preview without progress or run controls', async ({ page }) => {
-  const locked = catalog.labs.find((l) => l.status === 'locked' && l.titleConfirmed)!;
-  await page.goto(`/labs/${locked.id}`);
-  await expect(page.getByRole('heading', { level: 1 })).toContainText(locked.title);
-  await expect(page.getByText('This lab is not available yet')).toBeVisible();
-  await expect(page.getByRole('button', { name: /^Run/ })).toHaveCount(0);
+test('the final capstone is released with working lesson controls', async ({ page }) => {
+  const capstone = catalog.labs.find((l) => l.id === 'lab-75')!;
+  expect(catalog.labs.every((l) => l.status === 'available')).toBe(true);
+  await page.goto(`/labs/${capstone.id}?tab=run`);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(capstone.title);
+  await expect(page.getByText('This lab is not available yet')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Run', exact: true })).toBeEnabled();
 });
 
 test('unknown labs and paths show a graceful 404', async ({ page }) => {
@@ -68,8 +70,10 @@ test('unknown labs and paths show a graceful 404', async ({ page }) => {
   await expect(page).toHaveURL(/\/$/);
 });
 
-test('fresh learner sees zero completion', async ({ page }) => {
+test('fresh learner sees zero completion', async ({ page }, info) => {
+  await signInProgress(page, progressAccount(info, 'fresh'));
   await page.goto('/');
+  await progressSaved(page);
   await expect(page.getByTestId('progress-summary').first()).toHaveText(summary(0));
 });
 

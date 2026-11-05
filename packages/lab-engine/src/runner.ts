@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import {
   ExecutionRequestSchema,
   type ApprovalDecision,
@@ -22,6 +22,7 @@ import {
   type RunContext,
 } from './types.js';
 import { redactValue } from './util.js';
+import type { RunPersistence } from './persistence.js';
 
 export interface RunnerOptions<S> {
   registry: LabRegistry<S>;
@@ -47,6 +48,8 @@ export interface RunnerOptions<S> {
   secrets?: readonly string[];
   logger?: EngineLogger;
   now?: () => number;
+  /** Optional server-owned durable journal. No lab code is executed during recovery. */
+  persistence?: RunPersistence;
 }
 
 export interface StartMeta {
@@ -60,8 +63,8 @@ type Listener = (event: ExecutionEvent) => void;
 
 interface RunRecord {
   id: string;
-  /** Secret returned only to the starter; never in snapshots, events or logs. */
-  token: string;
+  /** Original capability hash plus at most four recovery hashes; never in public snapshots/events. */
+  tokenHashes: readonly string[];
   /** Owner (authenticated principal) of the run; never in snapshots or events. */
   ownerId: string | null;
   labId: string;
@@ -91,11 +94,12 @@ const TERMINAL: Record<RunTerminalStatus, true> = { succeeded: true, failed: tru
 
 export class LabRunner<S = unknown> {
   private readonly runs = new Map<string, RunRecord>();
-  private readonly opts: Required<Omit<RunnerOptions<S>, 'secrets' | 'logger' | 'now' | 'servicesFor'>> & {
+  private readonly opts: Required<Omit<RunnerOptions<S>, 'secrets' | 'logger' | 'now' | 'servicesFor' | 'persistence'>> & {
     servicesFor?: (ownerId: string | null) => S;
     secrets: readonly string[];
     logger: EngineLogger;
     now: () => number;
+    persistence?: RunPersistence;
   };
   private readonly sweepTimer: NodeJS.Timeout;
 
@@ -113,7 +117,13 @@ export class LabRunner<S = unknown> {
       now: Date.now,
       ...options,
     };
-    this.sweepTimer = setInterval(() => this.sweep(), 60_000);
+    this.sweepTimer = setInterval(() => {
+      try {
+        this.sweep();
+      } catch {
+        this.opts.logger.error('Run storage maintenance failed; check the journal.');
+      }
+    }, 60_000);
     this.sweepTimer.unref();
   }
 
@@ -136,11 +146,14 @@ export class LabRunner<S = unknown> {
    * run, FORBIDDEN for a missing or wrong token. In-process callers (tests, shutdown) skip this.
    */
   authorize(runId: string, token: string | undefined): void {
-    const record = this.runs.get(runId);
+    const record = this.record(runId);
     if (!record) throw new LabError('NOT_FOUND', `Unknown run "${runId}"`);
-    const a = Buffer.from(token ?? '');
-    const b = Buffer.from(record.token);
-    if (a.length !== b.length || !timingSafeEqual(a, b)) {
+    const a = createHash('sha256')
+      .update(token ?? '')
+      .digest();
+    let matched = 0;
+    for (const hash of record.tokenHashes) matched |= Number(timingSafeEqual(a, Buffer.from(hash, 'hex')));
+    if (!matched) {
       throw new LabError('FORBIDDEN', 'This action needs the run token returned when the run was started (X-Run-Token header).');
     }
   }
@@ -195,9 +208,11 @@ export class LabRunner<S = unknown> {
       this.opts.serverMaxTimeoutMs,
     );
     const requestId = meta.requestId ?? randomUUID();
+    this.sweep();
+    const runToken = randomBytes(32).toString('base64url');
     const record: RunRecord = {
       id: randomUUID(),
-      token: randomBytes(32).toString('base64url'),
+      tokenHashes: [createHash('sha256').update(runToken).digest('hex')],
       ownerId: meta.ownerId ?? null,
       labId: def.id,
       correlationId: meta.correlationId ?? requestId,
@@ -216,6 +231,12 @@ export class LabRunner<S = unknown> {
       extras: {},
       done: Promise.resolve(),
     };
+    const evicted = this.opts.persistence?.create({
+      ownerId: record.ownerId,
+      tokenHashes: record.tokenHashes,
+      snapshot: this.snapshot(record),
+    });
+    for (const id of evicted ?? []) if (this.runs.get(id)?.status !== 'running') this.runs.delete(id);
     this.runs.set(record.id, record);
     this.opts.logger.info('run started', {
       runId: record.id,
@@ -226,7 +247,7 @@ export class LabRunner<S = unknown> {
       deadlineMs,
     });
     record.done = this.execute(record, input.data);
-    return { ...this.snapshot(record), runToken: record.token };
+    return { ...this.snapshot(record), runToken };
   }
 
   private async execute(record: RunRecord, input: unknown): Promise<void> {
@@ -307,16 +328,31 @@ export class LabRunner<S = unknown> {
           error: redactSecrets(raw, this.opts.secrets),
         });
       }
-      this.push(record, {
-        type: 'error',
-        code: canonical.code,
-        message: canonical.message,
-        retryable: canonical.retryable,
-        ...(canonical.details ? { details: canonical.details } : {}),
-      });
       const status: RunTerminalStatus =
         err instanceof RunAbortedError ? (err.kind === 'timeout' ? 'timeout' : 'cancelled') : 'failed';
-      this.finish(record, status);
+      try {
+        this.push(record, {
+          type: 'error',
+          code: canonical.code,
+          message: canonical.message,
+          retryable: canonical.retryable,
+          ...(canonical.details ? { details: canonical.details } : {}),
+        });
+        this.finish(record, status);
+      } catch {
+        // Storage itself may be unavailable. Stop safely without recursively trying to persist failure.
+        this.push(
+          record,
+          {
+            type: 'error',
+            code: 'NOT_CONFIGURED',
+            retryable: false,
+            message: 'Run storage failed. Actions may already have occurred. Verify before starting another execution.',
+          },
+          false,
+        );
+        this.finish(record, 'failed', false);
+      }
     } finally {
       clearTimeout(record.deadlineTimer);
       if (record.graceTimer) clearTimeout(record.graceTimer);
@@ -405,17 +441,17 @@ export class LabRunner<S = unknown> {
    * when the run has finished or the approval is unknown or already resolved (first decision wins).
    */
   resolveApproval(runId: string, approvalId: string, decision: ApprovalDecision, reason?: string): RunSnapshot {
-    const record = this.runs.get(runId);
+    const record = this.record(runId);
     if (!record) throw new LabError('NOT_FOUND', `Unknown run "${runId}"`);
     const settle = record.status === 'running' ? record.approvals.get(approvalId) : undefined;
     if (!settle)
       throw new LabError('CONFLICT', 'This approval is not pending (already decided, expired, or the run has finished).');
-    this.opts.logger.info('approval resolved', { runId, approvalId, decision });
     settle({ decision, by: 'user', ...(reason ? { reason } : {}) });
+    this.opts.logger.info('approval resolved', { runId, approvalId, decision });
     return this.snapshot(record);
   }
 
-  private push(record: RunRecord, payload: ExecutionEventPayload): void {
+  private push(record: RunRecord, payload: ExecutionEventPayload, persist = true): ExecutionEvent | undefined {
     if (record.status !== 'running') return; // nothing after the terminal event
     const isTerminalish = payload.type === 'result' || payload.type === 'error' || payload.type === 'complete';
     if (!isTerminalish && record.events.length >= this.opts.maxEventsPerRun) {
@@ -435,6 +471,23 @@ export class LabRunner<S = unknown> {
       seq: record.events.length,
       timestamp: new Date(this.opts.now()).toISOString(),
     } as ExecutionEvent;
+    if (persist && this.opts.persistence) {
+      const snapshot = {
+        ...this.snapshot(record),
+        eventCount: record.events.length + 1,
+        ...(event.type === 'complete' ? { status: event.status, finishedAt: event.timestamp, pendingApprovals: 0 } : {}),
+      };
+      try {
+        this.opts.persistence.append(record.id, event, snapshot);
+      } catch {
+        const error = new LabError(
+          'NOT_CONFIGURED',
+          'Run storage failed. Actions may already have occurred; verify before repeating.',
+        );
+        record.controller.abort(error);
+        throw error;
+      }
+    }
     record.events.push(event);
     for (const l of [...record.listeners]) {
       try {
@@ -443,14 +496,15 @@ export class LabRunner<S = unknown> {
         this.opts.logger.warn('event listener failed', { runId: record.id, error: String(err) });
       }
     }
+    return event;
   }
 
-  private finish(record: RunRecord, status: RunTerminalStatus): void {
+  private finish(record: RunRecord, status: RunTerminalStatus, persist = true): void {
     if (record.status !== 'running') return;
     const durationMs = this.opts.now() - record.startedAt;
-    this.push(record, { type: 'complete', status, durationMs });
+    const complete = this.push(record, { type: 'complete', status, durationMs }, persist);
     record.status = status;
-    record.finishedAt = this.opts.now();
+    record.finishedAt = complete ? Date.parse(complete.timestamp) : this.opts.now();
     record.listeners.clear();
     this.opts.logger.info('run finished', { runId: record.id, labId: record.labId, status, durationMs });
   }
@@ -461,7 +515,7 @@ export class LabRunner<S = unknown> {
    * aborted after the disconnect grace period unless someone resubscribes.
    */
   subscribe(runId: string, listener: Listener, afterSeq = -1): () => void {
-    const record = this.runs.get(runId);
+    const record = this.record(runId);
     if (!record) throw new LabError('NOT_FOUND', `Unknown run "${runId}"`);
     if (record.graceTimer) {
       clearTimeout(record.graceTimer);
@@ -485,7 +539,7 @@ export class LabRunner<S = unknown> {
   }
 
   cancel(runId: string): RunSnapshot {
-    const record = this.runs.get(runId);
+    const record = this.record(runId);
     if (!record) throw new LabError('NOT_FOUND', `Unknown run "${runId}"`);
     if (record.status === 'running') record.controller.abort(new RunAbortedError('cancelled'));
     return this.snapshot(record);
@@ -493,21 +547,21 @@ export class LabRunner<S = unknown> {
 
   /** The owner a run was started for, null when it was started without one, undefined for an unknown run. */
   ownerOf(runId: string): string | null | undefined {
-    return this.runs.get(runId)?.ownerId;
+    return this.record(runId)?.ownerId;
   }
 
   get(runId: string): RunSnapshot | undefined {
-    const record = this.runs.get(runId);
+    const record = this.record(runId);
     return record ? this.snapshot(record) : undefined;
   }
 
   events(runId: string): readonly ExecutionEvent[] {
-    return this.runs.get(runId)?.events ?? [];
+    return this.record(runId)?.events ?? [];
   }
 
   /** Resolves when the run has emitted its terminal event (for tests and graceful shutdown). */
   async waitFor(runId: string): Promise<RunSnapshot> {
-    const record = this.runs.get(runId);
+    const record = this.record(runId);
     if (!record) throw new LabError('NOT_FOUND', `Unknown run "${runId}"`);
     await record.done;
     return this.snapshot(record);
@@ -519,6 +573,9 @@ export class LabRunner<S = unknown> {
 
   sweep(now = this.opts.now()): number {
     let removed = 0;
+    for (const id of this.opts.persistence?.prune(now) ?? []) {
+      if (this.runs.get(id)?.status !== 'running' && this.runs.delete(id)) removed++;
+    }
     for (const [id, r] of this.runs) {
       if (r.status !== 'running' && r.finishedAt !== undefined && now - r.finishedAt > this.opts.retentionMs) {
         this.runs.delete(id);
@@ -539,6 +596,62 @@ export class LabRunner<S = unknown> {
       }
     }
     await Promise.all(pending);
+    this.opts.persistence?.close();
+  }
+
+  /** Trusted API boundary must enforce ownership before issuing a recovery capability. */
+  recoverToken(runId: string): string {
+    const record = this.record(runId);
+    if (!record) throw new LabError('NOT_FOUND', 'Unknown run');
+    const token = randomBytes(32).toString('base64url');
+    const hashes = [
+      record.tokenHashes[0]!,
+      ...record.tokenHashes.slice(1).slice(-3),
+      createHash('sha256').update(token).digest('hex'),
+    ];
+    this.opts.persistence?.capabilities(runId, hashes);
+    record.tokenHashes = hashes;
+    return token;
+  }
+
+  recent(ownerId: string, labId: string): RunSnapshot[] {
+    const snapshots = new Map((this.opts.persistence?.list(ownerId, labId) ?? []).map((s) => [s.runId, s]));
+    for (const r of this.runs.values()) if (r.ownerId === ownerId && r.labId === labId) snapshots.set(r.id, this.snapshot(r));
+    return [...snapshots.values()].sort((a, b) => b.startedAt.localeCompare(a.startedAt)).slice(0, 10);
+  }
+
+  private record(runId: string): RunRecord | undefined {
+    this.opts.persistence?.assertHealthy();
+    const live = this.runs.get(runId);
+    if (live) return live;
+    const stored = this.opts.persistence?.load(runId);
+    if (!stored) return undefined;
+    const s = stored.snapshot;
+    if (s.status === 'running') throw new LabError('NOT_CONFIGURED', 'Execution is not attached to this runner.');
+    const record: RunRecord = {
+      id: s.runId,
+      tokenHashes: stored.tokenHashes,
+      ownerId: stored.ownerId,
+      labId: s.labId,
+      correlationId: s.correlationId,
+      requestId: s.correlationId,
+      mode: s.mode,
+      status: s.status,
+      startedAt: Date.parse(s.startedAt),
+      finishedAt: Date.parse(s.finishedAt!),
+      deadlineMs: s.deadlineMs,
+      events: [...stored.events],
+      listeners: new Set(),
+      controller: new AbortController(),
+      truncated: false,
+      deadlineAt: 0,
+      remainingMs: 0,
+      approvals: new Map(),
+      extras: {},
+      done: Promise.resolve(),
+    };
+    this.runs.set(runId, record);
+    return record;
   }
 
   private snapshot(r: RunRecord): RunSnapshot {
@@ -552,7 +665,7 @@ export class LabRunner<S = unknown> {
       ...(r.finishedAt !== undefined ? { finishedAt: new Date(r.finishedAt).toISOString() } : {}),
       deadlineMs: r.deadlineMs,
       eventCount: r.events.length,
-      pendingApprovals: r.approvals.size,
+      pendingApprovals: r.status === 'running' ? r.approvals.size : 0,
     };
   }
 }

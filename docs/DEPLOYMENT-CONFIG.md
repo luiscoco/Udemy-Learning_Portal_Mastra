@@ -52,7 +52,7 @@ npm run auth:hash-user -- ana        # prompts on stdin; prints ana:scrypt$16384
 Join entries with commas and supply them as the `AUTH_USERS_FILE` secret.
 
 - **Verification:** constant-time, with the same work for unknown users as for known ones.
-- **Sessions:** kept in memory and signed with `AUTH_SESSION_SECRET`. That limits you to one API instance, unless you add a shared session store.
+- **Sessions:** `memory` remains the compatibility default. Set `AUTH_SESSION_STORE=sqlite` with the stable `AUTH_SESSION_SECRET` or its `_FILE` form to persist sessions in `<MLP_DATA_DIR>/auth/sessions.db`. Storage initialization completes before listening. Participating processes need the same file, secret and identity settings; this local adapter does not make all platform stores safe for multiple replicas. See [SESSIONS.md](SESSIONS.md).
 
 Larger deployments should add an OIDC adapter (see [AUTH.md](AUTH.md)).
 
@@ -96,3 +96,7 @@ The `container` job in `.github/workflows/ci.yml` builds the image and runs `npm
 3. A password login works, and a lab-00 run streams over SSE to `complete — succeeded`.
 4. The logs are JSON lines without secrets.
 5. With a read-only data volume, `/api/ready` returns 503 with `data-dir` failing, while `/api/health` stays 200.
+
+HTTP execution storage: `RUN_STORE=memory` is the default. `RUN_STORE=sqlite` requires `RUN_STORE_SECRET` (32+ characters) or `RUN_STORE_SECRET_FILE` and a persistent local data root. One active runner may own a journal. See [RUN-RECOVERY.md](RUN-RECOVERY.md).
+
+Run request limits are enabled by default: 30 starts per learner / 120 per client network, and 60 approval/recovery requests per learner / 240 per network in 60 seconds. Configure `RUN_RATE_WINDOW_MS` and the four `RUN_*_RATE_*_MAX` settings for your environment; see [RATE-LIMITS.md](RATE-LIMITS.md). `TRUST_PROXY=false` ignores spoofed forwarding headers; enable trust only for your actual proxy topology. Limits are local to one API process and reset on restart.

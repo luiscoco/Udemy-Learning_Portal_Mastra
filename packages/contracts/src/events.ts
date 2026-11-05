@@ -202,6 +202,17 @@ export const RunSnapshotSchema = z.object({
 });
 export type RunSnapshot = z.infer<typeof RunSnapshotSchema>;
 
+/** Owner-only capability issuance. The raw value must never be saved in browser storage. */
+export const RecoverRunResponseSchema = z.object({
+  snapshot: RunSnapshotSchema,
+  runToken: z.string().min(16).max(200),
+});
+export type RecoverRunResponse = z.infer<typeof RecoverRunResponseSchema>;
+export const RecentRunsResponseSchema = z.object({ runs: z.array(RunSnapshotSchema).max(10) });
+export type RecentRunsResponse = z.infer<typeof RecentRunsResponseSchema>;
+export const RUN_SUBJECT_HEADER = 'x-run-subject';
+export const RecentRunsQuerySchema = z.object({ labId: LabIdSchema }).strict();
+
 export const PreflightResultSchema = z.object({
   labId: LabIdSchema,
   ready: z.boolean(),

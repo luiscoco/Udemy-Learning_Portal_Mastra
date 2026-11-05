@@ -9,6 +9,7 @@ export * from './workspace-turn.js';
 export * from './lab.js';
 export * from './events.js';
 export * from './progress.js';
+export * from './progress-api.js';
 export * from './cited-answer.js';
 export * from './mcp-catalog.js';
 export * from './mcp-capabilities.js';

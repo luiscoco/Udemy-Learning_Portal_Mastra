@@ -14,14 +14,19 @@ export function applyProgressPatch(current: ProgressRecord | undefined, labId: s
 export function useProgressActions(labId: string) {
   const store = useProgressStore();
   const record = useLabProgress(labId);
+  const identity = store.getIdentity?.();
   const update = useCallback(
     (patch: ProgressPatch | ((current: ProgressRecord) => ProgressPatch)) => {
+      if (store.getIdentity && store.getIdentity() !== identity) return;
       const current = store.get(labId) ?? emptyProgress(labId);
       const resolved = typeof patch === 'function' ? patch(current) : patch;
       store.save(applyProgressPatch(current, labId, resolved));
     },
-    [store, labId],
+    [store, labId, identity],
   );
-  const reset = useCallback(() => store.clear(labId), [store, labId]);
+  const reset = useCallback(() => {
+    if (store.getIdentity && store.getIdentity() !== identity) return;
+    store.clear(labId);
+  }, [store, labId, identity]);
   return { record: record ?? emptyProgress(labId), update, reset };
 }

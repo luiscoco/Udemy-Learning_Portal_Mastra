@@ -17,9 +17,9 @@ What exists today:
 
 What is still required:
 
-- ☐ **Production learner identity and sessions.** Implement a real identity provider (OIDC/SSO) and shared durable sessions. L61's development identity adapter and in-memory store are not public-host authentication. Sessions end on process restart.
-- ☐ **Token survives a reload.** Keep the run token in the learner's session server-side, or in `sessionStorage` per tab after a threat review. Today a reload loses it.
-- ☐ **Rate limits.** Add per-learner and per-IP limits on run starts and decisions, in addition to the global `MAX_CONCURRENT_RUNS`.
+- ☐ **Production learner identity and sessions.** Partly done: opt-in `AUTH_SESSION_STORE=sqlite` supports durable API sessions, cross-process revocation and atomic rotation on the same persistent local database; see [SESSIONS.md](SESSIONS.md). Memory remains the compatibility default. OIDC/SSO and a remote shared session backend for general multi-replica hosting remain open. L61's development identity adapter is not public-host authentication.
+- ☑ **Run controls recover after reload.** Standard Run tabs recover owner-authorized capabilities without storing credentials in the browser. Optional `RUN_STORE=sqlite` retains recorded HTTP executions across restarts; interrupted work fails explicitly rather than continuing automatically. See [RUN-RECOVERY.md](RUN-RECOVERY.md). Chat/workspace live bubble reattachment remains open.
+- ☑ **Local run request limits.** Configurable per-learner and per-client-network allowances cover run starts and approval/recovery controls, independently of `MAX_CONCURRENT_RUNS`. Cancellation stays available. See [RATE-LIMITS.md](RATE-LIMITS.md). Shared distributed admission, upload/voice quotas and unauthenticated gateway protection remain open before broader hosting.
 - ☐ **Live-mode cost caps.** Set per-learner budgets for live provider calls, and decide whether learners bring their own keys or share the server's.
 
 ## 2. Durable state
@@ -28,11 +28,11 @@ What is still required:
   - ☑ **Conversation history** is durable since L21: `@mastra/libsql` on local files via `services.memory`. Its survival across a real process restart is covered by an integration test.
   - ☑ **Suspended workflow runs** are durable since L32: Mastra snapshots in libSQL (`lab-32-workflows.db`). Resuming in a new process is covered by an integration test.
   - ☑ **Durable approvals** are available since L33. A workflow gate suspends with a deadline, and decisions, expiry sweeps and late or duplicate approvals all work across restarts. This is the pattern to use for any approval that matters.
-  - ☐ **In-run approval prompts** (`ctx.requestApproval`, used by L15 tool approvals and L33 `ask`) still wait in memory, and a restart loses the prompt. In L33 the refund itself stays suspended in storage and can still be decided or expired. Move L15-style tool approvals onto the same pattern before relying on them in production.
+  - ☐ **In-run approval prompts** (`ctx.requestApproval`, used by L15 tool approvals and L33 `ask`) still wait in memory. Optional HTTP journaling retains their history and marks interrupted runs failed on restart, without continuing the approval. In L33 the refund itself stays suspended in storage and can still be decided or expired. Move L15-style tool approvals onto the same pattern before relying on them in production.
   - ☑ **Workflow run ownership (L62).** Each learner's workflow snapshots live in their own storage partition (`memory/tenants/<partition>/`), so a run id from another learner resolves to nothing. Every HTTP run is owner-bound (L61). This covers the local single-process deployment; a shared remote database needs the same scoping per tenant.
   - ☐ **Hosting.** A public host needs a remote libSQL/Turso or Postgres adapter, with backups, instead of local files.
   - ☐ **Vector stores across processes.** Local libSQL vector files are serialised per process only (`withVectorStore`). Concurrent writers from several API processes would miss vectors. Use a server-side vector database, or a single writer, before scaling out.
-- ☐ **Learner progress on the server.** Progress is in browser storage today. Move it server-side if learners switch devices.
+- ☑ **Learner progress on the server.** Account-bound libSQL records survive restarts and restore across browsers. The browser queues unsaved edits, imports legacy records without overwriting saved data, and asks the learner to resolve conflicts. See [PROGRESS.md](PROGRESS.md). Local durable API sessions are available; remote shared storage and general multi-replica operation remain open.
 
 ## 3. Hosting hardening
 

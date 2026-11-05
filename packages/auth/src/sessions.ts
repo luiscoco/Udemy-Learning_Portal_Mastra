@@ -20,6 +20,20 @@ export interface SessionManagerOptions {
 
 const b64url = (b: Buffer) => b.toString('base64url');
 
+const signId = (secret: string, sid: string) => b64url(createHmac('sha256', secret).update(sid).digest());
+
+/** Shared opaque cookie format for synchronous teaching sessions and persistent API sessions. */
+export function createSessionCookie(secret: string): { sid: string; cookieValue: string } {
+  const sid = b64url(randomBytes(32));
+  return { sid, cookieValue: `${sid}.${signId(secret, sid)}` };
+}
+
+export function sessionIdFromCookie(secret: string, value: string | undefined): string | null {
+  if (!value || !/^[A-Za-z0-9_-]{43}\.[A-Za-z0-9_-]{43}$/.test(value)) return null;
+  const [sid, signature] = value.split('.') as [string, string];
+  return safeEqual(signature, signId(secret, sid)) ? sid : null;
+}
+
 /**
  * Server-side sessions behind a signed opaque id. The cookie carries `<sid>.<HMAC(sid)>` only: no claims,
  * nothing to decode. A forged or altered value fails the constant-time signature check; an expired or
@@ -47,10 +61,6 @@ export class SessionManager {
     return this.#ttlMs;
   }
 
-  #sign(sid: string): string {
-    return b64url(createHmac('sha256', this.#secret).update(sid).digest());
-  }
-
   #purge(): void {
     const now = this.#now();
     for (const [sid, s] of this.#sessions) if (s.expiresAt <= now) this.#sessions.delete(sid);
@@ -60,21 +70,17 @@ export class SessionManager {
 
   create(principal: Principal): { cookieValue: string; session: Session } {
     this.#purge();
-    const sid = b64url(randomBytes(32));
+    const { sid, cookieValue } = createSessionCookie(this.#secret);
     const now = this.#now();
     const session: Session = { sid, principal, createdAt: now, expiresAt: now + this.#ttlMs };
     this.#sessions.set(sid, session);
-    return { cookieValue: `${sid}.${this.#sign(sid)}`, session };
+    return { cookieValue, session };
   }
 
   /** The live session for a cookie value, or null when it is malformed, forged, expired or revoked. */
   verify(cookieValue: string | undefined): Session | null {
-    if (!cookieValue || cookieValue.length > 200) return null;
-    const dot = cookieValue.indexOf('.');
-    if (dot <= 0) return null;
-    const sid = cookieValue.slice(0, dot);
-    const sig = cookieValue.slice(dot + 1);
-    if (!safeEqual(sig, this.#sign(sid))) return null;
+    const sid = sessionIdFromCookie(this.#secret, cookieValue);
+    if (!sid) return null;
     const s = this.#sessions.get(sid);
     if (!s) return null;
     if (s.expiresAt <= this.#now()) {

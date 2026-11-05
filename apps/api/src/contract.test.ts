@@ -2,7 +2,7 @@ import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ApiClientError, CLIENT_ROUTES, createApiClient, type ApiClient } from '@mlp/client';
-import type { ExecutionEvent } from '@mlp/contracts';
+import { emptyProgress, type ExecutionEvent } from '@mlp/contracts';
 import { testMemoryDir } from '@mlp/labs/test-memory';
 import { createApp, type ApiApp } from './app.js';
 import { parseConfig } from './config.js';
@@ -52,6 +52,28 @@ const code = (p: Promise<unknown>) =>
   );
 
 describe('API contract (L66)', () => {
+  it('lists and recovers an owner execution through validated SDK methods', async () => {
+    const c = client();
+    await c.auth.login({ username: 'learner' });
+    const started = await c.runs.start('lab-00', { input: { message: 'recover through SDK', delayMs: 0 } });
+    await api.runner.waitFor(started.runId);
+    expect((await c.runs.recent('lab-00', 'dev:learner')).runs.some((r) => r.runId === started.runId)).toBe(true);
+    const recovered = await c.runs.recover(started.runId, 'dev:learner');
+    expect(recovered.snapshot.runId).toBe(started.runId);
+    expect(recovered.runToken).not.toBe(started.runToken);
+    expect(await code(c.runs.recover(started.runId, 'dev:someone-else'))).toBe('404 NOT_FOUND');
+  });
+  it('progress methods validate account-scoped snapshots, saves, imports and resets', async () => {
+    const c = client();
+    await c.auth.login({ username: 'learner' });
+    const record = emptyProgress('lab-02');
+    expect((await c.progress.get('dev:learner')).entries).toEqual([]);
+    const saved = await c.progress.save('dev:learner', 'lab-02', { record, baseRevision: 0 });
+    expect(saved.revision).toBe(1);
+    expect((await c.progress.import('dev:learner', { records: [record] })).entries).toHaveLength(1);
+    expect((await c.progress.reset('dev:learner', 'lab-02', { baseRevision: 1 })).record).toBeNull();
+    expect(await code(c.progress.get('dev:someone-else'))).toBe('404 NOT_FOUND');
+  });
   it('the SDK has a method for every registered route, and no method for a route that is gone', () => {
     expect(Object.keys(CLIENT_ROUTES).sort()).toEqual(Object.keys(ROUTE_CLASSES).sort());
   });

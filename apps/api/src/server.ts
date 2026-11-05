@@ -2,7 +2,7 @@ import { createApp } from './app.js';
 import { ConfigError, describeConfig, loadDeployConfig, loadDotEnv, secretValues } from './config.js';
 import { createLogger } from './logger.js';
 
-function main(): void {
+async function main(): Promise<void> {
   const envFile = loadDotEnv();
   let loaded;
   try {
@@ -21,7 +21,17 @@ function main(): void {
   for (const [key, source] of Object.entries(loaded.sources))
     if (source === 'file') process.env[key] = config[key as keyof typeof loaded.sources];
   const logger = createLogger(config.LOG_LEVEL, secretValues(config));
-  const { app, runner, readiness, drain } = createApp({ config, logger });
+  const { app, runner, readiness, drain, auth } = createApp({ config, logger });
+  // Validate durable session storage before accepting any traffic.
+  try {
+    await auth.ready;
+  } catch {
+    logger.error('Persistent session storage initialization failed. Check its volume and migrations.');
+    await runner.dispose();
+    await readiness.close();
+    process.exitCode = 1;
+    return;
+  }
   for (const w of loaded.warnings) logger.warn('config warning', { key: w.key, message: w.message });
   const server = app.listen(config.PORT, config.HOST, () => {
     logger.info('api listening', {
@@ -46,4 +56,7 @@ function main(): void {
   process.on('exit', (code) => logger.warn('process exit', { code }));
 }
 
-main();
+void main().catch(() => {
+  process.stderr.write('[startup] API initialization failed. Check the server configuration.\n');
+  process.exit(1);
+});

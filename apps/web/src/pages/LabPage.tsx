@@ -10,6 +10,7 @@ import { Badge, Button, Notice, Skeleton } from '../components/ui/primitives';
 import { useAsync } from '../lib/use-async';
 import { useDocumentTitle } from '../lib/use-document-title';
 import { NotFoundPage } from './NotFoundPage';
+import { useStorageScope } from '../lib/progress-scope';
 
 function LabHeader({ lab, children }: { lab: CatalogLab; children?: ReactNode }) {
   const mod = getModule(lab.moduleId);
@@ -63,6 +64,7 @@ function LockedLab({ lab }: { lab: CatalogLab }) {
 
 /** Available lab: header plus the Learn / Run / Source workspace. */
 export function AvailableLab({ lab, definition }: { lab: CatalogLab; definition: LabDefinition }) {
+  const scope = useStorageScope();
   return (
     <div className="flex flex-col gap-8">
       <LabHeader lab={lab}>
@@ -72,7 +74,7 @@ export function AvailableLab({ lab, definition }: { lab: CatalogLab; definition:
           {definition.execution.modes.includes('live') ? <Badge tone="warning">Live mode optional</Badge> : null}
         </div>
       </LabHeader>
-      <LabWorkspace definition={definition} />
+      <LabWorkspace key={`${definition.id}:${scope}`} definition={definition} />
     </div>
   );
 }

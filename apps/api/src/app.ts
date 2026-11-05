@@ -5,6 +5,8 @@ import {
   DEFAULT_REQUEST_BYTES,
   HealthResponseSchema,
   maxRequestBytes,
+  PROGRESS_IMPORT_BYTES,
+  PROGRESS_WRITE_BYTES,
   ReadinessResponseSchema,
   redactSecrets,
   type HealthResponse,
@@ -21,6 +23,10 @@ import type { Logger } from './logger.js';
 import { requestIds } from './request-id.js';
 import { labsRouter } from './routes/labs.js';
 import { runsRouter } from './routes/runs.js';
+import { progressRouter } from './routes/progress.js';
+import { ProgressRepository } from './progress-store.js';
+import { SqliteRunJournal } from './run-journal.js';
+import { RunRateLimiter } from './run-rate-limit.js';
 
 export const SERVICE_NAME = 'mastra-learning-platform-api';
 export const SERVICE_VERSION = '0.1.0';
@@ -35,6 +41,8 @@ export interface AppDeps {
   startedAt?: number;
   registry?: LabRegistry<LabServices>;
   runner?: LabRunner<LabServices>;
+  /** Monotonic admission clock; tests advance it without changing execution deadlines. */
+  rateLimitNow?: () => number;
 }
 
 export interface ApiApp {
@@ -51,10 +59,16 @@ export interface ApiApp {
 
 export function createApp({ config, logger, startedAt = Date.now(), ...deps }: AppDeps): ApiApp {
   // Validate the auth boundary before allocating runtime services.
-  const auth = createAuth(config, logger);
+  const auth = createAuth(config, logger, deps.dataDir ?? config.MLP_DATA_DIR ?? dataDir());
   const secrets = secretValues(config);
   const registry = deps.registry ?? createLabRegistry();
   const baseServices = createLabServices({ serverMode: config.MASTRA_MODE, env: process.env, memoryDir: deps.memoryDir });
+  if (deps.runner && config.RUN_STORE === 'sqlite')
+    throw new LabError('NOT_CONFIGURED', 'Persistent execution storage requires the API-owned runner.');
+  const persistence =
+    config.RUN_STORE === 'sqlite'
+      ? new SqliteRunJournal(deps.dataDir ?? config.MLP_DATA_DIR ?? dataDir(), { secret: config.RUN_STORE_SECRET! })
+      : undefined;
   const runner =
     deps.runner ??
     new LabRunner<LabServices>({
@@ -70,6 +84,7 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
       maxPendingApprovals: config.MAX_PENDING_APPROVALS,
       secrets,
       logger,
+      persistence,
     });
   const mastraVersion = getMastraVersion();
   const pinned = { '@mastra/core': mastraVersion, zod: '4.6.7', node: process.version };
@@ -107,8 +122,12 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
   // Request bodies are capped at 64 KB, except a lab's run request, which may also carry the files its
   // definition declares (file fields): the limit is derived from those declared limits, per lab.
   const defaultJson = express.json({ limit: DEFAULT_REQUEST_BYTES });
+  const progressImportJson = express.json({ limit: PROGRESS_IMPORT_BYTES });
+  const progressWriteJson = express.json({ limit: PROGRESS_WRITE_BYTES });
   const labJson = new Map<number, ReturnType<typeof express.json>>();
   app.use((req, res, next) => {
+    if (req.method === 'POST' && req.path.startsWith('/api/progress/'))
+      return (req.path === '/api/progress/import' ? progressImportJson : progressWriteJson)(req, res, next);
     const m = req.method === 'POST' ? /^\/api\/labs\/([a-z0-9-]{1,40})\/runs$/.exec(req.path) : null;
     const lab = m ? registry.get(m[1]!) : undefined;
     const limit = lab ? maxRequestBytes(lab.definition) : DEFAULT_REQUEST_BYTES;
@@ -125,6 +144,13 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
     app.use(base, router);
   };
   mount('/api/auth', auth.router);
+  mount(
+    '/api/progress',
+    progressRouter(
+      new ProgressRepository((subject) => baseServices.forTenant(subject).memory.file('platform-progress')),
+      registry,
+    ),
+  );
 
   app.get('/api/health', (_req, res) => {
     const body: HealthResponse = {
@@ -149,8 +175,16 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
     res.json(catalog);
   });
 
-  mount('/api/labs', labsRouter({ config, registry, runner, pinned }));
-  mount('/api/runs', runsRouter({ runner, heartbeatMs: config.SSE_HEARTBEAT_MS }));
+  const limits = new RunRateLimiter(
+    {
+      windowMs: config.RUN_RATE_WINDOW_MS,
+      start: { user: config.RUN_START_RATE_USER_MAX, ip: config.RUN_START_RATE_IP_MAX },
+      control: { user: config.RUN_CONTROL_RATE_USER_MAX, ip: config.RUN_CONTROL_RATE_IP_MAX },
+    },
+    deps.rateLimitNow,
+  );
+  mount('/api/labs', labsRouter({ config, registry, runner, pinned, limits }));
+  mount('/api/runs', runsRouter({ runner, heartbeatMs: config.SSE_HEARTBEAT_MS, limits }));
 
   app.use('/api', (req, _res, next) => {
     next(new LabError('NOT_FOUND', `No API route for ${req.method} ${req.originalUrl}`));

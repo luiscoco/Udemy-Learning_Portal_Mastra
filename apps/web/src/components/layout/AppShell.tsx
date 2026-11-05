@@ -6,6 +6,7 @@ import { MobileDrawer } from './MobileDrawer';
 import { SearchBox } from './SearchBox';
 import { Sidebar } from './Sidebar';
 import { SessionStatus } from './SessionStatus';
+import { ProgressSyncNotice } from '../ProgressSyncNotice';
 
 function ThemeToggle() {
   const [theme, toggle] = useTheme();
@@ -90,6 +91,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
           <Sidebar />
         </aside>
         <main id="main" tabIndex={-1} className="min-w-0 flex-1 py-8 lg:py-10">
+          <ProgressSyncNotice />
           {children ?? <Outlet />}
         </main>
       </div>

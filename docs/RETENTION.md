@@ -15,7 +15,7 @@ In the L71 model, a single SQLite file holds all four kinds of data, so one snap
 | Run records | `app_runs` |
 | Agent threads and messages | Mastra memory: `mastra_threads`, `mastra_messages` |
 
-> **Today's platform:** progress is kept in the browser (localStorage). Threads and documents are kept per lab, as L21 memory files and the L36 library. Runs are kept in memory and are lost on restart. L71 is the target model. Moving the platform's own stores onto it is a deployment step (L72–L73), and it must use the same migration rules.
+> **Today's platform:** account progress is durable in each tenant's `platform-progress.db` (`app_progress_records` and its own checksummed `app_progress_migrations` history); browser caches keep queued edits and legacy backups. See [PROGRESS.md](PROGRESS.md). Threads and documents remain per lab, as L21 memory files and the L36 library. HTTP runs default to memory; optional durable recorded-state recovery is described in [RUN-RECOVERY.md](RUN-RECOVERY.md). L71 demonstrates a unified database and backup model; its helpers do not automatically back up all platform stores. Include every tenant progress database in operational backups.
 
 ## Retention
 
@@ -70,3 +70,11 @@ The migrator refuses to run (with `CONFLICT`) in three cases:
 5. Check that the row counts match the manifest.
 
 **Practise it:** run the restore drill (Lab 71) regularly. It restores into a separate file and compares that file with the manifest, without touching live data. A backup that has never been restored is not a backup.
+
+## Authentication sessions
+
+With `AUTH_SESSION_STORE=sqlite`, API sessions live separately at `<MLP_DATA_DIR>/auth/sessions.db`, with their own checksummed migration history. They use absolute expiry and a 10,000-record cap; logout and rotation delete the old record durably. This database is not included automatically in Lab 71 backup helpers. Protect it as authentication data, and restore with a newly rotated signing secret to prevent revoked cookies from becoming valid after a rollback. See [SESSIONS.md](SESSIONS.md).
+
+## HTTP execution journal
+
+Optional durable execution records live in `runs/executions.db`. Retain at most 100 runs globally, 20 per owner and terminal records for 24 hours. Back up with the API stopped, including any SQLite WAL files, and retain the separate journal key securely. Lab 71 helpers do not automatically include this database. Consistent old database/key restoration can roll history back; external monotonic anchoring remains a production requirement. See [RUN-RECOVERY.md](RUN-RECOVERY.md).

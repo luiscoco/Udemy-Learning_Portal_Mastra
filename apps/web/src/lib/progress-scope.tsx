@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { useSession } from './auth-context';
 import { useProgressStore } from './progress-context';
 import { storageScopeOf } from './storage-scope';
@@ -8,7 +8,11 @@ export function ProgressScopeSync() {
   const store = useProgressStore();
   const { session } = useSession();
   const scope = storageScopeOf(session?.authenticated ? session.principal : null);
-  useEffect(() => store.setScope?.(scope), [store, scope]);
+  const subject = session?.authenticated ? session.principal!.sub : null;
+  useLayoutEffect(() => {
+    if (store.setIdentity) store.setIdentity(subject);
+    else store.setScope?.(scope);
+  }, [store, scope, subject]);
   return null;
 }
 

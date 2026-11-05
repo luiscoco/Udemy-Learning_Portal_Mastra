@@ -1,6 +1,6 @@
 # Mastra Learning Platform
 
-Interactive learning platform for the **Mastra AI Agents 2026** Udemy course: a React web app, an Express API that runs Mastra server-side, and 75 hands-on labs (delivered incrementally, see the catalog).
+Interactive learning platform for the **Mastra AI Agents 2026** Udemy course: a React web app, an Express API that runs Mastra server-side, and 75 implemented hands-on labs plus the Lab 00 orientation.
 
 | Workspace | What it is |
 | --- | --- |
@@ -113,13 +113,13 @@ Durable memory (from L21): conversation history is stored with `@mastra/libsql` 
 
 File uploads (from L36): labs can declare `file` input fields. The browser reads the files and sends them with the run request. The server measures size, sniffs the content and rejects files with a specific code, and raw bytes never appear in events. Only labs with file fields accept bodies above 64 KB, up to the limit computed from their declared fields.
 
-Authentication: starting a run requires a valid session. Snapshots, event streams, cancellation and approvals require the authenticated owner; mutations also need the secret `runToken` returned at start in `X-Run-Token`. Anonymous requests return 401; another learner's run returns 404. The local development provider refuses production and public-interface startup. Each learner's stored data (threads, documents, saved files, datasets) lives in their own partition under `.data/memory/tenants/`; data from before L62 is migrated only explicitly with `node scripts/migrate-tenant-data.mjs --owner dev:learner [--move] [--dry-run]`. See [docs/AUTH.md](docs/AUTH.md) for the HTTP migration, tenant isolation and remaining production requirements.
+Authentication: starting a run requires a valid session. Snapshots, event streams, cancellation and approvals require the authenticated owner; mutations also need the secret `runToken` returned at start in `X-Run-Token`. Anonymous requests return 401; another learner's run returns 404. The local development provider refuses production and public-interface startup. Each learner's stored data (threads, documents, saved files, datasets) lives in their own partition under `.data/memory/tenants/`; data from before L62 is migrated only explicitly with `node scripts/migrate-tenant-data.mjs --owner dev:learner [--move] [--dry-run]`. See [docs/AUTH.md](docs/AUTH.md) for the HTTP migration, tenant isolation and remaining production requirements. Enable durable API sessions with `AUTH_SESSION_STORE=sqlite`, a stable signing secret and a persistent volume; see [docs/SESSIONS.md](docs/SESSIONS.md).
 
 ## Learner experience
 
-- `/` — Home, course progress, course map (15 modules, locked previews for unreleased labs).
+- `/` — Home, course progress, course map (15 course modules, all 75 course labs released, plus orientation).
 - `/labs/lab-XX` (or legacy `/?lesson=lab-XX`) — lesson workspace with **Learn / Run / Source** tabs (`?tab=run`, `?tab=source`), quiz, self-check, notes and an instructor script with JSON export.
-- Progress is stored in the browser (`localStorage`, key `mlp.progress.v1`) through the `ProgressStore` adapter in `apps/web/src/lib/progress-store.ts`. A lab is completed when the lesson is marked read, a run succeeds with all checks passing and the quiz is passed (≥ 70%).
+- Signed-in progress is stored on the server and restores across browsers. The `ProgressStore` adapter queues offline edits, migrates legacy browser records and offers explicit conflict choices; guest progress stays local. See [progress and recovery](docs/PROGRESS.md). A lab is completed when the lesson is marked read, a run succeeds with all checks passing and the quiz is passed (≥ 70%).
 - Keyboard: `/` focuses search, arrow keys move through the sidebar and tabs, `Esc` closes the mobile menu.
 
 ## Adding a lab
@@ -147,3 +147,7 @@ npx openspec validate <change> --strict
 - **Playwright browser missing**: `npx playwright install chromium`.
 
 See [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) for pinned versions and known issues.
+
+HTTP execution recovery: standard Run tabs reattach after reload. Configure `RUN_STORE=sqlite` and a separate stable `RUN_STORE_SECRET` to preserve recorded output across API restarts; interrupted code is never replayed automatically. See [docs/RUN-RECOVERY.md](docs/RUN-RECOVERY.md).
+
+Run request admission is limited per verified learner and client network, with separate start and approval/recovery allowances. Cancellation stays available while throttled. See [docs/RATE-LIMITS.md](docs/RATE-LIMITS.md).

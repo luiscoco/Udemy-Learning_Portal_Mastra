@@ -36,6 +36,8 @@ export interface RunError {
 }
 
 export interface RunState {
+  /** Historical terminal replay must not reapply progress after an intentional reset. */
+  historical?: boolean;
   phase: 'idle' | 'starting' | 'streaming' | 'finished';
   runId?: string;
   correlationId?: string;
@@ -59,6 +61,7 @@ export interface RunState {
 export type RunAction =
   | { type: 'start' }
   | { type: 'started'; runId: string; correlationId: string }
+  | { type: 'restoring'; runId: string; correlationId: string; historical?: boolean }
   | { type: 'event'; event: ExecutionEvent }
   | { type: 'client-error'; error: RunError }
   | { type: 'reset' };
@@ -73,7 +76,8 @@ export const initialRunState: RunState = {
   approvals: [],
 };
 
-export const pendingApprovals = (state: RunState) => state.approvals.filter((a) => a.status === 'pending');
+export const pendingApprovals = (state: RunState) =>
+  state.phase === 'streaming' ? state.approvals.filter((a) => a.status === 'pending') : [];
 
 export function runReducer(state: RunState, action: RunAction): RunState {
   switch (action.type) {
@@ -83,6 +87,14 @@ export function runReducer(state: RunState, action: RunAction): RunState {
       return { ...initialRunState, phase: 'starting' };
     case 'started':
       return { ...state, phase: 'streaming', runId: action.runId, correlationId: action.correlationId };
+    case 'restoring':
+      return {
+        ...state,
+        phase: 'starting',
+        runId: action.runId,
+        correlationId: action.correlationId,
+        historical: action.historical,
+      };
     case 'client-error':
       return { ...state, phase: 'finished', error: action.error, terminal: state.terminal ?? 'failed' };
     case 'event': {

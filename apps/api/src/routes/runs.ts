@@ -1,15 +1,32 @@
 import { Router } from 'express';
-import { ApprovalDecisionRequestSchema, type ApprovalDecisionResponse, type ExecutionEvent } from '@mlp/contracts';
+import {
+  ApprovalDecisionRequestSchema,
+  RecentRunsQuerySchema,
+  RUN_SUBJECT_HEADER,
+  type ApprovalDecisionResponse,
+  type ExecutionEvent,
+} from '@mlp/contracts';
 import { LabError, type LabRunner } from '@mlp/lab-engine';
 import type { LabServices } from '@mlp/labs';
 import { requireAuth } from '../auth.js';
+import type { RunRateLimiter } from '../run-rate-limit.js';
 
 function parseAfter(raw: unknown): number {
   const n = typeof raw === 'string' ? Number.parseInt(raw, 10) : NaN;
   return Number.isFinite(n) && n >= -1 ? n : -1;
 }
 
-export function runsRouter(deps: { runner: LabRunner<LabServices>; heartbeatMs: number }): Router {
+function requireExpectedOwner(expected: string | undefined, actual: string): void {
+  let decoded: string | undefined;
+  try {
+    decoded = decodeURIComponent(expected ?? '');
+  } catch {
+    /* mismatched account */
+  }
+  if (decoded !== actual) throw new LabError('NOT_FOUND', 'Execution account does not match this session.');
+}
+
+export function runsRouter(deps: { runner: LabRunner<LabServices>; heartbeatMs: number; limits: RunRateLimiter }): Router {
   const { runner, heartbeatMs } = deps;
   const router = Router();
   // Every run route needs the owning learner. Someone else's run is reported as unknown (404), so run
@@ -25,6 +42,25 @@ export function runsRouter(deps: { runner: LabRunner<LabServices>; heartbeatMs: 
     next();
   });
 
+  router.get('/', (req, res) => {
+    requireExpectedOwner(req.header(RUN_SUBJECT_HEADER), req.principal!.sub);
+    const { labId } = RecentRunsQuerySchema.parse(req.query);
+    res.json({ runs: runner.recent(req.principal!.sub, labId) });
+  });
+
+  router.post(
+    '/:runId/recover',
+    (req, _res, next) => {
+      requireExpectedOwner(req.header(RUN_SUBJECT_HEADER), req.principal!.sub);
+      next();
+    },
+    deps.limits.middleware('control'),
+    (req, res) => {
+      const runToken = runner.recoverToken(String(req.params.runId));
+      res.json({ snapshot: runner.get(String(req.params.runId))!, runToken });
+    },
+  );
+
   router.get('/:runId', (req, res) => {
     const snap = runner.get(req.params.runId);
     if (!snap) throw new LabError('NOT_FOUND', `Unknown run "${req.params.runId}"`);
@@ -38,8 +74,9 @@ export function runsRouter(deps: { runner: LabRunner<LabServices>; heartbeatMs: 
   });
 
   /** Human decision for a pending approval (see ctx.requestApproval). 404 unknown run, 409 not pending. */
-  router.post('/:runId/approvals/:approvalId', (req, res) => {
-    const { runId, approvalId } = req.params;
+  router.post('/:runId/approvals/:approvalId', deps.limits.middleware('control'), (req, res) => {
+    const runId = String(req.params.runId),
+      approvalId = String(req.params.approvalId);
     const body = ApprovalDecisionRequestSchema.parse(req.body ?? {});
     runner.authorize(runId, req.header('x-run-token'));
     runner.resolveApproval(runId, approvalId, body.decision, body.reason);

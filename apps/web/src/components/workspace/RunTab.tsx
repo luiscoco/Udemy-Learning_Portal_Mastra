@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import type { LabDefinition, RuntimeMode } from '@mlp/contracts';
 import { fetchPreflight } from '../../api/runs';
@@ -74,8 +74,13 @@ const STATUS_TEXT = {
 
 export function RunTab({ definition }: { definition: LabDefinition }) {
   const auth = useSession();
+  const invalidateSession = auth.invalidate;
   const location = useLocation();
-  const { state, run, cancel, decide, reset } = useLabRun(definition.id);
+  const standard = definition.presentation !== 'chat' && definition.presentation !== 'workspace';
+  const { state, run, cancel, decide, reset, recoverLatest, recoveryMessage } = useLabRun(
+    definition.id,
+    standard ? { subject: auth.status === 'ready' ? (auth.session?.principal?.sub ?? null) : null } : undefined,
+  );
   const waiting = pendingApprovals(state);
   const cited = state.phase === 'finished' ? citedAnswerOf(state.output) : null;
   const mcpCatalog = state.phase === 'finished' ? mcpCatalogOf(state.output) : null;
@@ -87,6 +92,16 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
   const comparison = state.phase === 'finished' ? comparisonOf(state.output) : null;
   const dashboard = state.phase === 'finished' ? dashboardOf(state.output) : null;
   const { update } = useProgressActions(definition.id);
+  const recordedSuccess = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!state.historical && state.terminal === 'succeeded' && state.runId && recordedSuccess.current !== state.runId) {
+      recordedSuccess.current = state.runId;
+      update((cur) => ({ runSucceeded: true, checksPassed: cur.checksPassed || state.validation?.passed === true }));
+    }
+  }, [state.historical, state.terminal, state.runId, state.validation, update]);
+  useEffect(() => {
+    if (state.error?.code === 'UNAUTHORIZED') invalidateSession();
+  }, [state.error?.code, invalidateSession]);
   const example = definition.exampleInput;
   const [raw, setRaw] = useState<RawValues>(() => reconcile(definition.inputs, initialRawValues(definition.inputs, example)));
   const [clientErrors, setClientErrors] = useState<FieldErrors>({});
@@ -106,20 +121,18 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
     if (Object.keys(errors).length > 0) return;
     const final = await run({ input: values, mode });
     if (final?.error?.code === 'UNAUTHORIZED') auth.invalidate();
-    if (final?.terminal === 'succeeded') {
-      const passed = final.validation?.passed === true;
-      update((cur) => ({ runSucceeded: true, checksPassed: cur.checksPassed || passed }));
-    }
   };
 
   const statusText =
-    state.phase === 'finished'
-      ? state.terminal === 'succeeded'
-        ? `Run succeeded${state.validation ? (state.validation.passed ? ' — all checks passed' : ' — some checks failed') : ''}`
-        : `Run ${state.terminal ?? 'failed'}`
-      : waiting.length > 0
-        ? 'Waiting for your approval…'
-        : STATUS_TEXT[state.phase];
+    state.phase === 'starting' && recoveryMessage
+      ? recoveryMessage
+      : state.phase === 'finished'
+        ? state.terminal === 'succeeded'
+          ? `Run succeeded${state.validation ? (state.validation.passed ? ' — all checks passed' : ' — some checks failed') : ''}`
+          : `Run ${state.terminal ?? 'failed'}`
+        : waiting.length > 0
+          ? 'Waiting for your approval…'
+          : STATUS_TEXT[state.phase];
 
   if (auth.status === 'loading') return <p role="status">Checking your session…</p>;
   if (auth.status === 'error')
@@ -233,6 +246,9 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
             <Button variant="danger" disabled={!busy || !state.runId} onClick={() => void cancel()}>
               Cancel
             </Button>
+            <Button variant="ghost" disabled={busy} onClick={() => void recoverLatest()}>
+              Recover latest run
+            </Button>
             <Button
               variant="ghost"
               disabled={busy}
@@ -257,6 +273,11 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
         </form>
       </Section>
 
+      {recoveryMessage ? (
+        <p role="status" className="text-sm text-fg-muted" data-testid="run-recovery-status">
+          {recoveryMessage}
+        </p>
+      ) : null}
       {state.error ? (
         <div role="alert" className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-danger">
           <p className="font-semibold">

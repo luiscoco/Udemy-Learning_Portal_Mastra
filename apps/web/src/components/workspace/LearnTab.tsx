@@ -8,7 +8,7 @@ import { Section } from './Section';
 export function LearnTab({ definition }: { definition: LabDefinition }) {
   const { record, update } = useProgressActions(definition.id);
   const [hintsShown, setHintsShown] = useState(0);
-  const [prediction, setPrediction] = useState(record.prediction);
+  const prediction = record.prediction;
   const g = definition.guide;
   const id = (s: string) => `${definition.id}-learn-${s}`;
 
@@ -62,11 +62,10 @@ export function LearnTab({ definition }: { definition: LabDefinition }) {
           rows={3}
           maxLength={2000}
           value={prediction}
-          onChange={(e) => setPrediction(e.target.value)}
-          onBlur={() => prediction !== record.prediction && update({ prediction })}
+          onChange={(e) => update({ prediction: e.target.value })}
           className="w-full max-w-3xl rounded-lg border border-border-strong bg-surface p-3 text-sm"
         />
-        <p className="text-xs text-fg-subtle">Saved when you leave the field. Compare it with the Run tab result.</p>
+        <p className="text-xs text-fg-subtle">Saved automatically. Compare it with the Run tab result.</p>
       </Section>
 
       <Section title="Hints" id={id('hints')}>
