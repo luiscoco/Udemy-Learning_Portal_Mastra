@@ -12,9 +12,9 @@ type Status =
 
 /** Fresh questions, temporary answers, and no connection to lesson completion or lab execution. */
 export function AiTutor({ definition }: { definition: LabDefinition }) {
-  const { session, invalidate } = useSession();
+  const { session, invalidate, status: sessionStatus, error: sessionError, refresh } = useSession();
   const location = useLocation();
-  const subject = session?.principal?.sub;
+  const subject = sessionStatus === 'ready' && session?.authenticated ? session.principal?.sub : undefined;
   const dialog = useRef<HTMLDialogElement>(null);
   const launcher = useRef<HTMLButtonElement>(null);
   const questionBox = useRef<HTMLTextAreaElement>(null);
@@ -168,7 +168,16 @@ export function AiTutor({ definition }: { definition: LabDefinition }) {
             Ask about this lesson, get a hint or work through an error. Each question starts fresh. Answers are temporary and do
             not complete lessons or change quiz results.
           </p>
-          {!subject ? (
+          {!subject && sessionStatus === 'loading' ? (
+            <p role="status">Starting your learner session...</p>
+          ) : !subject && sessionStatus === 'error' ? (
+            <div role="alert">
+              <p>Cannot start your learner session: {sessionError}</p>
+              <Button type="button" variant="secondary" onClick={() => void refresh()}>
+                Retry learner session
+              </Button>
+            </div>
+          ) : !subject ? (
             <p role="status">
               <Link
                 className="text-accent underline"

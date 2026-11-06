@@ -1,6 +1,6 @@
 # Authentication boundary (L61)
 
-Run `npm run dev`, open `http://127.0.0.1:5173`, choose **Sign in**, and use `learner`. The default local login has no passcode. The Run tab returns you to the selected lab after sign-in. Learn and Source remain public. To run the authentication lesson, open `/labs/lab-61?tab=run`; its HTTP demo is free and needs no provider key.
+Run `npm run dev`, open `http://127.0.0.1:5173`; the portal automatically enters the sole local `learner` profile when no passcode is set. Learn and Source remain public. To run the authentication lesson, open `/labs/lab-61?tab=run`; its HTTP demo is free and needs no provider key.
 
 ## Local configuration
 
@@ -8,7 +8,8 @@ All settings belong in the server's gitignored `.env`, never a browser variable.
 
 | Setting | Default | Purpose |
 | --- | --- | --- |
-| `AUTH_PROVIDER` | `dev` | Only shipped provider; any other value fails validation |
+| `AUTH_PROVIDER` | `dev` | Local development provider; `password` supports configured hashed users |
+| `AUTH_LOCAL_AUTO_LOGIN` | `true` | Automatically enter one local learner without a passcode; `false` requires manual sign-in |
 | `AUTH_DEV_USERS` | `learner` | Comma-separated local names, normalized to lowercase |
 | `AUTH_DEV_PASSWORD` | unset | Optional shared local passcode; no real account passwords |
 | `AUTH_SESSION_SECRET` | random per process | HMAC key, at least 32 characters when configured |
@@ -24,6 +25,7 @@ Names contain 1–64 letters, digits, dots, dashes or underscores. Restart after
 | Route | Authorization |
 | --- | --- |
 | `GET /api/auth/session` | Public session view, no credential value |
+| `POST /api/auth/local-session` | Eligible automatic local entry; normal protected session, no credentials accepted |
 | `POST /api/auth/login` | Allowlisted local credentials; generic 401 failures; rate-limited |
 | `POST /api/auth/logout` | Revokes any current session and clears the cookie; idempotent |
 | Health, catalog, lab definitions, source, preflight | Public |
@@ -74,3 +76,22 @@ For a six-minute demo: contrast identity and ownership; sign in as learner; run 
 ## Run request admission
 
 Verified sessions provide the learner key for run-start and approval/recovery limits; changing tabs or logging in again does not reset that account allowance. Owner checks precede run control admission. The client network comes from the configured Express proxy trust boundary, with IPv6 /64 grouping. Cancellation is exempt. See [RATE-LIMITS.md](RATE-LIMITS.md).
+
+
+## Automatic local learner entry
+
+The default local portal enters the sole configured learner automatically. No manual sign-in is needed for runs or AI Tutor. The header shows **Local learner**; progress and notes still belong to that normal server session. Offline Tutor is free; live Tutor requires configured provider credentials and retains its cost notice.
+
+Automatic entry requires the development identity provider, a loopback host, one allowed learner and no passcode. Set `AUTH_LOCAL_AUTO_LOGIN=false` in the repository-root `.env` and restart the API to require explicit sign-in. Passcode, multiple-profile and password-provider configurations always require explicit sign-in. Existing sessions are preserved. Session startup failures offer retry; recovery never submits or replays a Tutor question.
+
+
+### Implementation and validation
+
+The local entry boundary is in `apps/api/src/auth.ts`, configured by `packages/deploy/src/schema.ts`. The additive response metadata lives in `packages/contracts/src/auth.ts`; `packages/client/src/client.ts` exposes the typed local-session method. Browser bootstrap and recovery live in `apps/web/src/lib/auth-context.tsx`; the shared Tutor and session header display session readiness.
+
+`npm run verify` completed all stages: lint, strict workspace TypeScript, 1,773 passing tests with 84 optional skips, production builds and the bundle-secret scan. All 91 main specifications passed strict validation after synchronization. Session lifecycle tests cover expiry renewal, explicit logout and obsolete initialization. Evidence is in the ignored `.data/local-learner-verify.log`.
+
+The browser acceptance in `e2e/local-learner.spec.ts` uses a real bundled API with one configured learner and no browser session. It visits every lesson, checks offline and configured-live Tutor availability, and requests real offline guidance in the first and last lessons. Live readiness is a fixture; this change makes no paid provider calls.
+
+
+The full `npm run test:e2e` run passed 287 cases and skipped 158; the two new acceptance cases initially used the offline button label after switching to live mode. After correcting that test locator, `npm run test:e2e -- --last-failed` passed all 3 selected cases (setup plus desktop/mobile acceptance), exit 0. All 289 distinct browser cases therefore passed after correction. Each acceptance case visited all 76 lessons and confirmed automatic identity, offline/live button readiness, offline guidance and reload persistence. Evidence: `.data/local-learner-e2e-final.log`, `.data/local-learner-e2e-rerun.log` and `.data/local-learner-e2e-rerun.exit`. The corrected browser fixtures also passed ESLint. No new unsupported features or unresolved implementation errors were identified; protected configurations intentionally retain explicit sign-in.

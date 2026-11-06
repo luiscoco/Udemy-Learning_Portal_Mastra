@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { LoginRequest, SessionResponse } from '@mlp/contracts';
 import * as auth from '../api/auth';
 
@@ -19,38 +19,57 @@ const messageOf = (err: unknown) => (err instanceof Error ? err.message : 'Canno
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ status: 'loading', session: null, error: null });
   const accept = useCallback((session: SessionResponse) => setState({ status: 'ready', session, error: null }), []);
+  const pending = useRef<AbortController | null>(null);
   const refresh = useCallback(async () => {
+    pending.current?.abort();
+    const ctrl = new AbortController();
+    pending.current = ctrl;
+    setState((cur) => ({ ...cur, status: 'loading', error: null }));
     try {
-      accept(await auth.getSession());
+      let session = await auth.getSession(ctrl.signal);
+      if (!session.authenticated && session.login.autoLocal && !ctrl.signal.aborted)
+        session = await auth.localSession(ctrl.signal);
+      if (!ctrl.signal.aborted) accept(session);
     } catch (err) {
-      setState({ status: 'error', session: null, error: messageOf(err) });
+      if (!ctrl.signal.aborted) setState({ status: 'error', session: null, error: messageOf(err) });
     }
   }, [accept]);
   useEffect(() => {
-    const ctrl = new AbortController();
-    void auth
-      .getSession(ctrl.signal)
-      .then(accept)
-      .catch((err: unknown) => {
-        if (!ctrl.signal.aborted) setState({ status: 'error', session: null, error: messageOf(err) });
-      });
-    return () => ctrl.abort();
-  }, [accept]);
-  const invalidate = useCallback(
-    () =>
-      setState((cur) => ({
-        ...cur,
-        session: cur.session ? { ...cur.session, authenticated: false, principal: null, expiresAt: null } : null,
-      })),
-    [],
-  );
+    let active = true;
+    queueMicrotask(() => {
+      if (active) void refresh();
+    });
+    return () => {
+      active = false;
+      pending.current?.abort();
+    };
+  }, [refresh]);
+  const invalidate = useCallback(() => {
+    setState((cur) => ({
+      ...cur,
+      session: cur.session ? { ...cur.session, authenticated: false, principal: null, expiresAt: null } : null,
+    }));
+    if (state.session?.login.autoLocal) void refresh();
+  }, [state.session?.login.autoLocal, refresh]);
   useEffect(() => {
     if (!state.session?.authenticated || !state.session.expiresAt) return;
-    const timer = setTimeout(invalidate, Math.max(0, Date.parse(state.session.expiresAt) - Date.now()));
+    const timer = setTimeout(
+      state.session.login.autoLocal ? () => void refresh() : invalidate,
+      Math.max(0, Date.parse(state.session.expiresAt) - Date.now()),
+    );
     return () => clearTimeout(timer);
-  }, [state.session, invalidate]);
-  const signIn = useCallback(async (credentials: LoginRequest) => accept(await auth.login(credentials)), [accept]);
-  const signOut = useCallback(async () => accept(await auth.logout()), [accept]);
+  }, [state.session, invalidate, refresh]);
+  const signIn = useCallback(
+    async (credentials: LoginRequest) => {
+      pending.current?.abort();
+      accept(await auth.login(credentials));
+    },
+    [accept],
+  );
+  const signOut = useCallback(async () => {
+    pending.current?.abort();
+    accept(await auth.logout());
+  }, [accept]);
   return <AuthContext.Provider value={{ ...state, signIn, signOut, refresh, invalidate }}>{children}</AuthContext.Provider>;
 }
 

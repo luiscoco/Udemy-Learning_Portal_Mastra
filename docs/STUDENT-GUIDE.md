@@ -8,7 +8,7 @@ This course runs on your own computer. Start offline: no provider account, payme
 2. Download the course source ZIP and extract it to a writable local folder. Open a terminal in `mastra-learning-platform`, where `package.json` is located. Keep the supplied lockfile.
 3. Run `npm ci`. Internet is needed to install packages. The lessons themselves can then use deterministic offline models at no provider cost.
 4. Windows PowerShell: `Copy-Item .env.example .env`. macOS/Linux: `cp .env.example .env`. Keep `MASTRA_MODE=offline`, `HOST=127.0.0.1` and the default local sign-in.
-5. Run `npm run dev`. Wait for `[dev] API ready` and Vite's `Local` URL; the API loads the lab runtime before the web server starts. Open `http://127.0.0.1:5173`, choose Sign in and use `learner`. Keep the terminal running.
+5. Run `npm run dev`. Wait for `[dev] API ready` and Vite's `Local` URL; the API loads the lab runtime before the web server starts. Open `http://127.0.0.1:5173`, the portal enters the local `learner` automatically. Keep the terminal running.
 6. Open Lab 00, read Learn, select Run and run the example. Expect a succeeded result with all checks passed. Use Source to inspect the reference code. Continue through the modules in order.
 
 `COURSE-MAP.json` connects all 75 labs plus orientation to modules, stable Learn/Run/Source URLs and local reference folders. Quizzes, objectives, hints and instructor outlines are included inside the platform. Your Udemy lecture tells you which lab to open.
@@ -51,3 +51,10 @@ Before updating, stop the app with Ctrl+C and back up your `.env` and entire `.d
 - Report a problem with OS, Node version, lab ID, offline/live mode and the visible request ID. Include sanitized error text; exclude keys, cookies, passwords, `.env` and `.data`.
 
 Original project code is MIT licensed; retain LICENSE and third-party notices when reusing it. Course recordings and other separately supplied instructor media are outside this source bundle. Public/shared hosting has additional requirements in `docs/RELEASE-GATES.md` and is not part of the local student setup.
+
+
+## Automatic local learner entry
+
+The default local portal enters the sole configured learner automatically. No manual sign-in is needed for runs or AI Tutor. The header shows **Local learner**; progress and notes still belong to that normal server session. Offline Tutor is free; live Tutor requires configured provider credentials and retains its cost notice.
+
+Automatic entry requires the development identity provider, a loopback host, one allowed learner and no passcode. Set `AUTH_LOCAL_AUTO_LOGIN=false` in the repository-root `.env` and restart the API to require explicit sign-in. Passcode, multiple-profile and password-provider configurations always require explicit sign-in. Existing sessions are preserved. Session startup failures offer retry; recovery never submits or replays a Tutor question.

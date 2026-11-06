@@ -4,7 +4,7 @@ Open any available lesson (orientation plus all 75 labs) and select **AI Tutor**
 
 ## Student demo
 
-1. Run `npm run dev`, sign in, open `/labs/lab-01` and select **AI Tutor**.
+1. Run `npm run dev`, let the local learner session start automatically, open `/labs/lab-01` and select **AI Tutor**.
 2. Keep **Offline · free study guide**, select **Give me a hint**, then **Ask tutor**. Guidance streams from this lesson's teaching material without contacting a provider. Try **Debug my approach** for its common mistakes and fixes. Offline text is authored guidance, not generative AI.
 3. For custom questions, select **Live** and a configured model, read the cost notice and select **Ask live tutor**. The server must have `MASTRA_MODE=live`, the appropriate provider API key and an enabled `LIVE_MODELS` entry. Existing configured OpenAI, Anthropic and Google models are reused; keys stay in the server `.env`. Configuration presence does not verify model access, credit or billing. No separate tutor environment variables are needed.
 4. **Stop receiving** requests abort and retains incomplete partial text. Retry is explicit and can incur another charge. Close/Escape returns focus to the launcher. Navigation, reload or account changes clear temporary answers; reopening within the same lesson/visit retains the answer. **Clear answer** resets the result.
@@ -43,3 +43,10 @@ Opt-in paid acceptance passed with `npx cross-env RUN_TUTOR_LIVE_TESTS=1 vitest 
 The change passed strict validation before implementation. The new `lesson-tutor` spec was synced with its Purpose and all four requirements intact; `npx openspec validate --specs --strict --no-interactive` passed all **91 specs**. OpenSpec archive: `openspec/changes/archive/2026-11-06-lesson-ai-tutor/`.
 
 Standard tests are offline and make no paid calls; the separate opt-in acceptance above made two billable calls. Existing large bundle and Tailwind sourcemap build warnings remain. Changes are local and uncommitted.
+
+
+## Automatic local learner entry
+
+The default local portal enters the sole configured learner automatically. No manual sign-in is needed for runs or AI Tutor. The header shows **Local learner**; progress and notes still belong to that normal server session. Offline Tutor is free; live Tutor requires configured provider credentials and retains its cost notice.
+
+Automatic entry requires the development identity provider, a loopback host, one allowed learner and no passcode. Set `AUTH_LOCAL_AUTO_LOGIN=false` in the repository-root `.env` and restart the API to require explicit sign-in. Passcode, multiple-profile and password-provider configurations always require explicit sign-in. Existing sessions are preserved. Session startup failures offer retry; recovery never submits or replays a Tutor question.

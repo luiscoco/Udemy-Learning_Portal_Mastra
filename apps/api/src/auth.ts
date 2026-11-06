@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { join } from 'node:path';
 import { Router, type RequestHandler } from 'express';
 import {
@@ -87,6 +88,20 @@ export function createAuth(config: AppConfig, logger: Logger, storageRoot: strin
   void ready.catch(() => undefined);
   const limiter = new LoginRateLimiter({ max: config.AUTH_LOGIN_RATE_MAX, windowMs: 60_000 });
   const secure = config.NODE_ENV === 'production';
+  const localUsers = [
+    ...new Set(
+      config.AUTH_DEV_USERS.split(',')
+        .map((name) => name.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  ];
+  const autoLocal =
+    config.AUTH_LOCAL_AUTO_LOGIN &&
+    provider.id === 'dev' &&
+    !secure &&
+    ['127.0.0.1', '::1', 'localhost'].includes(config.HOST) &&
+    !provider.passwordRequired &&
+    localUsers.length === 1;
 
   const middleware: RequestHandler = async (req, res, next) => {
     if (req.path.startsWith('/api/auth') || req.header('cookie')) res.setHeader('Cache-Control', 'no-store');
@@ -105,7 +120,7 @@ export function createAuth(config: AppConfig, logger: Logger, storageRoot: strin
     authenticated: !!session,
     principal: session ? { ...session.principal } : null,
     provider: provider.id,
-    login: { kind: provider.id, passwordRequired: provider.passwordRequired },
+    login: { kind: provider.id, passwordRequired: provider.passwordRequired, autoLocal },
     expiresAt: session ? new Date(session.expiresAt).toISOString() : null,
   });
 
@@ -113,6 +128,26 @@ export function createAuth(config: AppConfig, logger: Logger, storageRoot: strin
   router.get('/session', (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.json(view(req.authSession));
+  });
+  router.post('/local-session', async (req, res) => {
+    if (!autoLocal) throw new LabError('FORBIDDEN', 'Automatic local entry is unavailable; sign in.');
+    if (
+      !z
+        .object({})
+        .strict()
+        .safeParse(req.body ?? {}).success
+    )
+      throw new LabError('BAD_REQUEST', 'Local entry does not accept credentials.');
+    if (req.authSession) {
+      res.json(view(req.authSession));
+      return;
+    }
+    if (!limiter.take(req.ip ?? 'unknown')) throw new LabError('TOO_MANY_REQUESTS', 'Too many sign-in attempts; wait a minute.');
+    const principal = await provider.authenticate({ username: localUsers[0]! });
+    if (!principal) throw new LabError('UNAUTHORIZED', 'Local learner is unavailable.');
+    const { cookieValue, session } = await sessions.create(principal);
+    res.setHeader('Set-Cookie', serializeCookie(cookieValue, { maxAgeSeconds: sessions.ttlMs / 1000, secure }));
+    res.json(view(session));
   });
   router.post('/login', async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');

@@ -74,7 +74,7 @@ describe('password login', () => {
   it('signs in a hashed user and reports the password login kind', async () => {
     const api = make({ AUTH_PROVIDER: 'password', AUTH_USERS: await hashUserEntry('ana', 'a long test password') });
     const view = SessionResponseSchema.parse((await request(api.app).get('/api/auth/session').expect(200)).body);
-    expect(view.login).toEqual({ kind: 'password', passwordRequired: true });
+    expect(view.login).toEqual({ kind: 'password', passwordRequired: true, autoLocal: false });
     await request(api.app).post('/api/auth/login').send({ username: 'ana', password: 'wrong password here' }).expect(401);
     const ok = await request(api.app)
       .post('/api/auth/login')

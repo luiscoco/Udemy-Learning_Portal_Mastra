@@ -19,7 +19,7 @@ export const SessionResponseSchema = z.object({
   authenticated: z.boolean(),
   principal: PrincipalSchema.nullable(),
   provider: z.string().max(40),
-  login: z.object({ kind: z.enum(['dev', 'password']), passwordRequired: z.boolean() }),
+  login: z.object({ kind: z.enum(['dev', 'password']), passwordRequired: z.boolean(), autoLocal: z.boolean().optional() }),
   expiresAt: z.string().max(40).nullable(),
 });
 export type SessionResponse = z.infer<typeof SessionResponseSchema>;

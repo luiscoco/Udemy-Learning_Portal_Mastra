@@ -38,7 +38,7 @@ Copy-Item .env.example .env
 npm run dev
 ```
 
-Wait for `[dev] API ready` and Vite's `Local` URL before opening http://127.0.0.1:5173. Cold startup loads all lab runtimes and can take several seconds. Choose **Sign in**, using `learner` (no passcode by default). The **Platform status** card shows `ok` when the API is reachable. See [authentication setup](docs/AUTH.md). Check the API directly:
+Wait for `[dev] API ready` and Vite's `Local` URL before opening http://127.0.0.1:5173. Cold startup loads all lab runtimes and can take several seconds. The default portal enters the local `learner` automatically. The **Platform status** card shows `ok` when the API is reachable. See [authentication setup](docs/AUTH.md). Check the API directly:
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8787/api/health
@@ -88,6 +88,7 @@ All bodies are JSON validated with the Zod schemas in `packages/contracts`. Erro
 | --- | --- |
 | `GET /api/health` | Liveness, mode, installed Mastra version |
 | `GET /api/auth/session` | Current session view (never the cookie value) |
+| `POST /api/auth/local-session` | Automatic local learner entry when eligible |
 | `POST /api/auth/login` · `POST /api/auth/logout` | Local development sign-in · server-side revocation |
 | `GET /api/catalog` | Modules and lab index |
 | `GET /api/labs` · `GET /api/labs/:labId` | Lab summaries · full `LabDefinition` |

@@ -37,6 +37,7 @@ test('shows real start/control limits and keeps cancellation available without r
       LOG_REQUESTS: 'false',
       MASTRA_MODE: 'offline',
       AUTH_PROVIDER: 'dev',
+      AUTH_LOCAL_AUTO_LOGIN: 'false',
       AUTH_DEV_USERS: 'limited-learner',
       AUTH_DEV_PASSWORD: '',
       AUTH_SESSION_STORE: 'memory',

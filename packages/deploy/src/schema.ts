@@ -92,6 +92,8 @@ export const ConfigSchema = z
     WEB_DIST_DIR: z.string().min(1).optional(),
     /** Identity provider: "dev" (local development only) or "password" (scrypt-hashed users, production-capable). */
     AUTH_PROVIDER: z.enum(['dev', 'password']).default('dev'),
+    /** Automatically enter one local learner when no passcode is configured. */
+    AUTH_LOCAL_AUTO_LOGIN: bool('true'),
     /** Comma-separated user names the development login accepts. */
     AUTH_DEV_USERS: z.string().trim().min(1).default('learner'),
     /** Optional shared passcode for the development login. */
@@ -191,6 +193,7 @@ export function describeConfig(config: AppConfig): Record<string, string | numbe
     CORS_ORIGIN: config.CORS_ORIGIN ?? '(same origin)',
     MLP_DATA_DIR: config.MLP_DATA_DIR ?? '(default .data)',
     AUTH_PROVIDER: config.AUTH_PROVIDER,
+    AUTH_LOCAL_AUTO_LOGIN: config.AUTH_LOCAL_AUTO_LOGIN,
     AUTH_DEV_USERS: config.AUTH_DEV_USERS,
     AUTH_DEV_PASSWORD: maskSecret(config.AUTH_DEV_PASSWORD),
     AUTH_USERS: userCount(config.AUTH_USERS),

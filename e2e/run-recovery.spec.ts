@@ -60,6 +60,7 @@ test('reattaches live controls, preserves progress reset and safely recovers an 
         LOG_LEVEL: 'silent',
         LOG_REQUESTS: 'false',
         AUTH_PROVIDER: 'dev',
+        AUTH_LOCAL_AUTO_LOGIN: 'false',
         AUTH_DEV_USERS: 'recovery-learner',
         AUTH_DEV_PASSWORD: '',
         AUTH_SESSION_STORE: 'sqlite',

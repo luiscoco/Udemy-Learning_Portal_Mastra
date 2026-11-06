@@ -59,6 +59,7 @@ test('durable cookie and account notes survive bundled API restarts; logout stay
         LOG_LEVEL: 'silent',
         LOG_REQUESTS: 'false',
         AUTH_PROVIDER: 'dev',
+        AUTH_LOCAL_AUTO_LOGIN: 'false',
         AUTH_DEV_USERS: 'persistent-learner',
         AUTH_DEV_PASSWORD: '',
         AUTH_SESSION_STORE: 'sqlite',

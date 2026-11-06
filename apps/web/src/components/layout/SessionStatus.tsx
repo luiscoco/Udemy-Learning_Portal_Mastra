@@ -10,7 +10,9 @@ export function SessionStatus() {
   const [error, setError] = useState<string | null>(null);
   return (
     <div className="flex shrink-0 items-center gap-2 text-xs">
-      {auth.session?.authenticated ? (
+      {auth.session?.authenticated && auth.session.login.autoLocal ? (
+        <span>Local learner: {auth.session.principal?.name}</span>
+      ) : auth.session?.authenticated ? (
         <>
           <span className="sr-only sm:not-sr-only">Signed in as {auth.session.principal?.name}</span>
           <Button

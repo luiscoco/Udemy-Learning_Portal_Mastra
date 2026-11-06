@@ -170,3 +170,44 @@ describe('authentication boundary', () => {
     await api.runner.waitFor(run.body.runId as string);
   });
 });
+
+describe('automatic local learner entry', () => {
+  it('keeps session discovery read-only and creates a normal idempotent protected session', async () => {
+    const api = make({ AUTH_DEV_USERS: ' Learner,learner, ', AUTH_DEV_PASSWORD: '' });
+    const view = await request(api.app).get('/api/auth/session').expect(200);
+    expect(view.body).toMatchObject({ authenticated: false, login: { autoLocal: true } });
+    expect(view.headers['set-cookie']).toBeUndefined();
+    await request(api.app).post('/api/labs/lab-00/runs').send({ input: {} }).expect(401);
+    const first = await request(api.app).post('/api/auth/local-session').send({}).expect(200);
+    expect(first.body.principal.sub).toBe('dev:learner');
+    expect(String(first.headers['set-cookie'])).toContain('HttpOnly');
+    const cookie = cookieOf(first);
+    const second = await request(api.app).post('/api/auth/local-session').set('Cookie', cookie).send({}).expect(200);
+    expect(second.body).toEqual(first.body);
+    expect(second.headers['set-cookie']).toBeUndefined();
+    await request(api.app)
+      .get('/api/auth/session')
+      .set('Cookie', cookie)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.authenticated).toBe(true);
+      });
+  });
+  it.each([
+    { AUTH_DEV_USERS: 'alice,bob', AUTH_DEV_PASSWORD: '', AUTH_LOCAL_AUTO_LOGIN: 'true' },
+    { AUTH_DEV_USERS: 'learner', AUTH_DEV_PASSWORD: PASSWORD, AUTH_LOCAL_AUTO_LOGIN: 'true' },
+    { AUTH_DEV_USERS: 'learner', AUTH_DEV_PASSWORD: '', AUTH_LOCAL_AUTO_LOGIN: 'false' },
+  ])('refuses automatic entry when protected or opted out: %j', async (config) => {
+    const api = make(config);
+    const view = await request(api.app).get('/api/auth/session').expect(200);
+    expect(view.body.login.autoLocal).toBe(false);
+    await request(api.app).post('/api/auth/local-session').send({}).expect(403);
+  });
+  it('rejects cross-origin entry and arbitrary identities and limits session creation', async () => {
+    const api = make({ AUTH_DEV_USERS: 'learner', AUTH_DEV_PASSWORD: '', AUTH_LOGIN_RATE_MAX: '1' });
+    await request(api.app).post('/api/auth/local-session').set('Origin', 'https://evil.example').send({}).expect(403);
+    await request(api.app).post('/api/auth/local-session').send({ username: 'admin' }).expect(400);
+    await request(api.app).post('/api/auth/local-session').send({}).expect(200);
+    await request(api.app).post('/api/auth/local-session').send({}).expect(429);
+  });
+});

@@ -8,7 +8,11 @@ import { api, ApiClientError } from '../../api/client';
 import { AiTutor } from './AiTutor';
 
 vi.mock('../../lib/auth-context', () => ({
-  useSession: () => ({ session: { principal: { sub: 'dev:learner' } }, invalidate: vi.fn() }),
+  useSession: () => ({
+    status: 'ready',
+    session: { authenticated: true, principal: { sub: 'dev:learner' } },
+    invalidate: vi.fn(),
+  }),
 }));
 let deliver: (event: TutorEvent) => void;
 let signal: AbortSignal | undefined;
@@ -55,7 +59,9 @@ describe('AI Tutor panel', () => {
     expect(screen.getByRole('dialog', { name: 'AI Tutor' })).toHaveTextContent(lab01Definition.title);
     expect(screen.getByLabelText('Tutor mode')).toHaveValue('offline');
     await user.click(screen.getByRole('button', { name: 'Explain the concept' }));
-    expect(screen.getByLabelText('Your question')).toHaveValue(`Explain ${lab01Definition.title} in simple terms with a small TypeScript example.`);
+    expect(screen.getByLabelText('Your question')).toHaveValue(
+      `Explain ${lab01Definition.title} in simple terms with a small TypeScript example.`,
+    );
     await user.clear(screen.getByLabelText('Your question'));
     await user.click(screen.getByRole('button', { name: 'Ask tutor' }));
     expect(screen.getByRole('alert')).toHaveTextContent('between 1 and 2,000');

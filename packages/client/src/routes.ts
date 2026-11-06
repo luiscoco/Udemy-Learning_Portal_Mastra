@@ -8,6 +8,7 @@ export const CLIENT_ROUTES = {
   'GET /api/health': 'health',
   'GET /api/ready': 'ready',
   'GET /api/catalog': 'catalog',
+  'POST /api/auth/local-session': 'auth.localSession',
   'GET /api/auth/session': 'auth.session',
   'POST /api/auth/login': 'auth.login',
   'POST /api/auth/logout': 'auth.logout',

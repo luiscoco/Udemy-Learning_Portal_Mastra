@@ -247,6 +247,8 @@ export function createApiClient(options: ApiClientOptions = {}) {
     ready: (signal?: AbortSignal) => request('GET', '/api/ready', ReadinessResponseSchema, { signal, acceptStatuses: [503] }),
     catalog: (signal?: AbortSignal) => request('GET', '/api/catalog', CatalogSchema, { signal }),
     auth: {
+      localSession: (signal?: AbortSignal) =>
+        request('POST', '/api/auth/local-session', SessionResponseSchema, { body: {}, signal }),
       session: (signal?: AbortSignal) => request('GET', '/api/auth/session', SessionResponseSchema, { signal }),
       login: (body: LoginRequest) => request('POST', '/api/auth/login', SessionResponseSchema, { body }),
       logout: () => request('POST', '/api/auth/logout', SessionResponseSchema, { body: {} }),
