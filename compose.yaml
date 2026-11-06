@@ -1,4 +1,4 @@
-# Local production-like run (L72). First: node scripts/make-secrets.mjs (writes ./secrets, gitignored).
+# Local production-like run. First: npm run make-secrets (writes ./secrets, gitignored).
 #   docker compose up --build      then open http://127.0.0.1:8787
 # Secrets are mounted as files and read through <KEY>_FILE; they are never baked into the image.
 services:
@@ -13,12 +13,17 @@ services:
       LOG_LEVEL: info
       AUTH_USERS_FILE: /run/secrets/auth_users
       AUTH_SESSION_SECRET_FILE: /run/secrets/auth_session_secret
+      AUTH_SESSION_STORE: sqlite
+      RUN_STORE: sqlite
+      RUN_STORE_SECRET_FILE: /run/secrets/run_store_secret
+      HTTP_REQUIRE_HTTPS: 'false'
       AUDIT_HMAC_KEY_FILE: /run/secrets/audit_hmac_key
       # Live mode: set MASTRA_MODE=live and uncomment a provider key secret below.
       # OPENAI_API_KEY_FILE: /run/secrets/openai_api_key
     secrets:
       - auth_users
       - auth_session_secret
+      - run_store_secret
       - audit_hmac_key
       # - openai_api_key
     volumes:
@@ -30,6 +35,8 @@ secrets:
     file: ./secrets/auth_users
   auth_session_secret:
     file: ./secrets/auth_session_secret
+  run_store_secret:
+    file: ./secrets/run_store_secret
   audit_hmac_key:
     file: ./secrets/audit_hmac_key
   # openai_api_key:

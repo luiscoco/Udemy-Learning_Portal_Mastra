@@ -16,7 +16,7 @@ const charge = (inv: Invoice) =>
     },
   });
 
-const billing = createWorkflow({ id: 'billing-run', inputSchema: Batch, outputSchema: Result, stateSchema: State, retryConfig: { attempts: 3, delay: 100 } })
+const billing = createWorkflow({ id: 'billing-run', options: { autoRestartActiveRuns: false }, inputSchema: Batch, outputSchema: Result, stateSchema: State, retryConfig: { attempts: 3, delay: 100 } })
   .then(openBatch)
   .then(charge(inv1)).then(charge(inv2)).then(charge(inv3))
   .then(closeBatch)
@@ -37,3 +37,5 @@ for (const r of runs) {
 `restart()` skips completed steps and re-runs the interrupted one from its start. The idempotency key makes the provider replay a charge that already happened, so every invoice is charged once.
 
 **Challenge:** keep a `leases` table `(runId, owner, expiresAt)`. Acquire a lease with one atomic `INSERT … ON CONFLICT DO UPDATE … WHERE expiresAt < now`, and renew it from a timer while the run executes. A worker only restarts runs whose lease has expired, so a slow but alive worker keeps its run.
+
+On core 1.79+, this lab assigns recovery to its explicit selected-run operator with `options.autoRestartActiveRuns: false`. The framework generic boot-time sweep must not independently re-drive this simulated billing workflow. Workflows eligible for generic recovery keep the framework ownership lease; do not disable that protection for a shared automatically recovered worker. This lesson still verifies a real process crash and native restart, and demonstrates the duplicate charge when no idempotency key is used.

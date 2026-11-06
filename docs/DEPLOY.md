@@ -14,7 +14,7 @@ browser ──HTTPS──▶ Container Apps ingress (managed TLS, HTTP→HTTPS) 
 - **One origin for the frontend and the backend.** The API serves the built web app, so the session cookie stays `Secure; HttpOnly; SameSite=Strict` and CORS isn't needed.
 - **TLS** is terminated by the Container Apps ingress, which gets a managed certificate for `*.azurecontainerapps.io`. The app trusts one proxy hop (`TRUST_PROXY=1`), so it sees `https`.
 - **SSE** passes through the ingress unbuffered. The API sends a heartbeat every 15 s, well inside the ingress idle timeout.
-- **Single replica** (`maxReplicas: 1`). Sessions are held in memory, and SQLite on a network share must have only one writer.
+- **Single replica** (`maxReplicas: 1`). The current preset enables durable sessions and HTTP run records. SQLite and the journal require one active runner; the local journal is not a distributed worker service.
 
 ## Prerequisites
 
@@ -37,7 +37,7 @@ Every step is idempotent: running the script again deploys the current commit as
 | 3 | User-assigned identity `mlp-staging-id` with **AcrPull** on the registry (the app pulls without passwords) |
 | 4 | Storage account `mlpstg<hash>` with the file share `mlpdata` (5 GiB), registered on the environment |
 | 5 | Container Apps environment `mlp-staging-env` (logs go to Log Analytics) |
-| 6 | Secrets, generated once into `secrets/staging/` (gitignored): session secret, audit key, the `learner` password (stored only as a scrypt hash in the app) |
+| 6 | Secrets, generated once into `secrets/staging/` (gitignored): session secret, separate run-store secret, audit key, the `learner` password (stored only as a scrypt hash in the app) |
 | 7 | Container App `mlp-staging` from YAML (see below) |
 | 8 | The script waits for `https://<fqdn>/api/ready`, records the release in `secrets/staging/releases.json` and writes the URL to `secrets/staging/url` |
 
@@ -49,7 +49,7 @@ The Container App YAML (`secrets/staging/app.yaml`, which contains the secret va
   - readiness on `/api/ready`: no traffic reaches a revision until it is ready.
 - **Environment:**
   - `NODE_ENV=production`, `MLP_DATA_DIR=/data`, `TRUST_PROXY=1`, `MASTRA_MODE=offline`;
-  - secrets through `secretRef`: `AUTH_SESSION_SECRET`, `AUDIT_HMAC_KEY` and `AUTH_USERS`.
+  - secrets through `secretRef`: `AUTH_SESSION_SECRET`, `RUN_STORE_SECRET`, `AUDIT_HMAC_KEY` and `AUTH_USERS`. Durable stores and HTTPS enforcement are enabled in the current preset; internal health probes are exempt from the HTTP transport refusal.
 - **Volume:** `/data` on Azure Files, mounted with `nobrl` (SQLite byte-range locks stay local to the single replica), `uid/gid 1000` (the image's `node` user) and `cache=none`.
 - **Scale:** min 0, max 1. Idle staging costs almost nothing, and the first request after idle waits for a cold start.
 
@@ -118,3 +118,5 @@ az containerapp ingress traffic set -g mlp-staging-rg -n mlp-staging --revision-
 - **One replica.** Horizontal scaling needs a shared session store and a database that supports several writers (for example a hosted libSQL/Turso or Postgres store). SQLite files on SMB are fine for one writer only.
 - **Cold starts.** With min replicas 0, the first request after idle takes some seconds. Set `minReplicas: 1` for demos, which costs money continuously.
 - **No custom domain yet.** Add one with a managed certificate: `az containerapp hostname add` / `bind`.
+
+The preset changes above have local configuration/process tests. They have not been redeployed to Azure as part of the local Udemy release; the earlier staging evidence remains historical.

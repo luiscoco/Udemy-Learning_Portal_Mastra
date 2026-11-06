@@ -17,13 +17,20 @@ const write = (name: string, value: string) => {
     process.stdout.write(`kept     secrets/${name}\n`);
     return false;
   }
-  writeFileSync(file, `${value}\n`, { mode: 0o644 });
+  try {
+    writeFileSync(file, `${value}\n`, { mode: 0o600, flag: 'wx' });
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err;
+    process.stdout.write(`kept     secrets/${name}\n`);
+    return false;
+  }
   process.stdout.write(`created  secrets/${name}\n`);
   return true;
 };
 
 write('auth_session_secret', randomBytes(32).toString('base64url'));
 write('audit_hmac_key', randomBytes(32).toString('base64url'));
+write('run_store_secret', randomBytes(32).toString('base64url'));
 const password = randomBytes(12).toString('base64url');
 if (write('auth_users', await hashUserEntry(user, password)))
   process.stdout.write(`\nSign in as "${user}" with password: ${password}\n(shown once; it is stored only as a hash)\n`);

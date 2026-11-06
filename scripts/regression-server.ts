@@ -36,6 +36,7 @@ export async function startRegressionServer(repo: string, env: Record<string, st
   const sessionSecret = randomBytes(32).toString('base64url');
   const auditKey = randomBytes(32).toString('base64url');
   const child: ChildProcess = spawn(process.execPath, [server], {
+    windowsHide: true,
     cwd: dir, // no .env here: only the variables below
     env: {
       PATH: process.env.PATH ?? '',
@@ -53,6 +54,10 @@ export async function startRegressionServer(repo: string, env: Record<string, st
       AUTH_SESSION_SECRET: sessionSecret,
       AUDIT_HMAC_KEY: auditKey,
       MAX_CONCURRENT_RUNS: '4',
+      // This fixture measures concurrent execution capacity with one synthetic account. Dedicated API/e2e
+      // tests cover the default request quotas; quota rejection must not replace concurrency measurements.
+      RUN_START_RATE_USER_MAX: '10000',
+      RUN_START_RATE_IP_MAX: '10000',
       ...env,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -65,7 +70,9 @@ export async function startRegressionServer(repo: string, env: Record<string, st
   for (;;) {
     if (child.exitCode !== null) throw new Error(`the API exited with ${child.exitCode}: ${logs.slice(-500)}`);
     try {
-      if ((await fetch(`${url}/api/ready`)).status === 200) break;
+      const response = await fetch(`${url}/api/ready`);
+      await response.arrayBuffer();
+      if (response.status === 200) break;
     } catch {
       // starting
     }

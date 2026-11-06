@@ -27,6 +27,7 @@ import { progressRouter } from './routes/progress.js';
 import { ProgressRepository } from './progress-store.js';
 import { SqliteRunJournal } from './run-journal.js';
 import { RunRateLimiter } from './run-rate-limit.js';
+import { httpSecurity } from './http-security.js';
 
 export const SERVICE_NAME = 'mastra-learning-platform-api';
 export const SERVICE_VERSION = '0.1.0';
@@ -119,6 +120,7 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
       next();
     });
   }
+  app.use(httpSecurity(config));
   // Request bodies are capped at 64 KB, except a lab's run request, which may also carry the files its
   // definition declares (file fields): the limit is derived from those declared limits, per lab.
   const defaultJson = express.json({ limit: DEFAULT_REQUEST_BYTES });
@@ -197,7 +199,8 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
     if (!existsSync(indexHtml)) throw new Error(`WEB_DIST_DIR has no index.html: ${dist} (run npm run build)`);
     app.use(express.static(dist, { index: false, maxAge: '1h' }));
     // SPA fallback: client-side routes like /labs/lab-03 load index.html.
-    app.get(/^(?!\/api\/).*/, (_req, res) => res.sendFile(indexHtml));
+    // The constant allowlisted index may live beneath a hidden install directory (e.g. a local drill).
+    app.get(/^(?!\/api\/).*/, (_req, res) => res.sendFile(indexHtml, { dotfiles: 'allow' }));
   }
 
   const onError: ErrorRequestHandler = (err: unknown, req, res, _next) => {

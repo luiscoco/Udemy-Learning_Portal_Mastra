@@ -1,0 +1,34 @@
+{
+  "commit": "ddaab477922f",
+  "dirty": true,
+  "at": "2026-11-06T08:41:09.423Z",
+  "node": "v24.21.0",
+  "platform": "win32",
+  "injected": null,
+  "passed": true,
+  "gates": [
+    {
+      "gate": "load-smoke",
+      "status": "pass",
+      "metrics": {
+        "healthRequests": 300,
+        "healthP50Ms": 13,
+        "healthP95Ms": 38,
+        "runsStarted": 24,
+        "runsCompleted": 24,
+        "overloadRejections429": 32,
+        "runP95Ms": 1894
+      },
+      "thresholds": {
+        "healthRequests": 300,
+        "healthConcurrency": 16,
+        "runs": 24,
+        "runConcurrency": 8,
+        "healthP95Ms": 100,
+        "runP95Ms": 5000
+      },
+      "findings": [],
+      "durationMs": 2420
+    }
+  ]
+}

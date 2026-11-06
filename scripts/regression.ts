@@ -69,6 +69,7 @@ async function login(s: RegressionServer): Promise<{ status: number; cookie: str
     body: JSON.stringify({ username: s.username, password: s.password }),
   });
   const setCookie = res.headers.get('set-cookie') ?? '';
+  await res.arrayBuffer();
   return {
     status: res.status,
     cookie: setCookie.split(';')[0] ?? '',
@@ -97,8 +98,10 @@ async function httpChecks(s: RegressionServer, cookie: { setCookie: string; cach
   const checks: HttpCheck[] = [];
   const add = (name: string, ok: boolean, detail: string) => checks.push({ name, ok, detail });
   const health = await fetch(`${s.url}/api/health`);
+  await health.arrayBuffer();
   add('no X-Powered-By header', !health.headers.has('x-powered-by'), health.headers.get('x-powered-by') ?? 'absent');
   const session = await fetch(`${s.url}/api/auth/session`);
+  await session.arrayBuffer();
   add(
     'auth responses are not cached',
     /no-store/.test(session.headers.get('cache-control') ?? '') && /no-store/.test(cookie.cacheControl),
@@ -112,6 +115,7 @@ async function httpChecks(s: RegressionServer, cookie: { setCookie: string; cach
     body: '{"input":{}}',
   });
   const anonGet = await fetch(`${s.url}/api/runs/00000000-0000-0000-0000-000000000000/events`);
+  await Promise.all([anonStart.arrayBuffer(), anonGet.arrayBuffer()]);
   add(
     'anonymous run routes answer 401',
     anonStart.status === 401 && anonGet.status === 401,
@@ -123,6 +127,7 @@ async function httpChecks(s: RegressionServer, cookie: { setCookie: string; cach
     body: JSON.stringify({ username: s.username, password: s.password }),
   });
   add('cross-origin POST is refused', cross.status === 403, `status ${cross.status}`);
+  await cross.arrayBuffer();
   const notFound = await fetch(`${s.url}/api/labs/lab-99x`);
   const badJson = await fetch(`${s.url}/api/auth/login`, {
     method: 'POST',
@@ -148,6 +153,7 @@ async function rateLimitCheck(s: RegressionServer): Promise<HttpCheck> {
       body: JSON.stringify({ username: 'nobody', password: 'wrong-password-xx' }),
     });
     statuses.push(r.status);
+    await r.arrayBuffer();
     if (r.status === 429) break;
   }
   return {
@@ -261,15 +267,18 @@ async function main() {
   const durations: Partial<Record<GateName, number>> = {};
 
   if (only.includes('security') || only.includes('load-smoke')) {
+    // npm audit is synchronous. Run it before opening HTTP keep-alive connections, so a long registry
+    // request cannot leave an idle socket stale while this process's event loop is blocked.
+    const audited = only.includes('security') ? await timed(() => auditAdvisories()) : { v: [], ms: 0 };
     const server = await startRegressionServer(repo);
     try {
       const session = await login(server);
       if (session.status !== 200) throw new Error(`regression login failed (${session.status})`);
       if (only.includes('security')) {
         log('security: npm audit and HTTP checks');
-        const { v, ms } = await timed(async () => ({ advisories: auditAdvisories(), http: await httpChecks(server, session) }));
+        const { v, ms } = await timed(async () => ({ advisories: audited.v, http: await httpChecks(server, session) }));
         m.security = v;
-        durations.security = ms;
+        durations.security = ms + audited.ms;
       }
       if (only.includes('load-smoke')) {
         log(`load-smoke: ${cfg.load.healthRequests} health requests, ${cfg.load.runs} lab-00 runs`);

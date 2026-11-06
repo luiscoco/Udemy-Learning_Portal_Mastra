@@ -159,6 +159,8 @@ export function openBilling(storage: LibSQLStore, invoices: Invoice[], deps: Bil
   });
   let wf = createWorkflow({
     id: WORKFLOW_ID,
+    // Recovery is owned by this lab's explicit selected-run operator, not a generic boot-time sweep.
+    options: { autoRestartActiveRuns: false },
     inputSchema: Pass,
     outputSchema: BatchResultSchema,
     stateSchema: BillingStateSchema,

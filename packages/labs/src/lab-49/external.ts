@@ -2,7 +2,7 @@ import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/cli
 import type { McpCall, McpTool } from '@mlp/contracts';
 import { sanitizeDetail } from '../lab-46/connect.js';
 
-export const EXTERNAL_CLIENT = 'MCP TypeScript SDK client 2.2.0 (not Mastra)';
+export const EXTERNAL_CLIENT = 'MCP TypeScript SDK client 2.4.0 (not Mastra)';
 
 const newClient = () => new Client({ name: 'external-mcp-client', version: '1.0.0' }, { versionNegotiation: { mode: 'auto' } });
 
@@ -66,7 +66,21 @@ export async function discoverAndCall(
       permission: { allowed: true, reason: 'published by the façade' },
     }));
     const t0 = performance.now();
-    const r = await client.callTool({ name: toolName, arguments: args });
+    let r: Awaited<ReturnType<Client['callTool']>>;
+    try {
+      r = await client.callTool({ name: toolName, arguments: args });
+    } catch (err) {
+      const protocol = err as { code?: unknown; message?: unknown };
+      // SDK 2.4 propagates the server's unknown-tool protocol error instead of an isError result.
+      if (
+        protocol.code !== -32602 ||
+        typeof protocol.message !== 'string' ||
+        !/^Unknown tool:/i.test(protocol.message) ||
+        tools.some((t) => t.name === toolName)
+      )
+        throw err;
+      r = { isError: true, content: [{ type: 'text', text: `Unknown tool: ${toolName}` }] };
+    }
     const durationMs = Math.round(performance.now() - t0);
     const text = (r.content as { type: string; text?: string }[] | undefined)?.find((c) => c.type === 'text')?.text ?? '';
     const base = { toolName, args, suggestions: [], durationMs };

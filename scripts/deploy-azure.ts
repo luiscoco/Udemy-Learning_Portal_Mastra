@@ -305,6 +305,7 @@ async function main() {
   );
 
   const sessionSecret = await secretFile('auth_session_secret', () => randomBytes(32).toString('base64url'));
+  const runStoreSecret = await secretFile('run_store_secret', () => randomBytes(32).toString('base64url'));
   const auditKey = await secretFile('audit_hmac_key', () => randomBytes(32).toString('base64url'));
   const password = await secretFile('learner-password', () => randomBytes(15).toString('base64url'));
   const users = await secretFile('auth_users', () => hashUserEntry('learner', password));
@@ -329,6 +330,8 @@ properties:
     secrets:
       - name: auth-session-secret
         value: "${sessionSecret}"
+      - name: run-store-secret
+        value: "${runStoreSecret}"
       - name: audit-hmac-key
         value: "${auditKey}"
       - name: auth-users
@@ -349,6 +352,10 @@ properties:
           - { name: MASTRA_MODE, value: offline }
           - { name: AUTH_PROVIDER, value: password }
           - { name: AUTH_SESSION_SECRET, secretRef: auth-session-secret }
+          - { name: AUTH_SESSION_STORE, value: sqlite }
+          - { name: RUN_STORE, value: sqlite }
+          - { name: RUN_STORE_SECRET, secretRef: run-store-secret }
+          - { name: HTTP_REQUIRE_HTTPS, value: 'true' }
           - { name: AUDIT_HMAC_KEY, secretRef: audit-hmac-key }
           - { name: AUTH_USERS, secretRef: auth-users }
         probes:

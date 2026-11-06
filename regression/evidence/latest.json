@@ -1,8 +1,8 @@
 {
-  "commit": "0f276ea535d8",
-  "dirty": false,
-  "at": "2026-11-03T16:55:08.911Z",
-  "node": "v24.14.1",
+  "commit": "ddaab477922f",
+  "dirty": true,
+  "at": "2026-11-06T08:47:43.331Z",
+  "node": "v24.21.0",
   "platform": "win32",
   "injected": null,
   "passed": true,
@@ -12,37 +12,34 @@
       "status": "pass",
       "metrics": {
         "advisories": {
-          "moderate": 3,
-          "high": 3
+          "moderate": 1
         },
-        "allowlisted": 6,
+        "allowlisted": 1,
         "httpChecks": "8/8"
       },
       "thresholds": {
-        "failOn": ["high", "critical"],
+        "failOn": [
+          "high",
+          "critical"
+        ],
         "allowlist": [
-          "GHSA-f897-62hf-6gxq until 2026-12-31",
-          "GHSA-jm63-cq47-j5jp until 2026-12-31",
-          "GHSA-46jr-4wx8-v453 until 2026-12-31",
-          "GHSA-rvq5-wwqv-78pq until 2026-12-31",
-          "GHSA-6prh-2h8m-c8cw until 2026-12-31",
           "GHSA-rmxm-3fg6-px4f until 2026-12-31"
         ]
       },
       "findings": [],
-      "durationMs": 4046
+      "durationMs": 2650
     },
     {
       "gate": "load-smoke",
       "status": "pass",
       "metrics": {
         "healthRequests": 300,
-        "healthP50Ms": 9,
-        "healthP95Ms": 22,
+        "healthP50Ms": 12,
+        "healthP95Ms": 23,
         "runsStarted": 24,
         "runsCompleted": 24,
-        "overloadRejections429": 33,
-        "runP95Ms": 1739
+        "overloadRejections429": 34,
+        "runP95Ms": 1822
       },
       "thresholds": {
         "healthRequests": 300,
@@ -53,7 +50,7 @@
         "runP95Ms": 5000
       },
       "findings": [],
-      "durationMs": 2067
+      "durationMs": 2150
     },
     {
       "gate": "eval-regression",
@@ -68,7 +65,7 @@
         "passRateTolerance": 0
       },
       "findings": [],
-      "durationMs": 635
+      "durationMs": 1315
     },
     {
       "gate": "tracing",
@@ -82,7 +79,7 @@
         "baselineSpans": 34
       },
       "findings": [],
-      "durationMs": 635
+      "durationMs": 1315
     },
     {
       "gate": "workflow-recovery",
@@ -90,19 +87,25 @@
       "metrics": {
         "tests": 2,
         "passed": 2,
-        "durationsMs": [8411, 14504]
+        "durationsMs": [
+          6563,
+          11063
+        ]
       },
       "thresholds": {
-        "requiredFiles": ["packages/labs/src/lab-32/lab32.restart.test.ts", "packages/labs/src/lab-71/lab71.restart.test.ts"]
+        "requiredFiles": [
+          "packages/labs/src/lab-32/lab32.restart.test.ts",
+          "packages/labs/src/lab-71/lab71.restart.test.ts"
+        ]
       },
       "findings": [],
-      "durationMs": 18376
+      "durationMs": 18804
     },
     {
       "gate": "accessibility",
       "status": "pass",
       "metrics": {
-        "pages": 150,
+        "pages": 152,
         "serious": 0,
         "critical": 0,
         "moderate": 0,
@@ -111,10 +114,10 @@
       "thresholds": {
         "maxSerious": 0,
         "maxCritical": 0,
-        "minPages": 150
+        "minPages": 152
       },
       "findings": [],
-      "durationMs": 279419
+      "durationMs": 311428
     }
   ]
 }

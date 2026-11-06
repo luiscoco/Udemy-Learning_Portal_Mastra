@@ -4,9 +4,9 @@ Exact versions are locked in `package-lock.json` (`save-exact=true`). This table
 
 | Component | Version | Notes |
 | --- | --- | --- |
-| Node.js | 24.14.1 (CI: 24.x) | `@mastra/core` requires `>=22.13.0` |
-| npm | 11.12.0 | |
-| @mastra/core | 1.78.0 | server-only (`packages/mastra-runtime`); peer `zod ^3.25 \|\| ^4` |
+| Node.js | 24.21.0 (CI: 24.x) | `@mastra/core` requires `>=22.13.0` |
+| npm | 11.19.0 | |
+| @mastra/core | 1.79.0 | server-only (`packages/mastra-runtime`); peer `zod ^3.25 \|\| ^4` |
 | @mastra/memory | 1.38.0 | peer `@mastra/core >=1.4.1-0 <2`; durable memory from L21 |
 | @mastra/libsql | 1.26.2 | peer `@mastra/core >=1.76.0-0 <2`; local SQLite files under `.data/memory/` (native `libsql` binary, kept external to the API bundle) |
 | zod | 4.6.7 | |
@@ -20,8 +20,8 @@ Exact versions are locked in `package-lock.json` (`save-exact=true`). This table
 | @playwright/test | 1.64.1 | Chromium |
 | @mastra/rag | 2.6.6 | server-only (`packages/labs`, from L37); peer `@mastra/core >=1.0.0-0 <2`; 2.6.7 was a week old on 2026-10-18. Brings `js-tiktoken`, `zeroentropy` (alpha) and an AWS Bedrock client transitively; `npm audit` unchanged |
 | js-tiktoken | 1.0.21 | explicit dependency (same version `@mastra/rag` uses) for token counts in L37 (`cl100k_base`) |
-| @mastra/mcp | 2.4.1 | server-only (`packages/labs`, from L46); peer `@mastra/core >=1.76.0-0 <2.0.0-0`; published 2026-10-15 alongside core 1.78.0. Pins `@modelcontextprotocol/{core,client,server}` 2.2.0 and `/node` 2.0.0 (MCP revision 2026-07-28) |
-| @modelcontextprotocol/client | 2.2.0 | server-only (`packages/labs`, from L48): the official MCP TypeScript SDK client, the exact version `@mastra/mcp` 2.4.1 pins (deduplicated, MIT). Used only as the protocol-level capability probe (`getServerCapabilities`, `complete`) |
+| @mastra/mcp | 2.8.0 | Requires core >=1.79; pins MCP client/server/core 2.4.0 and node transport 2.1.2. Compatible methods checked against installed declarations and packaged official references; native fixture regression tests cover connection, discovery, capabilities, facade and capstone. |
+| @modelcontextprotocol/client | 2.4.0 | Exact direct server-only SDK, matching Mastra MCP. Unknown-tool calls now throw ProtocolError -32602; the facade adapter normalizes only that verified rejection without executing unpublished tools. |
 | unpdf | 1.8.1 | server-only (`packages/labs`, L36 PDF text extraction); MIT; no runtime dependencies; bundles **pdf.js 6.1.200**, which has no `isEvalSupported` option and no `eval(` / `new Function` in the bundle (checked); `PDFDocumentProxy.destroy()` is gone in pdf.js 6, release with `pdf.loadingTask.destroy()`. 1.9.0 was two days old on 2026-10-18, so the previous release is pinned |
 | @fission-ai/openspec | 1.14.3 | dev-only (1.14.3 drops the vulnerable fast-glob → micromatch → braces chain) |
 | Voice (L69) | @mastra/voice-openai 0.13.4 (openai 6.49.0), @mastra/core 1.78.0 | Mastra's model router has no speech or transcription models, so live voice uses the official `@mastra/voice-openai` (`OpenAIVoice`, models `tts-1`/`tts-1-hd` and `whisper-1`; it reads `OPENAI_API_KEY` on the server and bundles its own copy of `MastraVoice`). `speak()` returns an MP3 stream; `listen(stream, { filetype })` returns text. `new Agent({ voice })` keeps the instance as `agent.voice`. The offline simulator extends `MastraVoice` from `@mastra/core/voice`. **Transcripts mishear identifiers:** live runs heard ORD-5001 as "Ority 5001" and "or D5001", and the model did not reliably ask for confirmation when instructed, so L69 confirms ids in code (verified by spikes, lab69 tests, e2e and a live check). |
@@ -156,3 +156,9 @@ The API directly pins `libsql` 0.5.29, already present transitively; no Mastra d
 ## Run request admission compatibility
 
 The application limiter uses the installed Express 5.3.0 RequestHandler, req.ip and existing TRUST_PROXY setting, Node isIP/crypto and a monotonic clock. The [official Express proxy guide](https://expressjs.com/en/guide/behind-proxies/) defines forwarding-header trust behavior; IPv6 /64 accounting, bounded fixed windows and canonical 429 feedback are application adapters. No package, lockfile or Mastra changes are required.
+
+## Local course release compatibility
+
+Core 1.79.0, MCP 2.8.0 and direct MCP client 2.4.0 supersede the earlier historical versions recorded in the lab-specific evidence above. Framework signatures were checked in installed declarations and `@mastra/core/dist/docs/references/reference-tools-mcp-client.md`; the public reference was also consulted. Existing native methods remain in use. The connection fixture now stops accepting sockets before draining, and the facade maps the newly thrown unknown-tool protocol error into the established learner result. ZIP tooling uses exact dev-only fflate 0.8.2 (`zipSync`/`unzipSync`) and does not enter the web bundle. Full release results are in COURSE-RELEASE-IMPLEMENTATION.md.
+
+Core 1.79 adds a live ownership lease for workflows participating in generic boot recovery. L34 already owns recovery through an explicit selected-run operator; its workflow now uses the documented `options.autoRestartActiveRuns: false`, preserving that contract rather than invoking a competing generic sweep. Both same-process simulation and real process crash tests pass unchanged, including the intentional duplicate without an idempotency key. Other workflows retain their existing defaults.

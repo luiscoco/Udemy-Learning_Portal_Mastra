@@ -191,13 +191,15 @@ class TrackedHttp {
     return (this.server.address() as AddressInfo).port;
   }
   async close(): Promise<void> {
+    // Stop admission before draining: a pending client connection must not enter after the socket snapshot.
+    const stopped = this.server.listening
+      ? new Promise<void>((resolve) => this.server.close(() => resolve()))
+      : Promise.resolve();
     const closing = [...this.sockets].map(
       (s) => new Promise<void>((resolve) => (s.destroyed && !this.sockets.has(s) ? resolve() : s.once('close', () => resolve()))),
     );
     for (const s of this.sockets) s.destroy();
-    await Promise.all(closing);
-    if (!this.server.listening) return;
-    await new Promise<void>((resolve) => this.server.close(() => resolve()));
+    await Promise.all([...closing, stopped]);
   }
 }
 

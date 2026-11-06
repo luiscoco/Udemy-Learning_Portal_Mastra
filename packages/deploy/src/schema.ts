@@ -13,6 +13,21 @@ const bool = (def: 'true' | 'false') =>
     .default(def)
     .transform((v) => v === 'true' || v === '1');
 
+const optionalOrigin = z
+  .string()
+  .trim()
+  .optional()
+  .transform((v) => v || undefined)
+  .refine((value) => {
+    if (value === undefined) return true;
+    try {
+      const url = new URL(value);
+      return ['http:', 'https:'].includes(url.protocol) && url.origin === value;
+    } catch {
+      return false;
+    }
+  }, 'use one canonical http(s) origin without a path, credentials, query or wildcard');
+
 /** Express "trust proxy": false, true (every hop), a hop count, or "loopback". */
 const trustProxy = z
   .string()
@@ -47,7 +62,9 @@ export const ConfigSchema = z
     LOG_REQUESTS: bool('true'),
     /** offline = deterministic mock models only; live = real providers allowed when keys exist. */
     MASTRA_MODE: z.enum(['offline', 'live']).default('offline'),
-    CORS_ORIGIN: z.string().optional(),
+    CORS_ORIGIN: optionalOrigin,
+    /** Local HTTP stays compatible; enable only after configuring the actual HTTPS proxy. */
+    HTTP_REQUIRE_HTTPS: bool('false'),
     /** Set when a TLS-terminating proxy or load balancer sits in front (same-origin checks, secure cookies). */
     TRUST_PROXY: trustProxy,
     /** Where every durable store lives (a mounted volume in containers). Defaults to <repo>/.data. */
@@ -101,6 +118,14 @@ export const ConfigSchema = z
     GOOGLE_GENERATIVE_AI_API_KEY: optionalSecret,
   })
   .superRefine((config, ctx) => {
+    if (config.HTTP_REQUIRE_HTTPS && config.TRUST_PROXY === true)
+      ctx.addIssue({
+        code: 'custom',
+        path: ['TRUST_PROXY'],
+        message: 'use an explicit proxy hop count or loopback when HTTPS is required',
+      });
+    if (config.HTTP_REQUIRE_HTTPS && config.CORS_ORIGIN?.startsWith('http:'))
+      ctx.addIssue({ code: 'custom', path: ['CORS_ORIGIN'], message: 'must use HTTPS when HTTP_REQUIRE_HTTPS=true' });
     if (config.RUN_STORE === 'sqlite' && !config.RUN_STORE_SECRET)
       ctx.addIssue({
         code: 'custom',
@@ -162,6 +187,8 @@ export function describeConfig(config: AppConfig): Record<string, string | numbe
     RUN_CONTROL_RATE_IP_MAX: config.RUN_CONTROL_RATE_IP_MAX,
     RUN_STORE_SECRET: maskSecret(config.RUN_STORE_SECRET),
     TRUST_PROXY: String(config.TRUST_PROXY),
+    HTTP_REQUIRE_HTTPS: config.HTTP_REQUIRE_HTTPS,
+    CORS_ORIGIN: config.CORS_ORIGIN ?? '(same origin)',
     MLP_DATA_DIR: config.MLP_DATA_DIR ?? '(default .data)',
     AUTH_PROVIDER: config.AUTH_PROVIDER,
     AUTH_DEV_USERS: config.AUTH_DEV_USERS,

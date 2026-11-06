@@ -48,11 +48,7 @@ The HTTP checks in the security gate are:
 
 Every entry in `security.allowlist` has an advisory `id` (GHSA), the `package`, a `reason` (an exposure assessment, not "won't fix") and an `expires` date. An expired entry fails the gate, which forces a re-review.
 
-**Current entries (expiring 2026-12-31):** six MCP SDK advisories (`@modelcontextprotocol/node`, `/server` and `/client`, and `@hono/node-server`).
-
-- **Why they can't be fixed yet:** `@mastra/mcp` 2.4.1 pins those SDK versions exactly. The fix is `@mastra/mcp` 2.7.0, which requires `@mastra/core` ≥ 1.79, and the platform is pinned and tested on 1.78.0.
-- **Why the exposure is low:** MCP HTTP servers exist only inside lab runs, bound to `127.0.0.1` with per-run bearer tokens and torn down after the run. The public API exposes no MCP endpoint.
-- **Exit:** upgrade the Mastra framework (core, mcp and the related packages) in one tested change, then remove the entries.
+**Current entries (expiring 2026-12-31):** the lower-severity `@hono/node-server` exposure note remains. The former MCP SDK exceptions were removed after the compatible core 1.79.0 / MCP 2.8.0 / client 2.4.0 update. The fresh all-dependency audit reports zero high or critical findings. Lower-severity advisories still require review; do not treat removal of an old exception as proof that every transitive advisory is fixed.
 
 **Fixed in L74:** `body-parser` 2.4.0, `re2js` 2.9.1 and `@hono/node-server` 1.19.18, patched inside the ranges their parents declare. Only those three lockfile entries changed. `npm audit fix` was **not** used, because it would have moved `@mastra/core` 1.78 → 1.81 and 95 other packages.
 
@@ -67,3 +63,5 @@ Every entry in `security.allowlist` has an advisory `id` (GHSA), the `package`, 
 ## Evidence on record
 
 [`regression/REPORT.md`](../regression/REPORT.md) is the latest clean run. The `regression/evidence/injected-*.json` files show each gate failing on its injected regression.
+
+The local course release runs synchronous npm audit before opening regression HTTP connections and drains completed responses to avoid stale pooled sockets. Its disposable load server uses high run-start request allowances so one synthetic account can exercise concurrency/retry capacity; real production quotas stay unchanged and dedicated API/browser rate-limit tests cover them. Concurrency and performance gate thresholds are unchanged.

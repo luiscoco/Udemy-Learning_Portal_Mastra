@@ -34,10 +34,20 @@ export const clearCookie = (secure: boolean) => serializeCookie('', { maxAgeSeco
  * CSRF defence for cookie-authenticated unsafe requests, on top of SameSite=Strict: a browser sends Origin
  * on cross-origin POSTs, so a present Origin must match the request's Host.
  */
-export function sameOriginOrAbsent(origin: string | undefined, host: string | undefined, protocol = 'http'): boolean {
+export function sameOriginOrAbsent(
+  origin: string | undefined,
+  host: string | undefined,
+  protocol = 'http',
+  trustedOrigin?: string,
+): boolean {
   if (origin === undefined) return true;
   try {
-    return !!host && new URL(origin).origin === `${protocol}://${host}`;
+    const url = new URL(origin);
+    return (
+      url.origin !== 'null' &&
+      url.origin === origin &&
+      (origin === trustedOrigin || (!!host && origin === `${protocol}://${host}`))
+    );
   } catch {
     return false;
   }

@@ -90,7 +90,7 @@ export function createAuth(config: AppConfig, logger: Logger, storageRoot: strin
 
   const middleware: RequestHandler = async (req, res, next) => {
     if (req.path.startsWith('/api/auth') || req.header('cookie')) res.setHeader('Cache-Control', 'no-store');
-    if (UNSAFE.has(req.method) && !sameOriginOrAbsent(req.header('origin'), req.header('host'), req.protocol))
+    if (UNSAFE.has(req.method) && !sameOriginOrAbsent(req.header('origin'), req.header('host'), req.protocol, config.CORS_ORIGIN))
       throw new LabError('FORBIDDEN', 'Cross-origin requests are not allowed.');
     await ready;
     const session = await sessions.verify(parseCookies(req.header('cookie'))[SESSION_COOKIE]);

@@ -1,6 +1,6 @@
 # Release gates: before exposing the platform publicly
 
-The platform is built and tested for a single learner on a trusted machine (the API listens on `127.0.0.1`). The items below are **required** before it is reachable by other people, for example on a public host or a classroom network. Labs keep being added in the meantime. These gates block deployment, not lab development.
+The Udemy delivery model is one local installation per student, using loopback-only access and offline-first lessons. Source packaging, MIT licensing, student setup instructions and release verification are described in [COURSE-RELEASE.md](COURSE-RELEASE.md). The items below govern optional public/shared hosting; they are not all prerequisites for the local course download. Instructor recordings, captions, Udemy uploads and fresh-student pilot feedback remain publication tasks outside the codebase.
 
 Status key: ☐ open · ☑ done
 

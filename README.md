@@ -11,7 +11,7 @@ Interactive learning platform for the **Mastra AI Agents 2026** Udemy course: a 
 | `packages/client` | Typed API client SDK used by the web app (browser-safe, no credentials) |
 | `packages/mastra-runtime` | Server-only Mastra adapters |
 
-> **Local, single-learner use only for now.** Before exposing the platform publicly (a public host or a shared network), complete [docs/RELEASE-GATES.md](docs/RELEASE-GATES.md). Run authorization comes first.
+> **Udemy delivery: students run the platform locally.** Start with [the student guide](docs/STUDENT-GUIDE.md). Instructors can build a sanitized source ZIP with `npm run release:course` and verify a fresh extracted install with `npm run release:course:drill`; see [the release checklist](docs/COURSE-RELEASE.md). Public/shared hosting has separate [release gates](docs/RELEASE-GATES.md).
 
 ## Requirements
 
@@ -151,3 +151,5 @@ See [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) for pinned versions and known
 HTTP execution recovery: standard Run tabs reattach after reload. Configure `RUN_STORE=sqlite` and a separate stable `RUN_STORE_SECRET` to preserve recorded output across API restarts; interrupted code is never replayed automatically. See [docs/RUN-RECOVERY.md](docs/RUN-RECOVERY.md).
 
 Run request admission is limited per verified learner and client network, with separate start and approval/recovery allowances. Cancellation stays available while throttled. See [docs/RATE-LIMITS.md](docs/RATE-LIMITS.md).
+
+Original project code and documentation are MIT licensed; see [LICENSE](LICENSE) and [third-party notices](THIRD-PARTY-NOTICES.md). HTTP headers, optional exact-origin CORS and HTTPS proxy enforcement are described in [HTTP-SECURITY.md](docs/HTTP-SECURITY.md).

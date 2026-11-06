@@ -1,3 +1,4 @@
+import './lib/browser-schema-config';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter } from 'react-router';

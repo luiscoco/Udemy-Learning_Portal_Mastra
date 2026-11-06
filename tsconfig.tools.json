@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "scripts/course-release.ts",
+    "scripts/course-release-drill.ts",
+    "scripts/make-secrets.ts",
+    "scripts/regression.ts",
+    "scripts/regression-server.ts"
+  ]
+}

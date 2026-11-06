@@ -17,7 +17,7 @@
     "build": "npm run build -w @mlp/api && npm run build -w @mlp/web",
     "start": "npm run start -w @mlp/api",
     "lint": "eslint . --max-warnings=0",
-    "typecheck": "tsc -p tsconfig.json && npm run typecheck --workspaces --if-present",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.tools.json && npm run typecheck --workspaces --if-present",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
@@ -34,7 +34,9 @@
     "smoke:container": "tsx scripts/container-smoke.ts",
     "deploy:azure": "tsx scripts/deploy-azure.ts",
     "smoke:staging": "tsx scripts/staging-smoke.ts",
-    "regression": "tsx scripts/regression.ts"
+    "regression": "tsx scripts/regression.ts",
+    "release:course": "tsx scripts/course-release.ts",
+    "release:course:drill": "tsx scripts/course-release-drill.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
@@ -50,6 +52,8 @@
     "prettier": "3.9.10",
     "typescript": "6.0.3",
     "typescript-eslint": "8.71.2",
-    "vitest": "5.0.5"
-  }
+    "vitest": "5.0.5",
+    "fflate": "0.8.2"
+  },
+  "license": "MIT"
 }
