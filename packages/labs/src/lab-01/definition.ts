@@ -1,6 +1,7 @@
+import { liveCheckpointDefinition } from '../shared/live-checkpoint-definition.js';
 import type { LabDefinitionInput } from '@mlp/contracts';
 
-export const lab01Definition = {
+export const lab01Definition = liveCheckpointDefinition({
   id: 'lab-01',
   number: 1,
   title: 'Create a Mastra project',
@@ -230,4 +231,4 @@ export const lab01Definition = {
     costNotice: 'Free: the project is generated and compiled on the server; no AI provider is called.',
   },
   tags: ['setup', 'esm', 'project-structure'],
-} satisfies LabDefinitionInput;
+} satisfies LabDefinitionInput);

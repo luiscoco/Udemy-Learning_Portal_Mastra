@@ -26,7 +26,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npx vitest run packages/deploy/src/course-release.test.ts packages/deploy/src/secret-presets.test.ts
+      - run: npx vitest run packages/deploy/src/course-release.test.ts packages/deploy/src/secret-presets.test.ts packages/deploy/src/dev-startup.test.ts
 
   verify:
     runs-on: ubuntu-latest

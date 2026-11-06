@@ -1,3 +1,4 @@
+import { withLiveCheckpoint } from '../shared/live-checkpoint.js';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { z } from 'zod';
@@ -124,7 +125,7 @@ async function httpGet(
   }
 }
 
-export const lab05: LabImplementation<Lab05Input, Lab05Output> = {
+const baseLab05: LabImplementation<Lab05Input, Lab05Output> = {
   definition: lab05Definition as LabDefinition,
   inputSchema: Lab05InputSchema,
 
@@ -223,3 +224,5 @@ export const lab05: LabImplementation<Lab05Input, Lab05Output> = {
     ]);
   },
 };
+
+export const lab05 = withLiveCheckpoint(baseLab05);

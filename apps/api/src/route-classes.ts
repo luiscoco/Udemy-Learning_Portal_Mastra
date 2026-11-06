@@ -4,6 +4,8 @@
  * registered route is missing here, or listed here but no longer registered.
  */
 export const ROUTE_CLASSES = {
+  'GET /api/tutor/settings': 'public',
+  'POST /api/tutor/answer': 'tenant',
   'GET /api/health': 'public',
   'GET /api/ready': 'public',
   'GET /api/catalog': 'public',

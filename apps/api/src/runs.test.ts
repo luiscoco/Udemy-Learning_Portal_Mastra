@@ -98,7 +98,15 @@ describe('lab discovery', () => {
 
   it('serves readonly source with pinned versions', async () => {
     const body = LabSourceResponseSchema.parse(await (await authenticatedFetch(`${base}/api/labs/lab-00/source`)).json());
-    expect(body.files.map((f) => f.path)).toEqual(['run.ts', 'definition.ts', 'solution.md']);
+    expect(body.files.map((f) => f.path)).toEqual([
+      'run.ts',
+      'definition.ts',
+      'shared/live-checkpoint.ts',
+      'shared/live-checkpoint-definition.ts',
+      'shared/live-checkpoint.md',
+      'solution.md',
+    ]);
+    expect(body.files.find((file) => file.path === 'shared/live-checkpoint.ts')?.code).toContain('agent.generate(');
     expect(body.files[0]?.code).toContain('export const lab00');
     expect(body.pinned['@mastra/core']).toMatch(/^\d+\.\d+\.\d+/);
   });

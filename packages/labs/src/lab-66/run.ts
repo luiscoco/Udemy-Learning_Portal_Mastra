@@ -1,3 +1,4 @@
+import { withLiveCheckpoint } from '../shared/live-checkpoint.js';
 import { z } from 'zod';
 import { ApiClientError, createApiClient } from '@mlp/client';
 import { summarizeChecks, type LabDefinition } from '@mlp/contracts';
@@ -36,7 +37,7 @@ export interface Lab66Output {
   resources: { closed: boolean; openSockets: number };
 }
 
-export const lab66: LabImplementation<Lab66Input, Lab66Output, LabServices> = {
+const baseLab66: LabImplementation<Lab66Input, Lab66Output, LabServices> = {
   definition: lab66Definition as LabDefinition,
   inputSchema: Lab66InputSchema,
 
@@ -226,3 +227,5 @@ export const lab66: LabImplementation<Lab66Input, Lab66Output, LabServices> = {
     ]);
   },
 };
+
+export const lab66 = withLiveCheckpoint(baseLab66);

@@ -1,3 +1,4 @@
+import { withLiveCheckpoint } from '../shared/live-checkpoint.js';
 import { z } from 'zod';
 import { assertSafeAuthConfig, AuthConfigError, DevIdentityProvider } from '@mlp/auth';
 import { summarizeChecks, type LabDefinition } from '@mlp/contracts';
@@ -39,7 +40,7 @@ export interface Lab61Output {
   resourcesReleased: boolean;
 }
 
-export const lab61: LabImplementation<Lab61Input, Lab61Output, LabServices> = {
+const baseLab61: LabImplementation<Lab61Input, Lab61Output, LabServices> = {
   definition: lab61Definition as LabDefinition,
   inputSchema: Lab61InputSchema,
   async run(ctx, input) {
@@ -179,3 +180,5 @@ export const lab61: LabImplementation<Lab61Input, Lab61Output, LabServices> = {
     ]);
   },
 };
+
+export const lab61 = withLiveCheckpoint(baseLab61);

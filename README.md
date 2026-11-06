@@ -2,6 +2,10 @@
 
 Interactive learning platform for the **Mastra AI Agents 2026** Udemy course: a React web app, an Express API that runs Mastra server-side, and 75 implemented hands-on labs plus the Lab 00 orientation.
 
+Every lesson includes **AI Tutor**: free offline study guidance and optional live provider answers, streamed with formatted prose and coloured code. Open it from the lesson header; see [AI Tutor setup and usage](docs/AI-TUTOR.md).
+
+Every lesson also includes **Infographic Content** and **Exercise Walkthrough**: illustrated Mastra concepts, checked coloured code excerpts and six guided practice phases. Both offer zoom, fullscreen and downloadable artwork; see [visual study guides](docs/VISUAL-GUIDES.md).
+
 | Workspace | What it is |
 | --- | --- |
 | `apps/web` | React + Vite + TypeScript + Tailwind UI (http://127.0.0.1:5173) |
@@ -32,7 +36,7 @@ Copy-Item .env.example .env
 npm run dev
 ```
 
-Open http://127.0.0.1:5173 and choose **Sign in**, using `learner` (no passcode by default). The **Platform status** card shows `ok` when the API is reachable. See [authentication setup](docs/AUTH.md). Check the API directly:
+Wait for `[dev] API ready` and Vite's `Local` URL before opening http://127.0.0.1:5173. Cold startup loads all lab runtimes and can take several seconds. Choose **Sign in**, using `learner` (no passcode by default). The **Platform status** card shows `ok` when the API is reachable. See [authentication setup](docs/AUTH.md). Check the API directly:
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8787/api/health
@@ -44,7 +48,7 @@ macOS/Linux: same commands, use `cp .env.example .env`.
 
 | Command | Purpose |
 | --- | --- |
-| `npm run dev` | API (tsx watch) + web (Vite) with `/api` proxy |
+| `npm run dev` | API bundle watch (including shared packages), then Vite once the API is ready; stops both when either exits |
 | `npm run build` | Bundle API (tsup) and web (Vite) |
 | `npm start` | Run the built API (set `WEB_DIST_DIR=apps/web/dist` to also serve the web app on the same origin) |
 | `npm run lint` | ESLint, zero warnings |
@@ -142,7 +146,8 @@ npx openspec validate <change> --strict
 
 ## Troubleshooting (Windows)
 
-- **Port in use**: change `PORT` in `.env` (and set `API_PROXY_TARGET=http://127.0.0.1:<port>` for the web dev server).
+- **API unavailable / ECONNREFUSED during startup**: use the root `npm run dev` command and wait for `[dev] API ready` before opening Vite's URL. Startup waits up to 120 seconds; on timeout, inspect the `[api]` output for configuration or native-module errors and check port availability. Direct workspace commands bypass this readiness gate. During an API watch restart, wait for `api listening` and refresh the browser if needed.
+- **Port in use**: close the previous instance or change `PORT` in `.env`. Root `npm run dev` automatically uses the configured API host/port for its proxy. An explicit `API_PROXY_TARGET=http://127.0.0.1:<port>` overrides it; direct web workspace startup still requires this environment variable for a nondefault API port.
 - **`npm ci` fails with EBADENGINE**: upgrade Node to 24 LTS (`winget install OpenJS.NodeJS.LTS`).
 - **Playwright browser missing**: `npx playwright install chromium`.
 

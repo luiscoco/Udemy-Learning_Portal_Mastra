@@ -1,5 +1,6 @@
 import { VoiceTurnSchema, type VoiceTurn as Turn } from '@mlp/contracts';
 import { Badge } from '../ui/primitives';
+import { FormattedResponse } from './FormattedResponse';
 
 export function voiceTurnOf(output: unknown): Turn | null {
   if (!output || typeof output !== 'object' || !('voice' in output)) return null;
@@ -52,9 +53,9 @@ export function VoiceTurn({ turn }: { turn: Turn }) {
           I could not get your question from the audio. Please type it in the message box and run again.
         </p>
       ) : (
-        <p className="rounded-lg bg-surface-muted p-3 text-sm" data-testid="voice-answer">
-          {turn.answer}
-        </p>
+        <div className="min-w-0 rounded-lg bg-surface-muted p-3 text-sm" data-testid="voice-answer">
+          <FormattedResponse text={turn.answer ?? ''} />
+        </div>
       )}
       {turn.audio ? (
         <audio

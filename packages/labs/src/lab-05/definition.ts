@@ -1,6 +1,7 @@
+import { liveCheckpointDefinition } from '../shared/live-checkpoint-definition.js';
 import type { LabDefinitionInput } from '@mlp/contracts';
 
-export const lab05Definition = {
+export const lab05Definition = liveCheckpointDefinition({
   id: 'lab-05',
   number: 5,
   title: 'Inspect agent in Studio',
@@ -180,4 +181,4 @@ export const lab05Definition = {
     costNotice: 'Free: the lab only reads your local Studio API. Chatting in Studio itself uses your provider key.',
   },
   tags: ['studio', 'tooling', 'debugging'],
-} satisfies LabDefinitionInput;
+} satisfies LabDefinitionInput);

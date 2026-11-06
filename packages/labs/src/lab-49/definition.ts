@@ -1,8 +1,9 @@
+import { liveCheckpointDefinition } from '../shared/live-checkpoint-definition.js';
 import type { LabDefinitionInput } from '@mlp/contracts';
 
 const expose = ['calculate_order_total', 'inventory_lookup', 'format_currency'];
 
-export const lab49Definition = {
+export const lab49Definition = liveCheckpointDefinition({
   id: 'lab-49',
   number: 49,
   title: 'Expose Mastra over MCP',
@@ -219,4 +220,4 @@ export const lab49Definition = {
     costNotice: 'No model is called: the façade runs on 127.0.0.1 inside the run and nothing leaves your machine.',
   },
   tags: ['mcp', 'mcp-server', 'security', 'interoperability'],
-} satisfies LabDefinitionInput;
+} satisfies LabDefinitionInput);

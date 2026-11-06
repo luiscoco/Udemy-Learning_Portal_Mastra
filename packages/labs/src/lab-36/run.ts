@@ -1,3 +1,4 @@
+import { withLiveCheckpoint } from '../shared/live-checkpoint.js';
 import { z } from 'zod';
 import { summarizeChecks, uploadedFilesSchema, type CheckResult, type LabDefinition, type UploadedFile } from '@mlp/contracts';
 import type { LabImplementation, RunContext } from '@mlp/lab-engine';
@@ -32,7 +33,7 @@ export interface Lab36Output {
   limits: typeof LIMITS;
 }
 
-export const lab36: LabImplementation<Lab36Input, Lab36Output, LabServices> = {
+const baseLab36: LabImplementation<Lab36Input, Lab36Output, LabServices> = {
   definition: lab36Definition as LabDefinition,
   inputSchema: Lab36InputSchema,
 
@@ -166,3 +167,5 @@ export const lab36: LabImplementation<Lab36Input, Lab36Output, LabServices> = {
     return summarizeChecks(checks);
   },
 };
+
+export const lab36 = withLiveCheckpoint(baseLab36);

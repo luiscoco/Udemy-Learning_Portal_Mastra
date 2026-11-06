@@ -94,6 +94,35 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('tabs', () => {
+  it('opens the visual deep links, preserves six-phase position, run input and progress', async () => {
+    const user = userEvent.setup();
+    const { store } = renderApp('/labs/lab-00?tab=run');
+    const message = await screen.findByLabelText(/Message/);
+    await user.clear(message);
+    await user.type(message, 'Keep this input');
+    await user.click(screen.getByRole('tab', { name: 'Exercise Walkthrough' }));
+    await user.click(screen.getByRole('button', { name: 'Next step' }));
+    await user.click(screen.getByRole('button', { name: 'Next step' }));
+    expect(screen.getByRole('article', { name: 'Run a baseline' })).toBeVisible();
+    await user.click(screen.getByRole('tab', { name: 'Infographic Content' }));
+    expect(await screen.findByLabelText('lab-00 infographic teaching excerpt')).not.toHaveTextContent('SECRET SOLUTION');
+    await user.click(screen.getByRole('tab', { name: 'Exercise Walkthrough' }));
+    expect(screen.getByRole('article', { name: 'Run a baseline' })).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Open Run' }));
+    expect(message).toHaveValue('Keep this input');
+    expect(calls.filter((call) => call.url.endsWith('/runs'))).toHaveLength(0);
+    expect(store.get('lab-00')).toBeUndefined();
+  });
+  it('keeps infographic text usable when source loading fails and retries its checked excerpt', async () => {
+    sourceOk = false;
+    const user = userEvent.setup();
+    renderApp('/labs/lab-00?tab=infographic');
+    expect(await screen.findByRole('alert')).toHaveTextContent('checked code excerpt could not load');
+    expect(screen.getByRole('heading', { name: 'Read the infographic text' })).toBeVisible();
+    sourceOk = true;
+    await user.click(screen.getByRole('button', { name: 'Retry excerpt' }));
+    expect(await screen.findByLabelText('lab-00 infographic teaching excerpt')).toHaveTextContent('export const lab00');
+  });
   it('renders Learn/Run/Source with ARIA and arrow-key navigation', async () => {
     const user = userEvent.setup();
     const { router } = renderApp('/labs/lab-00');
@@ -104,7 +133,7 @@ describe('tabs', () => {
     expect(screen.getByRole('tab', { name: 'Run' })).toHaveAttribute('aria-selected', 'true');
     expect(router.state.location.search).toBe('?tab=run');
     await user.keyboard('{End}');
-    expect(screen.getByRole('tab', { name: 'Source' })).toHaveFocus();
+    expect(screen.getByRole('tab', { name: 'Exercise Walkthrough' })).toHaveFocus();
   });
 
   it('deep-links to a tab with ?tab=source', async () => {
@@ -141,7 +170,10 @@ describe('Run tab', () => {
     expect(screen.getAllByText('wordCounter').length).toBeGreaterThan(0);
     expect(screen.getByTestId('timeline')).toHaveTextContent('complete — succeeded');
     const body = JSON.parse(String(calls.find((c) => c.url === '/api/labs/lab-00/runs')?.init?.body));
-    expect(body).toEqual({ input: { message: 'Hello Mastra learners', delayMs: 150, simulateFailure: false }, mode: 'offline' });
+    expect(body).toEqual({
+      input: { message: 'Hello Mastra learners', delayMs: 150, simulateFailure: false, liveModelId: 'auto' },
+      mode: 'offline',
+    });
     const rec = store.get('lab-00')!;
     expect(rec).toMatchObject({ runSucceeded: true, checksPassed: true });
   });
@@ -202,9 +234,15 @@ describe('Run tab', () => {
   });
 
   it('shows the cost notice when live mode is chosen', async () => {
+    const user = userEvent.setup();
     renderApp('/labs/lab-00?tab=run');
     expect(await screen.findByTestId('cost-notice')).toHaveTextContent('Free: runs entirely offline');
-    expect(screen.getByRole('radio', { name: /Live/ })).toBeDisabled();
+    const live = screen.getByRole('radio', { name: /Live/ });
+    expect(live).toBeEnabled();
+    await user.click(live);
+    expect(live).toBeChecked();
+    expect(screen.getByTestId('cost-notice')).toHaveTextContent('Cost notice:');
+    expect(screen.getByTestId('cost-notice')).toHaveTextContent('provider charges apply');
   });
 });
 

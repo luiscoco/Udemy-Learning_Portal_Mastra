@@ -1,3 +1,4 @@
+import { liveCheckpointDefinition } from '../shared/live-checkpoint-definition.js';
 import type { LabDefinitionInput } from '@mlp/contracts';
 
 const configs = [
@@ -6,7 +7,7 @@ const configs = [
   { label: 'token-80', strategy: 'token', maxSize: 80, overlap: 16 },
 ];
 
-export const lab37Definition = {
+export const lab37Definition = liveCheckpointDefinition({
   id: 'lab-37',
   number: 37,
   title: 'Chunking strategies',
@@ -156,4 +157,4 @@ export const lab37Definition = {
     costNotice: 'No model is called: chunking and token counting run locally.',
   },
   tags: ['rag', 'chunking', 'tokens', 'traceability'],
-} satisfies LabDefinitionInput;
+} satisfies LabDefinitionInput);

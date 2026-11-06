@@ -1,5 +1,6 @@
 import { McpCatalogSchema, mcpParameters, type McpCatalog, type McpTool } from '@mlp/contracts';
 import { Badge, Card } from '../ui/primitives';
+import { JsonView } from './RunTimeline';
 
 /** Parses a lab result's `mcpCatalog`; anything that does not match the contract renders nothing. */
 export function mcpCatalogOf(output: unknown): McpCatalog | null {
@@ -7,8 +8,6 @@ export function mcpCatalogOf(output: unknown): McpCatalog | null {
   const parsed = McpCatalogSchema.safeParse((output as { mcpCatalog: unknown }).mcpCatalog);
   return parsed.success ? parsed.data : null;
 }
-
-const json = (v: unknown) => JSON.stringify(v, null, 2);
 
 function ToolCard({ tool }: { tool: McpTool }) {
   const params = mcpParameters(tool.inputSchema);
@@ -77,9 +76,7 @@ function ToolCard({ tool }: { tool: McpTool }) {
       </div>
       <details className="text-sm">
         <summary className="cursor-pointer text-accent">JSON Schema of {tool.name}</summary>
-        <pre className="mt-2 max-h-72 overflow-auto rounded-lg bg-surface-muted p-2 text-xs" tabIndex={0}>
-          {json({ input: tool.inputSchema, output: tool.outputSchema })}
-        </pre>
+        <JsonView value={{ input: tool.inputSchema, output: tool.outputSchema }} label={`JSON Schema of ${tool.name}`} />
       </details>
     </article>
   );
@@ -133,20 +130,14 @@ export function McpToolCatalog({ data }: { data: McpCatalog }) {
           <div className="grid min-w-0 gap-2 md:grid-cols-2">
             <div className="min-w-0">
               <h5 className="text-xs font-medium text-fg-muted">Arguments</h5>
-              <pre className="max-h-60 overflow-auto rounded-lg bg-surface-muted p-2 text-xs" tabIndex={0}>
-                {json(call.args)}
-              </pre>
+              <JsonView value={call.args} label="Tool call arguments" />
             </div>
             {call.status === 'success' ? (
               <div className="min-w-0">
                 <h5 className="text-xs font-medium text-fg-muted">Result</h5>
-                <pre
-                  className="max-h-60 overflow-auto rounded-lg bg-surface-muted p-2 text-xs"
-                  tabIndex={0}
-                  data-testid="mcp-call-result"
-                >
-                  {json(call.result)}
-                </pre>
+                <div data-testid="mcp-call-result">
+                  <JsonView value={call.result} label="Tool call result" />
+                </div>
               </div>
             ) : null}
           </div>

@@ -1,5 +1,6 @@
 import { McpCapabilitiesSchema, type McpCapabilities, type McpCapabilityRow } from '@mlp/contracts';
 import { Badge, Card } from '../ui/primitives';
+import { CodeBlock } from './CodeBlock';
 
 /** Parses a lab result's `mcpCapabilities`; anything that does not match the contract renders nothing. */
 export function mcpCapabilitiesOf(output: unknown): McpCapabilities | null {
@@ -89,13 +90,9 @@ export function McpCapabilityMatrix({ data }: { data: McpCapabilities }) {
           {op.fallbackReason ? <p className="text-sm [overflow-wrap:anywhere]">{op.fallbackReason}</p> : null}
           {op.error ? <p className="text-sm text-danger [overflow-wrap:anywhere]">{op.error.message}</p> : null}
           {op.content ? (
-            <pre
-              className="max-h-72 overflow-auto whitespace-pre-wrap rounded-lg bg-surface-muted p-2 text-xs"
-              tabIndex={0}
-              data-testid="mcp-operation-content"
-            >
-              {op.content}
-            </pre>
+            <div data-testid="mcp-operation-content">
+              <CodeBlock code={op.content} language="text" label="MCP operation content" lineNumbers={false} />
+            </div>
           ) : null}
         </section>
       ) : null}

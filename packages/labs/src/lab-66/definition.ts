@@ -1,6 +1,7 @@
+import { liveCheckpointDefinition } from '../shared/live-checkpoint-definition.js';
 import type { LabDefinitionInput } from '@mlp/contracts';
 
-export const lab66Definition = {
+export const lab66Definition = liveCheckpointDefinition({
   id: 'lab-66',
   number: 66,
   title: 'React client integration',
@@ -188,4 +189,4 @@ export const lab66Definition = {
     costNotice: 'Free: a disposable local API and Dummy Lab 00. No model or provider key is used.',
   },
   tags: ['client-sdk', 'react', 'sse', 'contracts', 'security'],
-} satisfies LabDefinitionInput;
+} satisfies LabDefinitionInput);

@@ -176,7 +176,7 @@ export function runReducer(state: RunState, action: RunAction): RunState {
 
 /**
  * The complete answer of a run that did not stream tokens (labs that call generate() return it in one
- * piece): a non-empty top-level `text` or `answer` string in the result output, if there is one.
+ * piece), including practical lessons with an additional live checkpoint.
  */
 export function completeAnswer(output: unknown): string | null {
   if (!output || typeof output !== 'object') return null;
@@ -184,5 +184,14 @@ export function completeAnswer(output: unknown): string | null {
     const v = (output as Record<string, unknown>)[key];
     if (typeof v === 'string' && v.trim()) return v;
   }
+  const checkpoint = (output as Record<string, unknown>).liveCheckpoint;
+  if (
+    checkpoint &&
+    typeof checkpoint === 'object' &&
+    'answer' in checkpoint &&
+    typeof checkpoint.answer === 'string' &&
+    checkpoint.answer.trim()
+  )
+    return checkpoint.answer;
   return null;
 }

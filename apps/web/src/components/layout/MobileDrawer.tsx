@@ -62,7 +62,7 @@ export function MobileDrawer({
         aria-modal="true"
         aria-label="Course menu"
         id="mobile-course-menu"
-        className="absolute inset-y-0 left-0 flex w-[min(22rem,88vw)] flex-col overflow-y-auto bg-bg p-4 shadow-xl"
+        className="course-sidebar absolute inset-y-0 left-0 flex w-[min(22rem,88vw)] flex-col overflow-y-auto bg-bg p-4 shadow-xl"
       >
         <div className="mb-3 flex justify-end">
           <button

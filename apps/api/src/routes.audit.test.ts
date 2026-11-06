@@ -95,6 +95,12 @@ describe('route audit (L62)', () => {
     const lab00Input = await labExample('lab-00');
     expect(approvalId).not.toBe('');
     const calls: Record<string, (cookie?: string) => Promise<Response>> = {
+      'POST /api/tutor/answer': (cookie) =>
+        fetch(`${base}/api/tutor/answer`, {
+          method: 'POST',
+          headers: { ...json, 'x-run-subject': 'dev%3Aalice', ...(cookie ? { cookie } : {}) },
+          body: JSON.stringify({ labId: 'lab-00', question: 'Give me a hint', mode: 'offline' }),
+        }),
       'GET /api/progress': (cookie) =>
         fetch(`${base}/api/progress`, {
           headers: { ...json, 'x-progress-subject': 'dev%3Aalice', ...(cookie ? { cookie } : {}) },

@@ -1,0 +1,138 @@
+.poster-viewer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  min-width: 0;
+}
+.poster-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.poster-tools output {
+  min-width: 3rem;
+  text-align: center;
+  font: 600 0.85rem var(--font-mono);
+}
+.poster-viewport {
+  max-width: 100%;
+  max-height: min(72vh, 50rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #90bad9;
+  border-radius: 0.8rem;
+  background: #edf6fc;
+  touch-action: pan-x pan-y;
+}
+.poster-viewport:focus-visible {
+  outline: 3px solid var(--mlp-focus);
+  outline-offset: 3px;
+}
+.poster-stage {
+  margin-inline: auto;
+  flex: none;
+}
+.poster-fit svg {
+  max-height: min(72vh, 50rem);
+}
+.poster-dialog .poster-fit svg {
+  max-height: calc(100dvh - 12rem);
+}
+.poster-viewport:not(.poster-fit) {
+  cursor: grab;
+}
+.poster-viewport:not(.poster-fit):active {
+  cursor: grabbing;
+}
+.poster-dialog {
+  width: calc(100vw - 2rem);
+  max-width: none;
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 1rem;
+  border: 1px solid var(--mlp-border-strong);
+  border-radius: 1rem;
+  background: var(--mlp-surface);
+  color: var(--mlp-fg);
+}
+.poster-dialog::backdrop {
+  background: #081929ce;
+}
+.poster-dialog .poster-tools {
+  margin-block: 1rem;
+}
+.poster-dialog .poster-viewport {
+  max-height: calc(100dvh - 12rem);
+}
+.walkthrough-phases {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+.walkthrough-phases button {
+  width: 100%;
+  height: 100%;
+  min-height: 48px;
+  padding: 0.8rem;
+  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid var(--mlp-border-strong);
+  border-radius: 0.65rem;
+  background: var(--mlp-surface);
+}
+.walkthrough-phases button[aria-current='step'] {
+  border-color: var(--mlp-accent);
+  background: var(--mlp-accent-soft);
+  color: var(--mlp-accent);
+  box-shadow: inset 0 0 0 1px var(--mlp-accent);
+}
+.walkthrough-phases button:focus-visible {
+  outline: 3px solid var(--mlp-focus);
+  outline-offset: 3px;
+}
+.walkthrough-current {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.2rem;
+  border: 1px solid var(--mlp-border);
+  border-radius: 0.8rem;
+  background: var(--mlp-surface-muted);
+  min-width: 0;
+}
+.lesson-tabs [role='tablist'] {
+  flex-wrap: wrap;
+}
+.lesson-tabs > [role='tablist'] > .lesson-stage {
+  flex: 1 1 9rem;
+  min-height: 4.2rem;
+}
+.lesson-stage:nth-child(4) {
+  --stage-color: #17643c;
+  --stage-soft: #e4f6ec;
+}
+.lesson-stage:nth-child(5) {
+  --stage-color: #075e73;
+  --stage-soft: #e0f7fa;
+}
+.lesson-tabs [id$='-panel-infographic'] {
+  border-top-color: #17643c;
+  background: #edf9f2;
+}
+.lesson-tabs [id$='-panel-walkthrough'] {
+  border-top-color: #075e73;
+  background: #edf9fc;
+}
+@media (max-width: 600px) {
+  .walkthrough-phases {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .lesson-tabs > [role='tablist'] > .lesson-stage {
+    flex-basis: 7.7rem;
+    padding-inline: 0.6rem;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+  }
+}

@@ -109,6 +109,8 @@ export function courseMap() {
     learn: `/labs/${lab.id}?tab=learn`,
     run: `/labs/${lab.id}?tab=run`,
     source: `/labs/${lab.id}?tab=source`,
+    infographic: `/labs/${lab.id}?tab=infographic`,
+    walkthrough: `/labs/${lab.id}?tab=walkthrough`,
     referenceFolder: `packages/labs/src/${lab.id}/`,
   }));
 }

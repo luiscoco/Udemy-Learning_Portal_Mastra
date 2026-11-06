@@ -1,3 +1,4 @@
+import { withLiveCheckpoint } from '../shared/live-checkpoint.js';
 import { z } from 'zod';
 import { summarizeChecks, type LabDefinition } from '@mlp/contracts';
 import type { LabImplementation } from '@mlp/lab-engine';
@@ -56,7 +57,7 @@ export interface Lab46Output {
 
 const STACK_OR_PATH = /\n\s+at\s|[A-Za-z]:\\|\/(?:home|Users)\//;
 
-export const lab46: LabImplementation<Lab46Input, Lab46Output, LabServices> = {
+const baseLab46: LabImplementation<Lab46Input, Lab46Output, LabServices> = {
   definition: lab46Definition as LabDefinition,
   inputSchema: Lab46InputSchema,
 
@@ -190,3 +191,5 @@ export const lab46: LabImplementation<Lab46Input, Lab46Output, LabServices> = {
     ]);
   },
 };
+
+export const lab46 = withLiveCheckpoint(baseLab46);

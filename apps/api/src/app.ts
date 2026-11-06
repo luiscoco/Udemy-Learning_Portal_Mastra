@@ -28,11 +28,14 @@ import { ProgressRepository } from './progress-store.js';
 import { SqliteRunJournal } from './run-journal.js';
 import { RunRateLimiter } from './run-rate-limit.js';
 import { httpSecurity } from './http-security.js';
+import { tutorRouter, type TutorProvider } from './tutor.js';
 
 export const SERVICE_NAME = 'mastra-learning-platform-api';
 export const SERVICE_VERSION = '0.1.0';
 
 export interface AppDeps {
+  /** Inject a bounded tutor transport for deterministic API tests. */
+  tutorProvider?: TutorProvider;
   config: AppConfig;
   /** Root for lab stores (tests pass a temporary one). Defaults to <dataDir>/memory. */
   memoryDir?: string;
@@ -187,6 +190,16 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
   );
   mount('/api/labs', labsRouter({ config, registry, runner, pinned, limits }));
   mount('/api/runs', runsRouter({ runner, heartbeatMs: config.SSE_HEARTBEAT_MS, limits }));
+  const tutor = tutorRouter({
+    config,
+    registry,
+    models: baseServices.models,
+    limits,
+    secrets,
+    provider: deps.tutorProvider,
+    accepting: () => !draining,
+  });
+  mount('/api/tutor', tutor.router);
 
   app.use('/api', (req, _res, next) => {
     next(new LabError('NOT_FOUND', `No API route for ${req.method} ${req.originalUrl}`));
@@ -249,6 +262,7 @@ export function createApp({ config, logger, startedAt = Date.now(), ...deps }: A
     readiness,
     drain: () => {
       draining = true;
+      tutor.drain();
     },
   };
 }

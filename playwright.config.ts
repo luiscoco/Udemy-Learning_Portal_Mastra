@@ -17,10 +17,25 @@ const progressAccounts = Object.fromEntries(
   ['desktop', 'mobile'].map((project) => [
     project,
     Object.fromEntries(
-      ['fresh', 'workspace', 'cross', 'offline', 'conflict', 'migration', 'alice', 'bob'].map((kind) => [
-        kind,
-        `p-${project}-${kind}-${progressTag}`,
-      ]),
+      [
+        'fresh',
+        'workspace',
+        'cross',
+        'offline',
+        'conflict',
+        'migration',
+        'alice',
+        'bob',
+        'visual',
+        'format-stream',
+        'format-checkpoint',
+        'tutor',
+        'tutor-live',
+        'tutor-lifecycle',
+        'visual-guides',
+        'visual-guides-state',
+        'visual-guides-export',
+      ].map((kind) => [kind, `p-${project}-${kind}-${progressTag}`]),
     ),
   ]),
 );

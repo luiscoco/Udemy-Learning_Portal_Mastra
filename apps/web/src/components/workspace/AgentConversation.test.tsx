@@ -37,6 +37,24 @@ const data: Data = {
 };
 
 describe('AgentConversation', () => {
+  it('formats agent replies but keeps injected content literal', () => {
+    render(
+      <AgentConversation
+        data={{
+          ...data,
+          messages: data.messages.map((m) => ({
+            ...m,
+            kind: 'result',
+            content: '**Formatted**\n\n```typescript\nconst ready = true;\n```',
+          })),
+        }}
+      />,
+    );
+    const reply = screen.getByLabelText('Content of message 1');
+    expect(reply.querySelector('strong')).toHaveTextContent('Formatted');
+    expect(reply.querySelector('.token.keyword')).toHaveTextContent('const');
+    expect(screen.getByLabelText('Content of message 2').querySelector('strong')).toBeNull();
+  });
   it('only accepts outputs that match the contract', () => {
     expect(agentConversationOf({ agentConversation: data })).toEqual(data);
     expect(agentConversationOf({ agentConversation: { agents: [] } })).toBeNull();

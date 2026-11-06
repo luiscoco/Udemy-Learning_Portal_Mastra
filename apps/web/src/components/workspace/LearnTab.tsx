@@ -4,6 +4,7 @@ import { useProgressActions } from '../../lib/progress-actions';
 import { Prerequisites } from '../Prerequisites';
 import { Badge, Button, Card } from '../ui/primitives';
 import { Section } from './Section';
+import { CodeBlock } from './CodeBlock';
 
 export function LearnTab({ definition }: { definition: LabDefinition }) {
   const { record, update } = useProgressActions(definition.id);
@@ -33,9 +34,7 @@ export function LearnTab({ definition }: { definition: LabDefinition }) {
       {g.diagram ? (
         <Section title="Diagram" id={id('diagram')}>
           <figure className="overflow-hidden rounded-xl border border-border">
-            <pre className="overflow-x-auto bg-code-bg p-4 font-mono text-xs leading-5 text-code-fg" tabIndex={0}>
-              {g.diagram.source}
-            </pre>
+            <CodeBlock code={g.diagram.source} language={g.diagram.kind} label="Diagram source" />
             <figcaption className="border-t border-border bg-surface px-4 py-2 text-sm text-fg-muted">
               {g.diagram.caption}
               {g.diagram.kind === 'mermaid' ? ' (Mermaid source — paste into mermaid.live to render)' : ''}

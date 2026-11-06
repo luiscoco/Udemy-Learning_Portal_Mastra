@@ -2,6 +2,8 @@
 
 Exact versions are locked in `package-lock.json` (`save-exact=true`). This table records what was tested together.
 
+All 75 lessons plus orientation support optional live execution. The practical-only lessons use an application-level live checkpoint adapter on `@mastra/core` 1.79.0 `Agent.generate`, with `abortSignal`, `maxSteps: 1` and bounded `modelSettings` (2,048 output tokens, no automatic retry). Installed declarations and the [official generate reference](https://mastra.ai/reference/agents/generate) were checked. This does not add a native Mastra feature or claim that a local fixture is a remote deployment; see `packages/labs/src/shared/live-checkpoint.md`.
+
 | Component | Version | Notes |
 | --- | --- | --- |
 | Node.js | 24.21.0 (CI: 24.x) | `@mastra/core` requires `>=22.13.0` |
@@ -12,6 +14,9 @@ Exact versions are locked in `package-lock.json` (`save-exact=true`). This table
 | zod | 4.6.7 | |
 | express | 5.3.0 | |
 | react / react-dom | 19.3.1 | |
+| AI Tutor | @mastra/core 1.79.0, existing ModelService | Server-only Agent.stream, textStream, finishReason, error, abortSignal, maxSteps and modelSettings (2,048 output tokens, zero retries). Checked installed declarations and packaged MastraModelOutput reference against the official streaming guide. No tools, memory, remote sessions or new SDK dependencies. Native dialog + typed POST SSE client; explicit terminal states, bounded questions/answers, prefix-safe secret masking and best-effort provider abort. See AI-TUTOR.md for verification and differences from the reference portal. |
+| Assistant Markdown | react-markdown 10.1.0, remark-gfm 4.0.1 | React >=18 peer supported; safe React elements, `skipHtml`, default URL safety plus a restricted link policy; no raw HTML plugin or external image loading. Tested with streamed and completed replies. |
+| Code highlighting | prism-react-renderer 2.4.1, prismjs 1.30.0 | Official bundled grammars plus TypeScript/JSX/TSX, JSON, Bash, Python, SQL, YAML and Markdown components. Prism manual mode prevents automatic DOM mutation; React renders tokens. Unknown languages and large blocks fall back to literal text. |
 | vite | 8.3.4 | |
 | tailwindcss | 4.3.3 | via `@tailwindcss/vite` |
 | typescript | 6.0.3 | **not 7.x**: typescript-eslint 8.71.2 supports `<6.1.0` |
@@ -158,6 +163,8 @@ The API directly pins `libsql` 0.5.29, already present transitively; no Mastra d
 The application limiter uses the installed Express 5.3.0 RequestHandler, req.ip and existing TRUST_PROXY setting, Node isIP/crypto and a monotonic clock. The [official Express proxy guide](https://expressjs.com/en/guide/behind-proxies/) defines forwarding-header trust behavior; IPv6 /64 accounting, bounded fixed windows and canonical 429 feedback are application adapters. No package, lockfile or Mastra changes are required.
 
 ## Local course release compatibility
+
+The visual study guides use existing React/SVG, browser canvas and native dialog APIs with the installed syntax highlighter. Teaching snippets come from the existing typed Source API and checked non-solution lesson references. No Mastra or dependency versions change; no new SDK methods or provider model strings are introduced. See [VISUAL-GUIDES.md](VISUAL-GUIDES.md) for browser evidence and export limitations.
 
 Core 1.79.0, MCP 2.8.0 and direct MCP client 2.4.0 supersede the earlier historical versions recorded in the lab-specific evidence above. Framework signatures were checked in installed declarations and `@mastra/core/dist/docs/references/reference-tools-mcp-client.md`; the public reference was also consulted. Existing native methods remain in use. The connection fixture now stops accepting sockets before draining, and the facade maps the newly thrown unknown-tool protocol error into the established learner result. ZIP tooling uses exact dev-only fflate 0.8.2 (`zipSync`/`unzipSync`) and does not enter the web bundle. Full release results are in COURSE-RELEASE-IMPLEMENTATION.md.
 

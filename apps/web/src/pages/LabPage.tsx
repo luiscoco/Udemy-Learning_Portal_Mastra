@@ -11,11 +11,12 @@ import { useAsync } from '../lib/use-async';
 import { useDocumentTitle } from '../lib/use-document-title';
 import { NotFoundPage } from './NotFoundPage';
 import { useStorageScope } from '../lib/progress-scope';
+import { AiTutor } from '../components/tutor/AiTutor';
 
 function LabHeader({ lab, children }: { lab: CatalogLab; children?: ReactNode }) {
   const mod = getModule(lab.moduleId);
   return (
-    <header className="flex flex-col gap-3">
+    <header className="lesson-hero flex flex-col gap-3">
       <p className="text-sm font-semibold uppercase tracking-wide text-accent">
         {mod?.number === 0 ? 'Platform orientation' : `Module ${String(mod?.number ?? 0).padStart(2, '0')} · ${mod?.title ?? ''}`}
       </p>
@@ -69,6 +70,7 @@ export function AvailableLab({ lab, definition }: { lab: CatalogLab; definition:
     <div className="flex flex-col gap-8">
       <LabHeader lab={lab}>
         <p className="max-w-3xl text-lg text-fg-muted">{definition.summary}</p>
+        <AiTutor key={`tutor:${definition.id}:${scope}`} definition={definition} />
         <div className="flex flex-wrap gap-2">
           {definition.execution.modes.includes('offline') ? <Badge tone="accent">Offline mode · free</Badge> : null}
           {definition.execution.modes.includes('live') ? <Badge tone="warning">Live mode optional</Badge> : null}

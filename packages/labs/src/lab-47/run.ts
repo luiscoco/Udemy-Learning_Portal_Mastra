@@ -1,3 +1,4 @@
+import { withLiveCheckpoint } from '../shared/live-checkpoint.js';
 import { z } from 'zod';
 import { noopLogger } from '@mastra/core/logger';
 import { MCPClient } from '@mastra/mcp';
@@ -42,7 +43,7 @@ export interface Lab47Output {
 
 const totalCalls = (c: Record<string, number>) => Object.values(c).reduce((a, b) => a + b, 0);
 
-export const lab47: LabImplementation<Lab47Input, Lab47Output, LabServices> = {
+const baseLab47: LabImplementation<Lab47Input, Lab47Output, LabServices> = {
   definition: lab47Definition as LabDefinition,
   inputSchema: Lab47InputSchema,
 
@@ -246,3 +247,5 @@ export const lab47: LabImplementation<Lab47Input, Lab47Output, LabServices> = {
     ]);
   },
 };
+
+export const lab47 = withLiveCheckpoint(baseLab47);

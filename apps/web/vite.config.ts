@@ -1,4 +1,5 @@
 import { Agent } from 'node:http';
+import { Agent as HttpsAgent } from 'node:https';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
@@ -7,7 +8,8 @@ const apiTarget = process.env.API_PROXY_TARGET ?? 'http://127.0.0.1:8787';
 
 // Reuse upstream connections: without keep-alive the dev proxy opens a new socket per request,
 // and on Windows thousands of TIME_WAIT sockets can exhaust ephemeral ports during long sessions.
-const keepAliveAgent = new Agent({ keepAlive: true, maxSockets: 64 });
+const ProxyAgent = new URL(apiTarget).protocol === 'https:' ? HttpsAgent : Agent;
+const keepAliveAgent = new ProxyAgent({ keepAlive: true, maxSockets: 64 });
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],

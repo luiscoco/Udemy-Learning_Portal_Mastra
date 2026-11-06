@@ -7,7 +7,7 @@ import { cn } from '../lib/cn';
 let lastFocusedPath: string | null = null;
 
 /** Page h1 that receives focus after client-side navigation to a new path (not on the initial load). */
-export function PageHeading({ children, className }: { children: ReactNode; className?: string }) {
+export function PageHeading({ children, className, id }: { children: ReactNode; className?: string; id?: string }) {
   const ref = useRef<HTMLHeadingElement>(null);
   const { pathname } = useLocation();
   useEffect(() => {
@@ -20,7 +20,7 @@ export function PageHeading({ children, className }: { children: ReactNode; clas
     ref.current?.focus();
   }, [pathname]);
   return (
-    <h1 ref={ref} tabIndex={-1} className={cn('text-3xl font-semibold tracking-tight text-fg sm:text-4xl', className)}>
+    <h1 id={id} ref={ref} tabIndex={-1} className={cn('text-3xl font-semibold tracking-tight text-fg sm:text-4xl', className)}>
       {children}
     </h1>
   );

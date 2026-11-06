@@ -43,7 +43,7 @@ function onRovingKeyDown(e: KeyboardEvent<HTMLElement>) {
 export function CourseProgressSummary() {
   const p = useCourseProgress();
   return (
-    <section aria-label="Course progress" className="rounded-xl border border-border bg-surface p-4">
+    <section aria-label="Course progress" className="course-progress rounded-xl border border-border bg-surface p-4">
       <p className="text-sm font-medium text-fg">Course progress</p>
       <p className="mt-1 text-xs text-fg-muted" data-testid="progress-summary">
         {p.completedLabs} of {p.availableLabs} available {p.availableLabs === 1 ? 'lab' : 'labs'} completed
@@ -85,12 +85,13 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const toggle = useCallback((id: string) => setExpanded((s) => ({ ...s, [id]: !s[id] })), []);
 
   return (
-    <nav aria-label="Course" className="flex flex-col gap-4" onKeyDown={onRovingKeyDown}>
+    <nav aria-label="Course" className="course-navigation flex flex-col gap-4" onKeyDown={onRovingKeyDown}>
+      <p className="px-3 text-[11px] font-semibold tracking-[0.18em] text-fg-subtle">YOUR LEARNING PATH</p>
       <Link
         to="/"
         data-nav-item
         onClick={onNavigate}
-        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-fg hover:bg-surface-muted"
+        className="nav-home flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-semibold text-fg hover:bg-surface-muted"
       >
         <HomeIcon className="text-fg-muted" /> Home
       </Link>
@@ -111,7 +112,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                 aria-expanded={isOpen}
                 aria-controls={listId}
                 onClick={() => toggle(mod.id)}
-                className="flex w-full items-start gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-surface-muted"
+                className="module-heading flex w-full items-start gap-2 rounded-lg px-3 py-3 text-left text-sm hover:bg-surface-muted"
               >
                 <ChevronIcon className={cn('mt-1 shrink-0 text-fg-subtle transition-transform', isOpen && 'rotate-90')} />
                 <span className="flex-1">
@@ -126,7 +127,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                   </span>
                 </span>
               </button>
-              <ul id={listId} hidden={!isOpen} className="mt-1 ml-5 flex flex-col gap-0.5 border-l border-border pl-2">
+              <ul id={listId} hidden={!isOpen} className="mt-2 flex flex-col gap-2">
                 {labs.map((lab) => {
                   const status = displayStatus(lab, progress[lab.id]?.status);
                   return (
@@ -138,7 +139,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                         aria-label={`${lab.id}: ${lab.title} (${STATUS_LABEL[status]})`}
                         className={({ isActive }) =>
                           cn(
-                            'flex items-start gap-2 rounded-md px-2 py-1.5 text-sm',
+                            'lesson-link flex items-start gap-2 rounded-lg px-3 py-3 text-sm',
                             isActive
                               ? 'bg-accent-soft font-medium text-accent'
                               : 'text-fg-muted hover:bg-surface-muted hover:text-fg',
@@ -151,7 +152,10 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                           className={cn('mt-1 shrink-0', status === 'completed' ? 'text-success' : 'text-fg-subtle')}
                         />
                         <span className={cn(!lab.titleConfirmed && 'italic')}>
-                          <span className="font-mono text-xs">{String(lab.number).padStart(2, '0')}</span> {lab.title}
+                          <span className="lesson-number font-mono text-xs" aria-hidden="true">
+                            {String(lab.number).padStart(2, '0')}
+                          </span>{' '}
+                          {lab.title}
                         </span>
                       </NavLink>
                     </li>

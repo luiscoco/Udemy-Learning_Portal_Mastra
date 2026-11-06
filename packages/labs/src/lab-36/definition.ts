@@ -1,6 +1,7 @@
+import { liveCheckpointDefinition } from '../shared/live-checkpoint-definition.js';
 import type { LabDefinitionInput } from '@mlp/contracts';
 
-export const lab36Definition = {
+export const lab36Definition = liveCheckpointDefinition({
   id: 'lab-36',
   number: 36,
   title: 'Document ingestion',
@@ -169,4 +170,4 @@ export const lab36Definition = {
     costNotice: 'No model is called. Uploaded files are processed on this server; ingested documents are stored in the local course library under the data directory.',
   },
   tags: ['rag', 'ingestion', 'uploads', 'validation', 'pdf', 'security'],
-} satisfies LabDefinitionInput;
+} satisfies LabDefinitionInput);

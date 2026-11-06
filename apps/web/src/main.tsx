@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { createBrowserRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import './index.css';
+import './portal.css';
 import { ProgressProvider } from './lib/progress-context';
 import { SyncedProgressStore } from './lib/synced-progress-store';
 import { api } from './api/client';

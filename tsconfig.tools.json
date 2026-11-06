@@ -4,6 +4,7 @@
     "allowImportingTsExtensions": true
   },
   "include": [
+    "scripts/dev-web.ts",
     "scripts/course-release.ts",
     "scripts/course-release-drill.ts",
     "scripts/make-secrets.ts",

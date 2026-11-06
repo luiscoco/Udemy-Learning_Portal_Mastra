@@ -1,3 +1,4 @@
+import { withLiveCheckpoint } from '../shared/live-checkpoint.js';
 import { z } from 'zod';
 import { noopLogger } from '@mastra/core/logger';
 import { MCPClient } from '@mastra/mcp';
@@ -150,7 +151,7 @@ async function runOperation(mcp: MCPClient, input: Lab48Input, advertised: Recor
   }
 }
 
-export const lab48: LabImplementation<Lab48Input, Lab48Output, LabServices> = {
+const baseLab48: LabImplementation<Lab48Input, Lab48Output, LabServices> = {
   definition: lab48Definition as LabDefinition,
   inputSchema: Lab48InputSchema,
 
@@ -298,3 +299,5 @@ export const lab48: LabImplementation<Lab48Input, Lab48Output, LabServices> = {
 async function closeQuietly(f: LocalFixture) {
   await f.close().catch(() => undefined);
 }
+
+export const lab48 = withLiveCheckpoint(baseLab48);

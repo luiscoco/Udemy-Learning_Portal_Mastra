@@ -1,6 +1,7 @@
+import { liveCheckpointDefinition } from '../shared/live-checkpoint-definition.js';
 import type { LabDefinitionInput } from '@mlp/contracts';
 
-export const lab61Definition = {
+export const lab61Definition = liveCheckpointDefinition({
   id: 'lab-61',
   number: 61,
   title: 'Authenticated API',
@@ -238,4 +239,4 @@ export const lab61Definition = {
       'Free: real HTTP requests to a disposable local server only. No model, provider key or external network service is used.',
   },
   tags: ['security', 'authentication', 'sessions', 'authorization'],
-} satisfies LabDefinitionInput;
+} satisfies LabDefinitionInput);

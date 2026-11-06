@@ -2,16 +2,16 @@ import type { ExecutionEvent } from '@mlp/contracts';
 import type { RunState } from '../../features/run/run-state';
 import { cn } from '../../lib/cn';
 import { Badge } from '../ui/primitives';
+import { CodeBlock } from './CodeBlock';
 
 export function JsonView({ value, label }: { value: unknown; label: string }) {
   return (
-    <pre
-      tabIndex={0}
-      aria-label={label}
-      className="max-h-80 max-w-full overflow-auto rounded-lg bg-code-bg p-3 font-mono text-xs leading-5 text-code-fg"
-    >
-      {value === undefined ? '—' : JSON.stringify(value, null, 2)}
-    </pre>
+    <CodeBlock
+      code={value === undefined ? '—' : (JSON.stringify(value, null, 2) ?? '—')}
+      language="json"
+      label={label}
+      lineNumbers={false}
+    />
   );
 }
 

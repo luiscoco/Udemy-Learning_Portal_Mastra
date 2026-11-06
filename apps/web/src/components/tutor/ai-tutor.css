@@ -1,0 +1,32 @@
+.ai-tutor-panel {
+  width: min(44rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  margin: auto 1rem auto auto;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--mlp-border-strong);
+  border-radius: 1rem;
+  background: var(--mlp-surface);
+  color: var(--mlp-fg);
+  box-shadow: 0 24px 90px #0006;
+  overflow-wrap: anywhere;
+}
+.ai-tutor-panel::backdrop {
+  background: #07101bbb;
+  backdrop-filter: blur(3px);
+}
+.ai-tutor-panel select,
+.ai-tutor-panel textarea {
+  min-height: 44px;
+}
+.ai-tutor-panel summary:focus-visible {
+  outline: 2px solid var(--mlp-focus);
+  outline-offset: 4px;
+}
+@media (max-width: 420px) {
+  .ai-tutor-panel {
+    width: calc(100vw - 1rem);
+    max-height: calc(100dvh - 1rem);
+    margin: auto 0.5rem;
+  }
+}

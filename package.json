@@ -13,7 +13,8 @@
     "examples/*"
   ],
   "scripts": {
-    "dev": "concurrently -n api,web -c blue,green \"npm:dev -w @mlp/api\" \"npm:dev -w @mlp/web\"",
+    "dev": "concurrently --kill-others -n api,web -c blue,green \"npm:dev -w @mlp/api\" \"npm:dev:web\"",
+    "dev:web": "tsx scripts/dev-web.ts",
     "build": "npm run build -w @mlp/api && npm run build -w @mlp/web",
     "start": "npm run start -w @mlp/api",
     "lint": "eslint . --max-warnings=0",

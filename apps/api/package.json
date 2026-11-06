@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch --clear-screen=false src/server.ts",
+    "dev": "tsup --watch src --watch ../../packages --onSuccess \"node dist/server.js\"",
     "build": "tsup",
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json",

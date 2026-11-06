@@ -1,3 +1,4 @@
+import { withLiveCheckpoint } from '../shared/live-checkpoint.js';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { z } from 'zod';
@@ -41,7 +42,7 @@ export function repoRoot(): string {
   return join(labsPackageDir(), '..', '..');
 }
 
-export const lab02: LabImplementation<Lab02Input, Lab02Output> = {
+const baseLab02: LabImplementation<Lab02Input, Lab02Output> = {
   definition: lab02Definition as LabDefinition,
   inputSchema: Lab02InputSchema,
 
@@ -159,3 +160,5 @@ export const lab02: LabImplementation<Lab02Input, Lab02Output> = {
     ]);
   },
 };
+
+export const lab02 = withLiveCheckpoint(baseLab02);

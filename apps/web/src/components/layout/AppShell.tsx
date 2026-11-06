@@ -28,7 +28,10 @@ function ThemeToggle() {
 function useLegacyLessonRedirect(): string | null {
   const [params] = useSearchParams();
   const lesson = params.get('lesson');
-  return lesson ? `/labs/${encodeURIComponent(lesson.trim().toLowerCase())}` : null;
+  const tab = params.get('tab');
+  return lesson
+    ? `/labs/${encodeURIComponent(lesson.trim().toLowerCase())}${tab ? `?${new URLSearchParams({ tab })}` : ''}`
+    : null;
 }
 
 export function AppShell({ children }: { children?: ReactNode }) {
@@ -43,7 +46,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
   if (redirect) return <Navigate to={redirect} replace />;
 
   return (
-    <div className="min-h-dvh bg-bg text-fg">
+    <div className="portal-shell min-h-dvh bg-bg text-fg">
       <a
         href="#main"
         onClick={(e) => {
@@ -54,8 +57,8 @@ export function AppShell({ children }: { children?: ReactNode }) {
       >
         Skip to content
       </a>
-      <header className="sticky top-0 z-20 border-b border-border bg-surface/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-[90rem] items-center gap-3 px-4 sm:px-6">
+      <header className="portal-header sticky top-0 z-20 border-b border-border bg-surface/95 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-[110rem] items-center gap-3 px-4 sm:px-6">
           <button
             ref={menuButtonRef}
             type="button"
@@ -67,9 +70,15 @@ export function AppShell({ children }: { children?: ReactNode }) {
           >
             <MenuIcon />
           </button>
-          <Link to="/" aria-label="Mastra Learning home" className="flex items-center gap-2 font-semibold text-fg">
+          <Link to="/" className="flex items-center gap-2 font-semibold text-fg">
             <LogoMark className="text-2xl" />
-            <span className="hidden sm:inline">Mastra Learning</span>
+            <span className="sr-only sm:not-sr-only">
+              Mastra Learning{' '}
+              <small className="hidden text-[10px] font-medium tracking-[0.16em] text-fg-muted sm:block">
+                AI AGENTS · THE LEARNING SERIES
+              </small>
+            </span>
+            <span className="sr-only"> home</span>
           </Link>
           <div className="flex flex-1 justify-center px-2">
             <SearchBox />
@@ -83,14 +92,14 @@ export function AppShell({ children }: { children?: ReactNode }) {
         <Sidebar onNavigate={closeMenu} />
       </MobileDrawer>
 
-      <div className="mx-auto flex max-w-[90rem] gap-8 px-4 sm:px-6">
+      <div className="mx-auto flex max-w-[110rem] gap-7 px-4 sm:px-6">
         <aside
           aria-label="Course navigation"
-          className="sticky top-16 hidden h-[calc(100dvh-4rem)] w-80 shrink-0 overflow-y-auto py-6 lg:block"
+          className="course-sidebar sticky top-16 hidden h-[calc(100dvh-4rem)] w-72 shrink-0 overflow-y-auto py-6 lg:block"
         >
           <Sidebar />
         </aside>
-        <main id="main" tabIndex={-1} className="min-w-0 flex-1 py-8 lg:py-10">
+        <main id="main" tabIndex={-1} className="portal-main min-w-0 flex-1 py-6 lg:py-8">
           <ProgressSyncNotice />
           {children ?? <Outlet />}
         </main>

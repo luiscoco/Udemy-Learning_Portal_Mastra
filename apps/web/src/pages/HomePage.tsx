@@ -5,6 +5,7 @@ import { displayStatus, LabStatusIcon, STATUS_LABEL } from '../components/LabSta
 import { PageHeading } from '../components/PageHeading';
 import { CourseProgressSummary } from '../components/layout/Sidebar';
 import { Badge, Card } from '../components/ui/primitives';
+import { LogoMark } from '../components/ui/icons';
 import { cn } from '../lib/cn';
 import { useAllProgress } from '../lib/progress-context';
 import { useDocumentTitle } from '../lib/use-document-title';
@@ -18,9 +19,17 @@ export function HomePage() {
 
   return (
     <div className="flex flex-col gap-10">
-      <section aria-labelledby="home-title" className="rounded-3xl border border-border bg-surface px-6 py-10 sm:px-10">
+      <section
+        aria-labelledby="home-title"
+        className="portal-hero rounded-3xl border border-border bg-surface px-6 py-10 sm:px-10"
+      >
+        <div className="hero-mark mb-6" aria-hidden="true">
+          <LogoMark />
+        </div>
         <p className="text-sm font-semibold uppercase tracking-wide text-accent">Mastra AI Agents 2026</p>
-        <PageHeading className="mt-2 max-w-3xl">Build production AI agents with Mastra, one lab at a time</PageHeading>
+        <PageHeading id="home-title" className="mt-2 max-w-3xl">
+          Build production AI agents with Mastra, one lab at a time
+        </PageHeading>
         <p className="mt-4 max-w-2xl text-lg text-fg-muted">
           Fifteen modules and 75 hands-on labs. Every lab runs on the server with a free offline mode, streams its events live,
           and checks your result automatically.
@@ -45,7 +54,7 @@ export function HomePage() {
 
       <div className="grid gap-6 md:grid-cols-2">
         <CourseProgressSummary />
-        <Card className="p-4">
+        <Card className="paper-surface platform-card p-5">
           <h2 className="mb-3 text-sm font-medium">Platform status</h2>
           <HealthStatus />
         </Card>
@@ -62,7 +71,7 @@ export function HomePage() {
             const available = labs.filter((l) => l.status === 'available').length;
             return (
               <li key={mod.id}>
-                <Card className="h-full p-5">
+                <Card className={cn('paper-surface module-card h-full p-5', `module-tone-${mod.number % 3}`)}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-fg-subtle">

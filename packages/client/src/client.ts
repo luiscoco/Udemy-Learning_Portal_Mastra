@@ -31,6 +31,14 @@ import type { z } from 'zod';
 export type StartRunRequest = z.input<typeof ExecutionRequestSchema>;
 import { ApiClientError, toApiClientError } from './errors.js';
 import { SseParser } from './sse.js';
+import {
+  TutorSettingsSchema,
+  TutorEventSchema,
+  TutorRequestSchema,
+  RUN_SUBJECT_HEADER as TUTOR_SUBJECT_HEADER,
+  type TutorRequest,
+  type TutorEvent,
+} from '@mlp/contracts';
 
 export interface ApiClientOptions {
   /** API origin, e.g. "http://127.0.0.1:8787". Default "": same origin as the page. */
@@ -157,7 +165,83 @@ export function createApiClient(options: ApiClientOptions = {}) {
     }
   }
 
+  /** Tutor requests are never replayed/retried automatically: a retry could incur another charge. */
+  async function tutorAnswer(subject: string, body: TutorRequest, onEvent: (event: TutorEvent) => void, signal?: AbortSignal) {
+    const input = TutorRequestSchema.parse(body);
+    const res = await send('/api/tutor/answer', {
+      method: 'POST',
+      headers: {
+        accept: 'text/event-stream',
+        'content-type': 'application/json',
+        [TUTOR_SUBJECT_HEADER]: enc(subject),
+      },
+      body: JSON.stringify(input),
+      signal,
+    });
+    if (!res.ok) throw await toApiClientError(res);
+    if (!res.body || !res.headers.get('content-type')?.includes('text/event-stream'))
+      throw new ApiClientError('CONTRACT', 'Tutor did not return an event stream.', res.status);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    const parser = new SseParser();
+    let seq = 0,
+      requestId = '',
+      bytes = 0;
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (signal?.aborted) throw signal.reason;
+        if (done)
+          throw new ApiClientError(
+            'NETWORK',
+            'Tutor connection interrupted. Partial text is incomplete; retry explicitly.',
+            0,
+            undefined,
+            true,
+          );
+        bytes += value.byteLength;
+        if (bytes > 16 * 1024 * 1024) throw new ApiClientError('CONTRACT', 'Tutor stream exceeded its size limit.', 0);
+        for (const frame of parser.push(decoder.decode(value, { stream: true }))) {
+          if (signal?.aborted) throw signal.reason;
+          let raw: unknown;
+          try {
+            raw = JSON.parse(frame.data);
+          } catch {
+            throw new ApiClientError('CONTRACT', 'Invalid tutor stream JSON.', 0);
+          }
+          const parsed = TutorEventSchema.safeParse(raw);
+          if (!parsed.success || parsed.data.seq !== seq || seq > 512)
+            throw new ApiClientError('CONTRACT', 'Invalid tutor stream event or sequence.', 0);
+          const event = parsed.data;
+          if (seq === 0) {
+            if (
+              event.type !== 'started' ||
+              event.labId !== input.labId ||
+              event.mode !== input.mode ||
+              event.simulated !== (input.mode === 'offline') ||
+              event.modelId !== (input.mode === 'live' ? input.modelId : null)
+            )
+              throw new ApiClientError('CONTRACT', 'Tutor response does not match this request.', 0);
+            requestId = event.requestId;
+          } else if (event.type === 'started' || event.requestId !== requestId) {
+            throw new ApiClientError('CONTRACT', 'Tutor response identity changed.', 0);
+          }
+          seq++;
+          onEvent(event);
+          if (event.type === 'complete' || event.type === 'error') return;
+        }
+      }
+    } finally {
+      await reader.cancel().catch(() => undefined);
+      reader.releaseLock();
+    }
+  }
+
   return {
+    tutor: {
+      settings: (signal?: AbortSignal) => request('GET', '/api/tutor/settings', TutorSettingsSchema, { signal }),
+      answer: tutorAnswer,
+    },
     health: (signal?: AbortSignal) => request('GET', '/api/health', HealthResponseSchema, { signal }),
     /** Readiness (L72): a 503 "not-ready" answer is returned as data, with the failing checks. */
     ready: (signal?: AbortSignal) => request('GET', '/api/ready', ReadinessResponseSchema, { signal, acceptStatuses: [503] }),

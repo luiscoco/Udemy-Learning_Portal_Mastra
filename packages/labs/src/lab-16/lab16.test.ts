@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import { LabRegistry, LabRunner } from '@mlp/lab-engine';
 import { createLabServices } from '../services.js';
 import { buildInstructions, formatFacts, normalize, SupportContextSchema } from './profiles.js';
@@ -41,7 +41,18 @@ describe('lab-16 profiles (unit)', () => {
 
 describe('lab-16 parallel requests', () => {
   it('parallel requests preserve independent instructions (DoD)', async () => {
-    const { output, validation, events } = await run();
+    // Control the scripted model's delays: real scheduling under a busy full suite can reorder
+    // 40 ms timers without changing the instruction isolation being demonstrated.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    let result: Awaited<ReturnType<typeof run>>;
+    try {
+      const pending = run();
+      await vi.advanceTimersByTimeAsync(500);
+      result = await pending;
+    } finally {
+      vi.useRealTimers();
+    }
+    const { output, validation, events } = result;
     expect(validation.passed).toBe(true);
     const [a, b, c] = output.requests;
     expect(a!.instructions).toContain('You are Ava,');

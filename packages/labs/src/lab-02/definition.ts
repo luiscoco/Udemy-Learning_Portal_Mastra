@@ -1,9 +1,10 @@
+import { liveCheckpointDefinition } from '../shared/live-checkpoint-definition.js';
 import type { LabDefinitionInput } from '@mlp/contracts';
 import { ENTRY_FILES, LAYER_DIRS } from './inspect.js';
 
 const dirOptions = LAYER_DIRS.map((d) => ({ value: d, label: d }));
 
-export const lab02Definition = {
+export const lab02Definition = liveCheckpointDefinition({
   id: 'lab-02',
   number: 2,
   title: 'Explore project architecture',
@@ -177,4 +178,4 @@ export const lab02Definition = {
     costNotice: 'Free: the server reads repository files; no AI provider is called.',
   },
   tags: ['architecture', 'security', 'env'],
-} satisfies LabDefinitionInput;
+} satisfies LabDefinitionInput);

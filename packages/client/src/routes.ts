@@ -3,6 +3,8 @@
  * routes the server registers, so a new route cannot ship without a typed client method.
  */
 export const CLIENT_ROUTES = {
+  'GET /api/tutor/settings': 'tutor.settings',
+  'POST /api/tutor/answer': 'tutor.answer',
   'GET /api/health': 'health',
   'GET /api/ready': 'ready',
   'GET /api/catalog': 'catalog',

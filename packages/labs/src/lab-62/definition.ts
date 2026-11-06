@@ -1,6 +1,7 @@
+import { liveCheckpointDefinition } from '../shared/live-checkpoint-definition.js';
 import type { LabDefinitionInput } from '@mlp/contracts';
 
-export const lab62Definition = {
+export const lab62Definition = liveCheckpointDefinition({
   id: 'lab-62',
   number: 62,
   title: 'Tenant isolation',
@@ -218,4 +219,4 @@ export const lab62Definition = {
     costNotice: 'Free: local LibSQL files and an in-process runner only. No model or provider key is used.',
   },
   tags: ['security', 'multi-tenancy', 'authorization', 'storage'],
-} satisfies LabDefinitionInput;
+} satisfies LabDefinitionInput);

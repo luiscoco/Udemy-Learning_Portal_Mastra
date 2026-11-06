@@ -1,5 +1,6 @@
 import { AgentConversationSchema, type AgentConversation as Conversation, type ConversationMessage } from '@mlp/contracts';
 import { Badge, Card } from '../ui/primitives';
+import { FormattedResponse } from './FormattedResponse';
 
 /** Parses a lab result's `agentConversation`; anything that does not match the contract renders nothing. */
 export function agentConversationOf(output: unknown): Conversation | null {
@@ -27,7 +28,7 @@ const OUTCOME = {
   failed: { tone: 'danger', text: 'Failed' },
 } as const;
 
-/** Agents, every message in order (sender → recipient, step, round) and the outcome. All content is rendered as text. */
+/** Agent replies use safe Markdown; injected evidence remains literal text. */
 export function AgentConversation({ data }: { data: Conversation }) {
   const name = (id: string) => data.agents.find((a) => a.id === id)?.name ?? id;
   const outcome = OUTCOME[data.outcome.status];
@@ -60,13 +61,13 @@ export function AgentConversation({ data }: { data: Conversation }) {
                   {m.round === null ? '' : `, round ${m.round}`})
                 </span>
               </summary>
-              <pre
+              <div
                 className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap rounded bg-surface-muted p-2 text-xs [overflow-wrap:anywhere]"
                 tabIndex={0}
                 aria-label={`Content of message ${m.seq}`}
               >
-                {m.content}
-              </pre>
+                {m.injected || m.kind === 'task' ? m.content : <FormattedResponse text={m.content} />}
+              </div>
             </details>
           </li>
         ))}
@@ -76,7 +77,7 @@ export function AgentConversation({ data }: { data: Conversation }) {
         <p className="text-sm font-semibold">
           Outcome: <Badge tone={outcome.tone}>{outcome.text}</Badge>
         </p>
-        {data.outcome.text ? <p className="mt-1 text-sm [overflow-wrap:anywhere]">{data.outcome.text}</p> : null}
+        {data.outcome.text ? <FormattedResponse text={data.outcome.text} /> : null}
         {data.outcome.issues.length ? (
           <ul className="mt-1 list-disc pl-5 text-sm text-danger" aria-label="Remaining issues">
             {data.outcome.issues.map((i, k) => (

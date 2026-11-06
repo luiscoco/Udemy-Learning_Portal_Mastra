@@ -15,7 +15,7 @@ export function Section({
   actions?: ReactNode;
 }) {
   return (
-    <section aria-labelledby={id} className={cn('flex flex-col gap-3', className)}>
+    <section aria-labelledby={id} className={cn('learning-section flex flex-col gap-4', className)}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id={id} className="text-lg font-semibold text-fg">
           {title}

@@ -1,6 +1,7 @@
+import { liveCheckpointDefinition } from '../shared/live-checkpoint-definition.js';
 import type { LabDefinitionInput } from '@mlp/contracts';
 
-export const lab00Definition = {
+export const lab00Definition = liveCheckpointDefinition({
   id: 'lab-00',
   number: 0,
   title: 'Dummy Lab 00',
@@ -200,4 +201,4 @@ export const lab00Definition = {
     costNotice: 'Free: runs entirely offline with no AI provider calls.',
   },
   tags: ['platform', 'events', 'offline'],
-} satisfies LabDefinitionInput;
+} satisfies LabDefinitionInput);

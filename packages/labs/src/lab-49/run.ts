@@ -1,3 +1,4 @@
+import { withLiveCheckpoint } from '../shared/live-checkpoint.js';
 import { z } from 'zod';
 import { summarizeChecks, type LabDefinition, type McpCatalog } from '@mlp/contracts';
 import type { LabImplementation } from '@mlp/lab-engine';
@@ -42,7 +43,7 @@ export interface Lab49Output {
   teardown: { externalClientClosed: boolean; facadeClosed: boolean; openSockets: number };
 }
 
-export const lab49: LabImplementation<Lab49Input, Lab49Output, LabServices> = {
+const baseLab49: LabImplementation<Lab49Input, Lab49Output, LabServices> = {
   definition: lab49Definition as LabDefinition,
   inputSchema: Lab49InputSchema,
 
@@ -202,3 +203,5 @@ export const lab49: LabImplementation<Lab49Input, Lab49Output, LabServices> = {
     ]);
   },
 };
+
+export const lab49 = withLiveCheckpoint(baseLab49);

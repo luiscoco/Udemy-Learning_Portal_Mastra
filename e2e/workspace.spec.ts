@@ -83,11 +83,15 @@ test('Dummy Lab 00 end-to-end: learn, run, cancel, source, quiz, persistent prog
 });
 
 test('API errors surface in the Run tab (live mode refused on offline server)', async ({ page, request }) => {
-  // The UI disables live for offline-only labs; verify the API contract directly as well.
+  // Every lesson supports Live, while an offline server still enforces the execution boundary.
   const res = await request.post('/api/labs/lab-00/runs', { data: { input: { message: 'x' }, mode: 'live' } });
   expect(res.status()).toBe(503);
   await page.goto('/labs/lab-00?tab=run');
-  await expect(page.getByRole('radio', { name: /Live/ })).toBeDisabled();
+  const live = page.getByRole('radio', { name: /Live/ });
+  await expect(live).toBeEnabled();
+  await live.check();
+  await page.getByRole('button', { name: 'Run', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Live');
 });
 
 test('Live output: a non-streaming lab shows its complete answer; a streaming lab shows tokens', async ({ page }) => {

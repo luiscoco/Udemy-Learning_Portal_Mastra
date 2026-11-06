@@ -37,8 +37,8 @@ export function Tabs<T extends string>({
   };
 
   return (
-    <div>
-      <div role="tablist" aria-label={label} onKeyDown={onKeyDown} className="flex flex-wrap gap-1 border-b border-border">
+    <div className="lesson-tabs">
+      <div role="tablist" aria-label={label} onKeyDown={onKeyDown} className="flex gap-2">
         {tabs.map((t, i) => {
           const isSel = t.id === selected;
           return (
@@ -55,11 +55,14 @@ export function Tabs<T extends string>({
               tabIndex={isSel ? 0 : -1}
               onClick={() => onSelect(t.id)}
               className={cn(
-                '-mb-px border-b-2 px-4 py-2.5 text-sm font-medium',
+                'lesson-stage min-w-0 flex-1 border-b-2 px-3 py-3 text-sm font-semibold',
                 isSel ? 'border-accent text-accent' : 'border-transparent text-fg-muted hover:text-fg',
               )}
             >
-              {t.label}
+              <span className="stage-number" aria-hidden="true">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <span>{t.label}</span>
             </button>
           );
         })}

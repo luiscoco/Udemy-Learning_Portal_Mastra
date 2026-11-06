@@ -1,3 +1,4 @@
+import { FormattedResponse } from './FormattedResponse';
 import { useRef, useState } from 'react';
 import { CitedAnswerSchema, type CitedAnswer as CitedAnswerData } from '@mlp/contracts';
 import { Button, Card } from '../ui/primitives';
@@ -44,7 +45,7 @@ export function CitedAnswer({ data, idPrefix }: { data: CitedAnswerData; idPrefi
         <ol className="flex list-decimal flex-col gap-2 pl-5" aria-label="Answer claims">
           {data.claims.map((c, i) => (
             <li key={i} className="min-w-0 text-fg [overflow-wrap:anywhere]">
-              {c.text}{' '}
+              <FormattedResponse text={c.text} />{' '}
               {c.citations.map((cit) => (
                 <button
                   key={`${cit.n}-${cit.sourceId}`}

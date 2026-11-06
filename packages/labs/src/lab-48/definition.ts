@@ -1,6 +1,7 @@
+import { liveCheckpointDefinition } from '../shared/live-checkpoint-definition.js';
 import type { LabDefinitionInput } from '@mlp/contracts';
 
-export const lab48Definition = {
+export const lab48Definition = liveCheckpointDefinition({
   id: 'lab-48',
   number: 48,
   title: 'MCP resources and prompts',
@@ -236,4 +237,4 @@ export const lab48Definition = {
     costNotice: 'No model is called: the example MCP server runs on 127.0.0.1 inside the run and nothing leaves your machine.',
   },
   tags: ['mcp', 'resources', 'prompts', 'capabilities', 'fallback'],
-} satisfies LabDefinitionInput;
+} satisfies LabDefinitionInput);

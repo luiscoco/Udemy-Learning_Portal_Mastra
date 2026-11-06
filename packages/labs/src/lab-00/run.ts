@@ -1,3 +1,4 @@
+import { withLiveCheckpoint } from '../shared/live-checkpoint.js';
 import { z } from 'zod';
 import { summarizeChecks, type LabDefinition } from '@mlp/contracts';
 import { LabError, sleep, type LabImplementation } from '@mlp/lab-engine';
@@ -24,7 +25,7 @@ export function countWords(text: string): { words: number; characters: number } 
   return { words, characters: text.length };
 }
 
-export const lab00: LabImplementation<Lab00Input, Lab00Output> = {
+const baseLab00: LabImplementation<Lab00Input, Lab00Output> = {
   definition: lab00Definition as LabDefinition,
   inputSchema: Lab00InputSchema,
   outputSchema: Lab00OutputSchema,
@@ -106,3 +107,5 @@ export const lab00: LabImplementation<Lab00Input, Lab00Output> = {
     ]);
   },
 };
+
+export const lab00 = withLiveCheckpoint(baseLab00);

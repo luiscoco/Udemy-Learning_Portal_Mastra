@@ -1,3 +1,4 @@
+import { FormattedResponse } from './FormattedResponse';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { WorkspaceTurnSchema, type LabDefinition, type RuntimeMode, type WorkspaceTurn } from '@mlp/contracts';
 import { useLabRun } from '../../features/run/useLabRun';
@@ -405,12 +406,12 @@ function Bubble({ role, text }: { role: 'user' | 'assistant'; text: string }) {
       data-testid="ws-message"
       data-role={role}
       className={cn(
-        'max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm [overflow-wrap:anywhere]',
+        'min-w-0 max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm [overflow-wrap:anywhere]',
         role === 'user' ? 'self-end bg-accent text-accent-fg' : 'self-start bg-surface-muted',
       )}
     >
       <span className="sr-only">{role === 'user' ? 'You' : 'Assistant'}: </span>
-      {text}
+      {role === 'assistant' ? <FormattedResponse text={text} /> : text}
     </li>
   );
 }

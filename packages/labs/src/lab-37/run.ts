@@ -1,3 +1,4 @@
+import { withLiveCheckpoint } from '../shared/live-checkpoint.js';
 import { z } from 'zod';
 import { MDocument } from '@mastra/rag';
 import { summarizeChecks, type CheckResult, type LabDefinition } from '@mlp/contracts';
@@ -72,7 +73,7 @@ function loadDocuments(input: Lab37Input, services: LabServices): { docs: Doc[];
   return { docs: CORPUS.map((d) => ({ docId: d.docId, name: d.name, text: d.text, markdown: d.format === 'markdown' })), note: null };
 }
 
-export const lab37: LabImplementation<Lab37Input, Lab37Output, LabServices> = {
+const baseLab37: LabImplementation<Lab37Input, Lab37Output, LabServices> = {
   definition: lab37Definition as LabDefinition,
   inputSchema: Lab37InputSchema,
 
@@ -165,3 +166,5 @@ export const lab37: LabImplementation<Lab37Input, Lab37Output, LabServices> = {
     return summarizeChecks(checks);
   },
 };
+
+export const lab37 = withLiveCheckpoint(baseLab37);

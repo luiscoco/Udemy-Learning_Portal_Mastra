@@ -1,3 +1,4 @@
+import { withLiveCheckpoint } from '../shared/live-checkpoint.js';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { z } from 'zod';
@@ -49,7 +50,7 @@ export function nodeSatisfies(version: string, min: readonly [number, number] = 
   return maj > min[0] || (maj === min[0] && minor >= min[1]);
 }
 
-export const lab01: LabImplementation<Lab01Input, Lab01Output, LabServices> = {
+const baseLab01: LabImplementation<Lab01Input, Lab01Output, LabServices> = {
   definition: lab01Definition as LabDefinition,
   inputSchema: Lab01InputSchema,
 
@@ -187,3 +188,5 @@ export const lab01: LabImplementation<Lab01Input, Lab01Output, LabServices> = {
     ]);
   },
 };
+
+export const lab01 = withLiveCheckpoint(baseLab01);

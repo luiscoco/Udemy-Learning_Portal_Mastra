@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router';
 import type { LabDefinition, RuntimeMode } from '@mlp/contracts';
 import { fetchPreflight } from '../../api/runs';
 import { completeAnswer, pendingApprovals } from '../../features/run/run-state';
+import { FormattedResponse } from './FormattedResponse';
 import { useLabRun } from '../../features/run/useLabRun';
 import { cn } from '../../lib/cn';
 import { useProgressActions } from '../../lib/progress-actions';
@@ -324,17 +325,17 @@ export function RunTab({ definition }: { definition: LabDefinition }) {
       <Section title="Live output" id={`${id}-output`}>
         <Card className="min-h-20 p-4">
           {state.tokenText ? (
-            <p className="whitespace-pre-wrap text-fg" data-testid="token-output">
-              {state.tokenText}
+            <div className="min-w-0 text-fg" data-testid="token-output">
+              <FormattedResponse text={state.tokenText} />
               {state.phase === 'streaming' ? <span className="ml-0.5 animate-pulse">▍</span> : null}
-            </p>
+            </div>
           ) : state.phase === 'finished' && completeAnswer(state.output) ? (
             <div className="flex flex-col gap-2" data-testid="complete-answer">
               <p className="text-xs text-fg-muted">
                 No tokens were streamed: this lab returns the whole answer in one piece (for example with generate()), so it
                 appears when the run finishes.
               </p>
-              <p className="whitespace-pre-wrap text-fg">{completeAnswer(state.output)}</p>
+              <FormattedResponse text={completeAnswer(state.output) ?? ''} />
             </div>
           ) : state.phase === 'finished' ? (
             <p className="text-sm text-fg-muted">This run did not stream any tokens. See the result and checks below.</p>

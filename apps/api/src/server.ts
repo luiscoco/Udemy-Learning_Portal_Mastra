@@ -1,4 +1,3 @@
-import { createApp } from './app.js';
 import { ConfigError, describeConfig, loadDeployConfig, loadDotEnv, secretValues } from './config.js';
 import { createLogger } from './logger.js';
 
@@ -21,6 +20,9 @@ async function main(): Promise<void> {
   for (const [key, source] of Object.entries(loaded.sources))
     if (source === 'file') process.env[key] = config[key as keyof typeof loaded.sources];
   const logger = createLogger(config.LOG_LEVEL, secretValues(config));
+  logger.info('initializing API and lab runtime');
+  // Validate configuration and report progress before importing the full course runtime.
+  const { createApp } = await import('./app.js');
   const { app, runner, readiness, drain, auth } = createApp({ config, logger });
   // Validate durable session storage before accepting any traffic.
   try {

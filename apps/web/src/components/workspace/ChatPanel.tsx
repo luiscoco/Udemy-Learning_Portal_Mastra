@@ -1,3 +1,4 @@
+import { FormattedResponse } from './FormattedResponse';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChatTranscriptSchema, type ChatTranscript, type LabDefinition, type RuntimeMode } from '@mlp/contracts';
 import { useLabRun } from '../../features/run/useLabRun';
@@ -217,9 +218,12 @@ export function ChatPanel({ definition }: { definition: LabDefinition }) {
           ))}
           {pending !== null ? <Bubble role="user" status="complete" text={pending} /> : null}
           {streaming ? (
-            <li data-testid="chat-streaming" className="max-w-[85%] self-start rounded-lg bg-surface-muted px-3 py-2 text-sm">
+            <li
+              data-testid="chat-streaming"
+              className="min-w-0 max-w-[85%] self-start rounded-lg bg-surface-muted px-3 py-2 text-sm"
+            >
               <span className="sr-only">Assistant (streaming): </span>
-              {state.tokenText}
+              <FormattedResponse text={state.tokenText} />
               <span aria-hidden="true" className="ml-0.5 animate-pulse">
                 ▍
               </span>
@@ -283,13 +287,13 @@ function Bubble({ role, status, text }: { role: 'user' | 'assistant'; status: st
       data-role={role}
       data-status={status}
       className={cn(
-        'max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm',
+        'min-w-0 max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm',
         role === 'user' ? 'self-end bg-accent text-accent-fg' : 'self-start bg-surface-muted',
         status !== 'complete' && 'border border-dashed border-warning',
       )}
     >
       <span className="sr-only">{role === 'user' ? 'You' : 'Assistant'}: </span>
-      {text || (status === 'stopped' ? '…' : '')}
+      {role === 'assistant' ? <FormattedResponse text={text || (status === 'stopped' ? '…' : '')} /> : text}
       {status !== 'complete' ? (
         <span className="mt-1 block text-xs font-medium text-warning">
           {status === 'stopped' ? 'Stopped' : 'Failed — no reply'}

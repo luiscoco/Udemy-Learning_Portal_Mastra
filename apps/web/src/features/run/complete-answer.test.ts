@@ -12,4 +12,11 @@ describe('completeAnswer (Live output for labs that do not stream)', () => {
     expect(completeAnswer(undefined)).toBeNull();
     expect(completeAnswer('plain string')).toBeNull();
   });
+  it('shows practical live checkpoint replies and keeps primary answer precedence', () => {
+    expect(completeAnswer({ liveCheckpoint: { answer: '**Ready**' } })).toBe('**Ready**');
+    expect(completeAnswer({ answer: 'Primary', liveCheckpoint: { answer: 'Extra' } })).toBe('Primary');
+    for (const liveCheckpoint of [null, false, { answer: 42 }, { answer: '  ' }]) {
+      expect(completeAnswer({ liveCheckpoint })).toBeNull();
+    }
+  });
 });

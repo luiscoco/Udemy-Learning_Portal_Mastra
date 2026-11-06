@@ -1,3 +1,4 @@
+import { withLiveCheckpoint } from '../shared/live-checkpoint.js';
 import { basename, dirname } from 'node:path';
 import { z } from 'zod';
 import { summarizeChecks, type LabDefinition } from '@mlp/contracts';
@@ -47,7 +48,7 @@ async function threadsFor(opened: OpenedMemory) {
   return res.threads.map((t) => ({ id: t.id, title: t.title ?? '' }));
 }
 
-export const lab62: LabImplementation<Lab62Input, Lab62Output, LabServices> = {
+const baseLab62: LabImplementation<Lab62Input, Lab62Output, LabServices> = {
   definition: lab62Definition as LabDefinition,
   inputSchema: Lab62InputSchema,
 
@@ -193,3 +194,5 @@ export const lab62: LabImplementation<Lab62Input, Lab62Output, LabServices> = {
     ]);
   },
 };
+
+export const lab62 = withLiveCheckpoint(baseLab62);

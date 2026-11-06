@@ -110,6 +110,22 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('ChatPanel (L67)', () => {
+  it('formats assistant history while leaving student Markdown literal', async () => {
+    scripts.push(
+      finished(
+        transcript([
+          msg('u1', 'user', '**literal** <b>student</b>'),
+          msg('a1', 'assistant', '## Your reply\n\n**Ready**\n\n```typescript\nconst ready = true;\n```'),
+        ]),
+      ),
+    );
+    renderApp('/labs/lab-67?tab=run');
+    expect(await screen.findByRole('heading', { name: 'Your reply' })).toBeVisible();
+    const user = screen.getAllByTestId('chat-message').find((m) => m.dataset.role === 'user')!;
+    expect(user).toHaveTextContent('**literal** <b>student</b>');
+    expect(user.querySelector('strong, b')).toBeNull();
+    expect(screen.getByLabelText('typescript code').querySelector('.token.keyword')).toHaveTextContent('const');
+  });
   it('loads the history, streams a reply without duplicated tokens, then shows the saved turn', async () => {
     const user = userEvent.setup();
     scripts.push(finished(transcript([msg('u0', 'user', 'Earlier'), msg('a0', 'assistant', 'Earlier reply')])));

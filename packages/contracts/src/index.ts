@@ -20,3 +20,4 @@ export * from './eval-report.js';
 export * from './experiment-comparison.js';
 export * from './quality-dashboard.js';
 export * from './auth.js';
+export * from './tutor.js';

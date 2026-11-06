@@ -11,8 +11,9 @@ import { NotesPanel, SelfCheckPanel } from './ReflectPanels';
 import { RunTab } from './RunTab';
 import { SourceTab } from './SourceTab';
 import { Tabs } from './Tabs';
+import { VisualStudyTab } from './VisualStudyTab';
 
-const TAB_IDS = ['learn', 'run', 'source'] as const;
+const TAB_IDS = ['learn', 'run', 'source', 'infographic', 'walkthrough'] as const;
 type TabId = (typeof TAB_IDS)[number];
 
 function ProgressChecklist({ labId }: { labId: string }) {
@@ -25,7 +26,7 @@ function ProgressChecklist({ labId }: { labId: string }) {
     { label: 'Quiz passed', done: Boolean(p?.quiz?.passed) },
   ];
   return (
-    <section aria-label="Lab progress" className="flex flex-wrap items-center gap-2">
+    <section aria-label="Lab progress" className="lesson-progress flex flex-wrap items-center gap-3">
       {p?.status === 'completed' ? (
         <Badge tone="success" data-testid="lab-status">
           Completed
@@ -72,6 +73,24 @@ export function LabWorkspace({ definition }: { definition: LabDefinition }) {
   const [params, setParams] = useSearchParams();
   const raw = params.get('tab');
   const selected: TabId = TAB_IDS.includes(raw as TabId) ? (raw as TabId) : 'learn';
+  const select = (id: TabId) =>
+    setParams(
+      (p) => {
+        const next = new URLSearchParams(p);
+        if (id === 'learn') next.delete('tab');
+        else next.set('tab', id);
+        return next;
+      },
+      { replace: true },
+    );
+  const navigate = (tab: 'learn' | 'run' | 'source', anchor?: string) => {
+    select(tab);
+    requestAnimationFrame(() => {
+      const target = document.getElementById(anchor ?? `${definition.id}-tab-${tab}`);
+      target?.focus({ preventScroll: true });
+      target?.scrollIntoView?.({ block: 'center' });
+    });
+  };
 
   return (
     <div className="flex flex-col gap-10">
@@ -80,24 +99,38 @@ export function LabWorkspace({ definition }: { definition: LabDefinition }) {
         label="Lesson sections"
         idPrefix={definition.id}
         selected={selected}
-        onSelect={(id) =>
-          setParams(
-            (p) => {
-              const next = new URLSearchParams(p);
-              if (id === 'learn') next.delete('tab');
-              else next.set('tab', id);
-              return next;
-            },
-            { replace: true },
-          )
-        }
+        onSelect={select}
         tabs={[
           { id: 'learn', label: 'Learn', panel: <LearnTab definition={definition} /> },
           { id: 'run', label: 'Run', panel: <RunTab definition={definition} /> },
           { id: 'source', label: 'Source', panel: <SourceTab definition={definition} /> },
+          {
+            id: 'infographic',
+            label: 'Infographic Content',
+            panel: (
+              <VisualStudyTab
+                definition={definition}
+                kind="infographic"
+                active={selected === 'infographic'}
+                onNavigate={navigate}
+              />
+            ),
+          },
+          {
+            id: 'walkthrough',
+            label: 'Exercise Walkthrough',
+            panel: (
+              <VisualStudyTab
+                definition={definition}
+                kind="walkthrough"
+                active={selected === 'walkthrough'}
+                onNavigate={navigate}
+              />
+            ),
+          },
         ]}
       />
-      <div className="grid gap-10 border-t border-border pt-10 [&>*]:min-w-0">
+      <div className="lesson-review grid gap-8 [&>*]:min-w-0">
         <QuizPanel key={JSON.stringify(progress?.quiz ?? null)} definition={definition} />
         <div className="grid gap-10 lg:grid-cols-2 [&>*]:min-w-0">
           <SelfCheckPanel definition={definition} />

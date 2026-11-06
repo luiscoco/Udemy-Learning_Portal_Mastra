@@ -8,10 +8,18 @@ This course runs on your own computer. Start offline: no provider account, payme
 2. Download the course source ZIP and extract it to a writable local folder. Open a terminal in `mastra-learning-platform`, where `package.json` is located. Keep the supplied lockfile.
 3. Run `npm ci`. Internet is needed to install packages. The lessons themselves can then use deterministic offline models at no provider cost.
 4. Windows PowerShell: `Copy-Item .env.example .env`. macOS/Linux: `cp .env.example .env`. Keep `MASTRA_MODE=offline`, `HOST=127.0.0.1` and the default local sign-in.
-5. Run `npm run dev`. Open `http://127.0.0.1:5173`, choose Sign in and use `learner`. Keep the terminal running.
+5. Run `npm run dev`. Wait for `[dev] API ready` and Vite's `Local` URL; the API loads the lab runtime before the web server starts. Open `http://127.0.0.1:5173`, choose Sign in and use `learner`. Keep the terminal running.
 6. Open Lab 00, read Learn, select Run and run the example. Expect a succeeded result with all checks passed. Use Source to inspect the reference code. Continue through the modules in order.
 
 `COURSE-MAP.json` connects all 75 labs plus orientation to modules, stable Learn/Run/Source URLs and local reference folders. Quizzes, objectives, hints and instructor outlines are included inside the platform. Your Udemy lecture tells you which lab to open.
+
+## Visual study tabs
+
+Use **Infographic Content** for a Mastra concept map and checked code excerpt, or **Exercise Walkthrough** for six practice phases using the lesson's real input, checks and challenge. Zoom/fullscreen and SVG/PNG/text downloads are available. Guidance never starts runs or completes lessons; your current Run input is preserved when you follow a walkthrough link. See [visual guide usage](VISUAL-GUIDES.md).
+
+## Ask AI Tutor
+
+Open any lesson and select **AI Tutor** in its header. Start with **Offline · free study guide** and choose **Give me a hint** or **Debug my approach** for that lesson's authored guidance. For custom AI answers, deliberately select **Live** and a configured model; the cost notice appears before you submit. Replies stream with formatted text and coloured code. Stop, retry and clear controls are included. Each question starts fresh, and tutor use does not change your progress or quiz results. See [AI Tutor setup, examples and limits](AI-TUTOR.md).
 
 ## Build and run without development servers
 
@@ -19,7 +27,9 @@ Run `npm run build`. In PowerShell, set `$env:WEB_DIST_DIR='apps/web/dist'`, the
 
 ## Optional live providers
 
-First complete the offline example. If the lesson supports live mode, obtain your own provider API key, place it only in your local `.env`, set `MASTRA_MODE=live` and restart the API. Choose Live in the lab only after reading its cost notice. Provider API usage is billed separately; chat subscriptions do not supply API credit. Request, step and token limits are not dollar budgets. Set spending controls in your provider account. Never submit a key in a course question, screenshot, Git commit or public repository. The app never asks you to paste a key into the browser UI.
+First complete the offline example. All 75 lessons and orientation support optional Live mode. Obtain your own provider API key, place it only in your local `.env`, set `MASTRA_MODE=live` and restart the API. Choose Live in the lab only after reading its cost notice. Provider API usage is billed separately; chat subscriptions do not supply API credit. Request, step and token limits are not dollar budgets. Set spending controls in your provider account. Never submit a key in a course question, screenshot, Git commit or public repository. The app never asks you to paste a key into the browser UI.
+
+In labs 00, 01, 02, 05, 36, 37, 46–49, 61, 62 and 66, Live adds a real-model checkpoint after the practical exercise. It sends a bounded, redacted excerpt of the result to the selected provider. Do not use confidential learner or document data. Leave **Live checkpoint model** as `auto`, or enter an enabled `provider/model` ID. Inspect `liveCheckpoint.answer`, the model identity, usage and `live-checkpoint` workflow step. A local fixture or recorded Studio response retains that label; the checkpoint does not claim a remote deployment was contacted. A failed provider call is an error, not a simulated success. See the lesson's shared Source files for details.
 
 ## Save, reset and update
 
@@ -29,8 +39,8 @@ Before updating, stop the app with Ctrl+C and back up your `.env` and entire `.d
 
 ## Troubleshooting
 
-- API unavailable: keep the terminal running and check `http://127.0.0.1:8787/api/health`. Offline mode does not need keys.
-- Port occupied: close the previous platform instance. If changing PORT, also configure API_PROXY_TARGET for the development web server as described in README.
+- API unavailable: wait for `[dev] API ready`; first startup can take several seconds. If startup times out after 120 seconds, check the `[api]` terminal output, `.env` settings and port availability, then restart `npm run dev`. Check `http://127.0.0.1:8787/api/health` (adjust for your configured port). Offline mode does not need keys.
+- Port occupied: close the previous platform instance or change PORT in `.env`. Root `npm run dev` automatically adjusts its API proxy; see README for advanced overrides.
 - Unsupported Node or native-module error: use Node 24 LTS and rerun `npm ci`; do not copy another computer's node_modules.
 - 429 response: wait for the displayed allowance to reset and retry deliberately. Cancel remains available for your active run.
 - Live authentication/billing failure: return to Offline, check your provider account and restart after editing your local configuration.

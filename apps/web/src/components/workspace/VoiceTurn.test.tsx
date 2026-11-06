@@ -22,6 +22,21 @@ const turn: Turn = {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('VoiceTurn', () => {
+  it('formats the assistant answer and keeps the transcript literal', () => {
+    render(
+      <VoiceTurn
+        turn={{
+          ...turn,
+          transcript: { text: '**literal**', provider: 'openai' },
+          answer: '## Delivery\n\n**Packing**\n\n```json\n{"status":"packing"}\n```',
+        }}
+      />,
+    );
+    expect(screen.getByRole('heading', { name: 'Delivery' })).toBeVisible();
+    expect(screen.getByTestId('voice-answer').querySelector('strong')).toHaveTextContent('Packing');
+    expect(screen.getByLabelText('json code').querySelector('.token.property')).not.toBeNull();
+    expect(screen.getByText(/Heard:/).closest('p')).toHaveTextContent('**literal**');
+  });
   it('shows what was heard, the id to confirm, the answer and a player for the spoken reply', () => {
     expect(voiceTurnOf({ voice: turn })).toEqual(turn);
     expect(voiceTurnOf({ voice: { nope: true } })).toBeNull();
