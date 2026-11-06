@@ -4,6 +4,7 @@
     "allowImportingTsExtensions": true
   },
   "include": [
+    "scripts/generate-tour-audio.ts",
     "scripts/dev-web.ts",
     "scripts/course-release.ts",
     "scripts/course-release-drill.ts",

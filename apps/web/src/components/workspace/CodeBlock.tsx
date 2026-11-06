@@ -1,5 +1,5 @@
 import { Highlight, themes, type PrismTheme } from 'prism-react-renderer';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { copyText } from '../../lib/download';
 import { codeLanguage, Prism } from './code-languages';
 import './formatted-response.css';
@@ -21,13 +21,23 @@ export function CodeBlock({
   label,
   copyable = false,
   lineNumbers = true,
+  highlightRange,
+  follow = false,
 }: {
   code: string;
   language: string;
   label: string;
   copyable?: boolean;
   lineNumbers?: boolean;
+  highlightRange?: readonly [number, number];
+  follow?: boolean;
 }) {
+  const pre = useRef<HTMLPreElement>(null);
+  useEffect(() => {
+    if (!follow || !highlightRange || !pre.current) return;
+    const line = pre.current.querySelector<HTMLElement>(`[data-tour-line="${highlightRange[0]}"]`);
+    if (line) pre.current.scrollTop += line.getBoundingClientRect().top - pre.current.getBoundingClientRect().top - 16;
+  }, [follow, highlightRange]);
   const [copyStatus, setCopyStatus] = useState('');
   const normalized = codeLanguage(language);
   const highlight = code.length <= 40_000 && code.split('\n', 1002).length <= 1000;
@@ -57,6 +67,7 @@ export function CodeBlock({
       >
         {({ className, style, tokens, getLineProps, getTokenProps }) => (
           <pre
+            ref={pre}
             tabIndex={0}
             aria-label={label}
             className={`${className} max-h-[32rem] max-w-full overflow-auto rounded-lg p-4 font-mono text-xs leading-5`}
@@ -68,7 +79,16 @@ export function CodeBlock({
                 : tokens.map((line, i) => {
                     const { key: _lineKey, ...lineProps } = getLineProps({ line, key: i });
                     return (
-                      <span key={i} {...lineProps}>
+                      <span
+                        key={i}
+                        {...lineProps}
+                        data-tour-line={i + 1}
+                        data-tour-highlight={
+                          highlightRange && i + 1 >= highlightRange[0] && i + 1 <= highlightRange[1] ? 'true' : undefined
+                        }
+                        data-tour-first={i + 1 === highlightRange?.[0] ? 'true' : undefined}
+                        data-tour-last={i + 1 === highlightRange?.[1] ? 'true' : undefined}
+                      >
                         {lineNumbers ? (
                           <span aria-hidden="true" className="mr-4 inline-block w-8 text-right text-[#a0a8b7] select-none">
                             {i + 1}

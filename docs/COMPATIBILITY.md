@@ -164,6 +164,8 @@ The application limiter uses the installed Express 5.3.0 RequestHandler, req.ip 
 
 ## Local course release compatibility
 
+Narrated learning tours use the documented Inworld REST synthesis API as an instructor-only authoring integration, not a native Mastra SDK capability. Exact Yash/TTS-2 settings, content binding, MP3/48 kHz checks, provider word timings and browser evidence are documented in [NARRATED-TOURS.md](NARRATED-TOURS.md). Playback uses standard HTML audio, native dialog and the existing SVG/code renderers; no Mastra/package versions change.
+
 The visual study guides use existing React/SVG, browser canvas and native dialog APIs with the installed syntax highlighter. Teaching snippets come from the existing typed Source API and checked non-solution lesson references. No Mastra or dependency versions change; no new SDK methods or provider model strings are introduced. See [VISUAL-GUIDES.md](VISUAL-GUIDES.md) for browser evidence and export limitations.
 
 Core 1.79.0, MCP 2.8.0 and direct MCP client 2.4.0 supersede the earlier historical versions recorded in the lab-specific evidence above. Framework signatures were checked in installed declarations and `@mastra/core/dist/docs/references/reference-tools-mcp-client.md`; the public reference was also consulted. Existing native methods remain in use. The connection fixture now stops accepting sockets before draining, and the facade maps the newly thrown unknown-tool protocol error into the established learner result. ZIP tooling uses exact dev-only fflate 0.8.2 (`zipSync`/`unzipSync`) and does not enter the web bundle. Full release results are in COURSE-RELEASE-IMPLEMENTATION.md.

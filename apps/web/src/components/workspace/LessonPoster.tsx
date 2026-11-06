@@ -184,12 +184,14 @@ export function LessonPoster({
   excerpt,
   selected = 0,
   svgRef,
+  focusRect,
 }: {
   definition: LabDefinition;
   kind: 'infographic' | 'walkthrough';
   excerpt: TeachingExcerpt | null;
   selected?: number;
   svgRef?: Ref<SVGSVGElement>;
+  focusRect?: readonly [number, number, number, number];
 }) {
   const prefix = `poster-${useId().replace(/[^\w-]/g, '')}`;
   const flow = CONCEPT_FLOWS[d.number] ?? CONCEPT_FLOWS[0]!;
@@ -388,6 +390,20 @@ export function LessonPoster({
           />
         </>
       )}
+      {focusRect ? (
+        <rect
+          data-tour-focus="true"
+          x={focusRect[0]}
+          y={focusRect[1]}
+          width={focusRect[2]}
+          height={focusRect[3]}
+          fill="none"
+          stroke="#d52222"
+          strokeWidth="8"
+          rx="16"
+          aria-hidden="true"
+        />
+      ) : null}
       <path d="M240 1048H1625" stroke="#94b2cd" strokeWidth="2" />
       {(kind === 'infographic' ? flow : phases).map((_, i) => (
         <circle

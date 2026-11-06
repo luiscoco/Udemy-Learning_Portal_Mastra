@@ -11,6 +11,7 @@ import { NotesPanel, SelfCheckPanel } from './ReflectPanels';
 import { RunTab } from './RunTab';
 import { SourceTab } from './SourceTab';
 import { Tabs } from './Tabs';
+import { NarratedTour } from '../narration/NarratedTour';
 import { VisualStudyTab } from './VisualStudyTab';
 
 const TAB_IDS = ['learn', 'run', 'source', 'infographic', 'walkthrough'] as const;
@@ -102,8 +103,17 @@ export function LabWorkspace({ definition }: { definition: LabDefinition }) {
         onSelect={select}
         tabs={[
           { id: 'learn', label: 'Learn', panel: <LearnTab definition={definition} /> },
-          { id: 'run', label: 'Run', panel: <RunTab definition={definition} /> },
-          { id: 'source', label: 'Source', panel: <SourceTab definition={definition} /> },
+          {
+            id: 'run',
+            label: 'Run',
+            panel: (
+              <div className="flex flex-col gap-6">
+                {selected === 'run' ? <NarratedTour definition={definition} kind="exercise" /> : null}
+                <RunTab definition={definition} />
+              </div>
+            ),
+          },
+          { id: 'source', label: 'Source', panel: <SourceTab definition={definition} isActive={selected === 'source'} /> },
           {
             id: 'infographic',
             label: 'Infographic Content',

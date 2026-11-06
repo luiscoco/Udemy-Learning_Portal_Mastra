@@ -17,6 +17,10 @@ This course runs on your own computer. Start offline: no provider account, payme
 
 Use **Infographic Content** for a Mastra concept map and checked code excerpt, or **Exercise Walkthrough** for six practice phases using the lesson's real input, checks and challenge. Zoom/fullscreen and SVG/PNG/text downloads are available. Guidance never starts runs or completes lessons; your current Run input is preserved when you follow a walkthrough link. See [visual guide usage](VISUAL-GUIDES.md).
 
+## Guided Narrated Learning Tour
+
+Run, Source and both visual tabs include a **Start Guided Narrated Learning Tour** button. Open it and press **Play narration** for included Inworld Yash MP3s with captions, timed red outlines and vertical follow-scrolling. Follow narration can be disabled for manual inspection. Pause/replay/section/speed controls and Escape/Close are available; exercise narration waits for you to choose Next. Listening preserves current inputs, scratch drafts, hidden solutions and progress. Playback requires no Inworld key or provider payment. See [the tour guide](NARRATED-TOURS.md) for details and instructor-only recording instructions.
+
 ## Ask AI Tutor
 
 Open any lesson and select **AI Tutor** in its header. Start with **Offline · free study guide** and choose **Give me a hint** or **Debug my approach** for that lesson's authored guidance. For custom AI answers, deliberately select **Live** and a configured model; the cost notice appears before you submit. Replies stream with formatted text and coloured code. Stop, retry and clear controls are included. Each question starts fresh, and tutor use does not change your progress or quiz results. See [AI Tutor setup, examples and limits](AI-TUTOR.md).

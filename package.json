@@ -37,7 +37,8 @@
     "smoke:staging": "tsx scripts/staging-smoke.ts",
     "regression": "tsx scripts/regression.ts",
     "release:course": "tsx scripts/course-release.ts",
-    "release:course:drill": "tsx scripts/course-release-drill.ts"
+    "release:course:drill": "tsx scripts/course-release-drill.ts",
+    "narration:generate": "tsx scripts/generate-tour-audio.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

@@ -8,6 +8,7 @@ import { FormattedResponse } from './FormattedResponse';
 import { JsonView } from './RunTimeline';
 import { PosterViewer } from './PosterViewer';
 import { Section } from './Section';
+import { NarratedTour } from '../narration/NarratedTour';
 
 export function VisualStudyTab({
   definition: d,
@@ -47,6 +48,7 @@ export function VisualStudyTab({
   const title = kind === 'infographic' ? 'Infographic Content' : 'Exercise Walkthrough';
   return (
     <div className="visual-study flex min-w-0 flex-col gap-7">
+      {active && source ? <NarratedTour definition={d} kind={kind} files={source.files} /> : null}
       <Section title={title} id={`${d.id}-${kind}-title`}>
         <div className="flex flex-wrap gap-2">
           <Badge>

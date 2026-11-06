@@ -15,6 +15,8 @@ These are original scalable SVG teaching posters, not reused Claude SDK images. 
 
 ## Use the guides
 
+Both visual tabs also offer an original prerecorded Inworld **Guided Narrated Learning Tour**, with timed red region/word highlighting and follow-scrolling. It uses this portal's Mastra content; see [NARRATED-TOURS.md](NARRATED-TOURS.md).
+
 1. Start `npm run dev`, sign in and open `/labs/lab-03?tab=infographic`.
 2. Use **Fit**, **Zoom in/out** or **100%**. Zoomed diagrams scroll within a focusable viewport; use arrow keys, scrollbars or pointer dragging. **Fullscreen** opens a native dialog; Escape/Close returns focus to its launcher.
 3. Download a self-contained **SVG**, full-HD **PNG** (1920 × 1080), or full **text** summary. Image text uses short excerpts; the readable summary below the poster retains the complete teaching content and code. Export failures are reported accessibly and alternate formats remain available.

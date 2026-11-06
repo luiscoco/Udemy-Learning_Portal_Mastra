@@ -6,6 +6,8 @@ Every lesson includes **AI Tutor**: free offline study guidance and optional liv
 
 Every lesson also includes **Infographic Content** and **Exercise Walkthrough**: illustrated Mastra concepts, checked coloured code excerpts and six guided practice phases. Both offer zoom, fullscreen and downloadable artwork; see [visual study guides](docs/VISUAL-GUIDES.md).
 
+**Guided Narrated Learning Tour** explains exercises, TypeScript source and both infographic views with prerecorded Inworld Yash MP3s, timed red highlights and follow-scrolling. See [narrated tour usage and authoring](docs/NARRATED-TOURS.md).
+
 | Workspace | What it is |
 | --- | --- |
 | `apps/web` | React + Vite + TypeScript + Tailwind UI (http://127.0.0.1:5173) |

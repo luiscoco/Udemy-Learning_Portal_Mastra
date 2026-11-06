@@ -79,6 +79,9 @@ it('rejects unsafe path syntax instead of normalizing traversal into an allowed 
     expect(() => includeCoursePath(path)).toThrow('Unsafe archive path');
   expect(includeCoursePath('unexpected-root-file.txt')).toBe(false);
   expect(includeCoursePath('apps/api/src/private.pem')).toBe(false);
+  expect(includeCoursePath('apps/web/public/audio/tours/' + 'a'.repeat(64) + '.mp3')).toBe(true);
+  expect(includeCoursePath('apps/web/public/audio/tours/unreviewed.mp3')).toBe(false);
+  expect(includeCoursePath('apps/api/private.mp3')).toBe(false);
 });
 
 it('refuses selected symbolic paths and oversized files without reading private targets', () => {
@@ -90,6 +93,19 @@ it('refuses selected symbolic paths and oversized files without reading private 
   expect(() => buildCourseArchive(f.root, [...f.candidates, 'apps/linked/outside.ts'], provenance)).toThrow('Symbolic');
   f.write('apps/large.ts', 'x'.repeat(4 * 1024 * 1024 + 1));
   expect(() => buildCourseArchive(f.root, f.candidates, provenance)).toThrow('oversized');
+});
+
+it('includes only correctly hash-named tour MP3 media in the student ZIP', () => {
+  const f = fixture();
+  const content = 'MP3 test fixture';
+  const sha = createHash('sha256').update(content).digest('hex');
+  const path = `apps/web/public/audio/tours/${sha}.mp3`;
+  f.write(path, content);
+  expect(unzipSync(buildCourseArchive(f.root, f.candidates, provenance).bytes)[ARCHIVE_ROOT + path]).toEqual(
+    new TextEncoder().encode(content),
+  );
+  f.write('apps/web/public/audio/tours/' + 'a'.repeat(64) + '.mp3', 'wrong bytes');
+  expect(() => buildCourseArchive(f.root, f.candidates, provenance)).toThrow('Tour audio filename hash mismatch');
 });
 
 it('refuses missing release prerequisites and missing lab references', () => {

@@ -78,7 +78,7 @@ const PREFIXES = [
   '.github/workflows/',
   'regression/',
 ];
-const BUDGET = { files: 5000, fileBytes: 4 * 1024 * 1024, totalBytes: 64 * 1024 * 1024 };
+const BUDGET = { files: 5000, fileBytes: 4 * 1024 * 1024, totalBytes: 512 * 1024 * 1024 };
 const digest = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
 
 export function includeCoursePath(path: string): boolean {
@@ -91,6 +91,7 @@ export function includeCoursePath(path: string): boolean {
   if (!PREFIXES.some((prefix) => path.startsWith(prefix))) return false;
   if (path.startsWith('regression/evidence/') || path === 'regression/REPORT.md') return false;
   if (/^docs\/.*-IMPLEMENTATION\.md$/.test(path)) return false;
+  if (/^apps\/web\/public\/audio\/tours\/[a-f0-9]{64}\.mp3$/.test(path)) return true;
   return EXTENSIONS.has(extname(path)) || ['.env.example', '.gitignore', 'Dockerfile'].includes(parts.at(-1)!);
 }
 
@@ -135,6 +136,8 @@ export function buildCourseArchive(
     totalBytes += stat.size;
     if (totalBytes > BUDGET.totalBytes) throw new Error('Course byte budget exceeded');
     const content = readFileSync(current);
+    const tourHash = /^apps\/web\/public\/audio\/tours\/([a-f0-9]{64})\.mp3$/.exec(path)?.[1];
+    if (tourHash && digest(content) !== tourHash) throw new Error(`Tour audio filename hash mismatch: ${path}`);
     if (
       path.endsWith('.env.example') &&
       /^[ \t]*[A-Z0-9_]*(?:KEY|SECRET|TOKEN|PASSWORD)[A-Z0-9_]*[ \t]*=[ \t]*\S+/m.test(content.toString('utf8'))
@@ -169,7 +172,8 @@ export function buildCourseArchive(
   };
   files['COURSE-MANIFEST.json'] = strToU8(JSON.stringify(manifest, null, 2) + '\n');
   const zipped: Zippable = Object.create(null) as Zippable;
-  for (const path of Object.keys(files).sort()) zipped[ARCHIVE_ROOT + path] = files[path]!;
+  for (const path of Object.keys(files).sort())
+    zipped[ARCHIVE_ROOT + path] = path.endsWith('.mp3') ? [files[path]!, { level: 0 }] : files[path]!;
   const bytes = zipSync(zipped, { level: 6, mtime: new Date(1980, 0, 1) });
   const unpacked = unzipSync(bytes);
   for (const entry of entries)

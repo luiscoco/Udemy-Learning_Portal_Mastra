@@ -9,6 +9,7 @@ import { claimGuest, GUEST_SCOPE, scratchKey } from '../../lib/storage-scope';
 import { Badge, Button, Skeleton } from '../ui/primitives';
 import { CodeBlock } from './CodeBlock';
 import { Section } from './Section';
+import { NarratedTour } from '../narration/NarratedTour';
 
 function FileActions({ file }: { file: SourceFile }) {
   const [copied, setCopied] = useState<'idle' | 'ok' | 'fail'>('idle');
@@ -77,7 +78,7 @@ function ScopedScratchpad({ labId, scope }: { labId: string; scope: string }) {
   );
 }
 
-export function SourceTab({ definition }: { definition: LabDefinition }) {
+export function SourceTab({ definition, isActive = true }: { definition: LabDefinition; isActive?: boolean }) {
   const state = useAsync(`source:${definition.id}`, (signal) => fetchSource(definition.id, signal));
   const [active, setActive] = useState(0);
   const [revealConfirm, setRevealConfirm] = useState(false);
@@ -111,6 +112,7 @@ export function SourceTab({ definition }: { definition: LabDefinition }) {
 
   return (
     <div className="flex flex-col gap-10">
+      {isActive ? <NarratedTour definition={definition} kind="source" files={state.data.files} /> : null}
       <Section title="Reference source" id={`${definition.id}-source-files`}>
         <div className="flex flex-wrap gap-2" aria-label="Pinned versions">
           {Object.entries(state.data.pinned).map(([k, v]) => (
