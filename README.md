@@ -161,3 +161,8 @@ HTTP execution recovery: standard Run tabs reattach after reload. Configure `RUN
 Run request admission is limited per verified learner and client network, with separate start and approval/recovery allowances. Cancellation stays available while throttled. See [docs/RATE-LIMITS.md](docs/RATE-LIMITS.md).
 
 Original project code and documentation are MIT licensed; see [LICENSE](LICENSE) and [third-party notices](THIRD-PARTY-NOTICES.md). HTTP headers, optional exact-origin CORS and HTTPS proxy enforcement are described in [HTTP-SECURITY.md](docs/HTTP-SECURITY.md).
+
+
+### Milestone projects
+
+Visit `/projects` for the Mastra Study Coach, Agent Evaluation Studio and Agent Publishing Studio. Follow 22 cumulative build prompts, inspect linked course source, execute real offline evaluations and publish selected completed answers as Markdown, Word, PDF and SVG/PNG infographics. See [milestone projects](docs/MILESTONE-PROJECTS.md) for procedures, provenance, storage and export limitations.

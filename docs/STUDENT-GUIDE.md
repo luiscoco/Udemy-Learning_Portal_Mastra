@@ -58,3 +58,8 @@ Original project code is MIT licensed; retain LICENSE and third-party notices wh
 The default local portal enters the sole configured learner automatically. No manual sign-in is needed for runs or AI Tutor. The header shows **Local learner**; progress and notes still belong to that normal server session. Offline Tutor is free; live Tutor requires configured provider credentials and retains its cost notice.
 
 Automatic entry requires the development identity provider, a loopback host, one allowed learner and no passcode. Set `AUTH_LOCAL_AUTO_LOGIN=false` in the repository-root `.env` and restart the API to require explicit sign-in. Passcode, multiple-profile and password-provider configurations always require explicit sign-in. Existing sessions are preserved. Session startup failures offer retry; recovery never submits or replays a Tutor question.
+
+
+## Cumulative milestone projects
+
+Open **Milestone projects** in the sidebar or visit `/projects`. Study Coach, Agent Evaluation Studio and Agent Publishing Studio provide 22 cumulative build stages, working reference screens and downloadable learner starters. Read [the milestone procedure](MILESTONE-PROJECTS.md) for the build order, local evidence, offline/live controls and artifact formats. Project evidence is independent of lesson completion and saved in this browser for the current learner.

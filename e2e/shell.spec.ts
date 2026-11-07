@@ -101,6 +101,8 @@ test('keyboard: arrow keys move through sidebar items and Enter toggles modules'
   const nav = await courseNav(page);
   await nav.getByRole('link', { name: 'Home' }).focus();
   await page.keyboard.press('ArrowDown');
+  await expect(nav.getByRole('link', { name: 'Milestone projects', exact: true })).toBeFocused();
+  await page.keyboard.press('ArrowDown');
   await expect(nav.getByRole('button', { name: /Platform Orientation/ })).toBeFocused();
   const tools = nav.getByRole('button', { name: /Tools and Function Calling/ });
   await tools.focus();

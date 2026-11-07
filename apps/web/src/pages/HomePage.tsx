@@ -43,6 +43,12 @@ export function HomePage() {
               {progress[nextLab.id] ? 'Continue' : 'Start'} {nextLab.title}
             </Link>
           ) : null}
+          <Link
+            to="/projects"
+            className="inline-flex h-11 items-center rounded-lg border border-border-strong px-5 font-medium text-fg hover:bg-surface-muted"
+          >
+            Milestone projects
+          </Link>
           <a
             href="#course-map"
             className="inline-flex h-11 items-center rounded-lg border border-border-strong px-5 font-medium text-fg hover:bg-surface-muted"

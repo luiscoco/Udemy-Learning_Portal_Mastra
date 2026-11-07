@@ -4,6 +4,7 @@ import { LABS } from './labs.js';
 
 export { MODULES } from './modules.js';
 export { LABS } from './labs.js';
+export * from './projects.js';
 
 /** Validates structural invariants beyond the Zod shape. Throws on violation. */
 export function validateCatalog(catalog: Catalog): Catalog {

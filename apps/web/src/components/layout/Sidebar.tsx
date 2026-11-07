@@ -96,6 +96,14 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         <HomeIcon className="text-fg-muted" /> Home
       </Link>
 
+      <NavLink
+        to="/projects"
+        data-nav-item
+        onClick={onNavigate}
+        className="rounded-lg px-3 py-3 text-sm font-semibold hover:bg-surface-muted"
+      >
+        Milestone projects
+      </NavLink>
       <CourseProgressSummary />
 
       <ul className="flex flex-col gap-1" aria-label="Modules">

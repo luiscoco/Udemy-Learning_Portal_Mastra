@@ -174,3 +174,6 @@ Core 1.79 adds a live ownership lease for workflows participating in generic boo
 
 
 Local learner entry adds optional `login.autoLocal` session metadata and `POST /api/auth/local-session` (`client.auth.localSession`). Older responses without the metadata retain explicit sign-in. No Mastra package or persistent data changes are required.
+
+
+Milestone workspaces reuse the tested Mastra core 1.79.0 runtime and existing typed Tutor/run APIs. The generated learner starters pin core 1.79.0, TypeScript 6.0.3 and Node types 24.19.2; offline checks and a semantic TypeScript compilation verify their generation options. The browser adds fflate 0.8.2 (already pinned at the root) for DOCX/starter ZIP exports. No Mastra runtime package was upgraded and no lab progress contract changed. Project state is a separate versioned browser format; see [milestone procedures](MILESTONE-PROJECTS.md).
